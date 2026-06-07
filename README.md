@@ -86,6 +86,16 @@ Optional hooks, rules, custom subagents, `minion` settings, stricter approval/sa
 
 Those controls are opt-in because they can change how Codex approves commands, delegates work, or enforces local project rules. Review the purpose, risk level, enable steps, disable steps, and verify command before enabling any optional config.
 
+## Verification
+
+Run the T010 static verification suite from the repo root:
+
+```bash
+./verification/run-static-checks.sh
+```
+
+The suite checks shell syntax, live `.claude/*` runtime references, hardcoded `/home/echo/ACC` runtime dependencies, and documented allowlists for migration/source references. See `verification/README.md` for the disposable `/tmp` dry-run check and the T012-deferred install/readback, conflict, protected-path, and missing-`bd` behavior commands.
+
 ## Relocation Safety
 
 The repo may be developed at an example path such as `/home/echo/ACC/codex-bootstrap-protocol`, but runtime logic and installed targets should not depend on `/home/echo/ACC`. Scripts should resolve paths relative to the script or repo root so the checkout can move later, for example to `/home/echo/dev/codex-bootstrap-protocol`.
