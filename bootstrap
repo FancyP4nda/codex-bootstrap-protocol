@@ -13,11 +13,127 @@ script_dir() {
 }
 
 main() {
-    local root
-    root="$(script_dir)"
-    printf 'bootstrap CLI skeleton placeholder\n'
-    printf 'repo root: %s\n' "$root"
-    printf 'T002 implements argument parsing, help text, dry-run, and install planning.\n'
+    local source_dir target="" prefix="" dry_run=0 force=0
+    source_dir="$(script_dir)"
+
+    while (($#)); do
+        case "$1" in
+            -h|--help)
+                usage
+                return 0
+                ;;
+            --dry-run)
+                dry_run=1
+                shift
+                ;;
+            --force)
+                force=1
+                shift
+                ;;
+            --prefix)
+                shift
+                if (($# == 0)) || [[ "$1" == -* ]]; then
+                    die "--prefix requires a value"
+                fi
+                prefix="$1"
+                shift
+                ;;
+            --prefix=*)
+                prefix="${1#*=}"
+                if [[ -z "$prefix" ]]; then
+                    die "--prefix requires a value"
+                fi
+                shift
+                ;;
+            --)
+                shift
+                while (($#)); do
+                    set_target "$1" target
+                    shift
+                done
+                ;;
+            -*)
+                die "unknown option: $1"
+                ;;
+            *)
+                set_target "$1" target
+                shift
+                ;;
+        esac
+    done
+
+    [[ -n "$target" ]] || die "missing required <target>"
+    [[ -n "$prefix" ]] || die "missing required --prefix <PREFIX>"
+
+    if ((dry_run)); then
+        print_dry_run "$source_dir" "$target" "$prefix" "$force"
+        return 0
+    fi
+
+    printf 'bootstrap install is not implemented yet.\n' >&2
+    printf 'Parsed source directory: %s\n' "$source_dir" >&2
+    printf 'T003 will add install planning, conflict checks, and write behavior.\n' >&2
+    printf 'Use --dry-run to validate CLI arguments without making changes.\n' >&2
+    return 1
+}
+
+usage() {
+    cat <<'EOF'
+Usage:
+  ./bootstrap [--dry-run] [--force] --prefix <PREFIX> <target>
+  ./bootstrap [--dry-run] [--force] <target> --prefix <PREFIX>
+
+Required arguments:
+  <target>              Target project directory to inspect or install into.
+  --prefix <PREFIX>     Short uppercase identifier used by generated project assets.
+
+Options:
+  --dry-run             Parse arguments and print the planned inputs without writing files.
+  --force               Accepted for future conflict handling; no effect in the T002 skeleton.
+  -h, --help            Show this help text.
+
+Notes:
+  The CLI resolves its source directory from the bootstrap executable path, so it
+  can be called through a symlink. Optional symlink or PATH setup is a user
+  choice; this command does not modify PATH, install packages, or create links.
+  Real install planning and safety checks are delegated to T003.
+EOF
+}
+
+die() {
+    printf 'bootstrap: %s\n\n' "$1" >&2
+    usage >&2
+    return 2
+}
+
+set_target() {
+    local value="$1"
+    local -n target_ref="$2"
+
+    if [[ -n "$target_ref" ]]; then
+        die "unexpected extra argument: $value"
+    fi
+
+    target_ref="$value"
+}
+
+print_dry_run() {
+    local source_dir="$1"
+    local target="$2"
+    local prefix="$3"
+    local force="$4"
+
+    cat <<EOF
+bootstrap dry-run
+source_dir: $source_dir
+target: $target
+prefix: $prefix
+force: $force
+bd_required: no
+writes: none
+
+T003 will add install planning, conflict checks, and write behavior.
+EOF
 }
 
 main "$@"

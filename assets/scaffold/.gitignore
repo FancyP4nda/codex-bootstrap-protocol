@@ -1,0 +1,3 @@
+# Target-local transient Codex state
+.codex/state/tmp/*
+!.codex/state/tmp/.gitignore

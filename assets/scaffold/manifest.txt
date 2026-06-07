@@ -1,0 +1,46 @@
+# Codex Bootstrap Protocol managed-path manifest.
+#
+# This file is installer metadata for T003/T011. It should be consumed from
+# assets/scaffold/ and should not be installed into target repositories unless a
+# future task explicitly changes the contract.
+#
+# Format:
+# kind<TAB>path<TAB>action<TAB>description
+#
+# kind values:
+# file          Copy this file from assets/scaffold into the target.
+# dir           Ensure this directory exists in the target.
+# transient_dir Ensure this directory exists but treat contents as ignored state.
+#
+# action values:
+# copy              Copy file content.
+# ensure_dir        Create directory if absent.
+# ensure_ignored    Create directory and rely on installed ignore rules for contents.
+#
+file	.gitignore	copy	Target ignore rules for scaffold-managed transient paths.
+file	AGENTS.md	copy	Repo-local Codex operating instructions.
+file	docs/CONTEXT.md	copy	Durable project context entrypoint.
+dir	docs/adr/	ensure_dir	Architecture decision record directory.
+file	docs/adr/README.md	copy	ADR directory guidance.
+file	docs/prd.md	copy	Product requirements document placeholder.
+file	docs/project-plan.md	copy	Implementation plan placeholder.
+file	docs/architecture.md	copy	Architecture notes placeholder.
+file	docs/backend.md	copy	Backend notes placeholder.
+file	docs/frontend.md	copy	Frontend notes placeholder.
+file	docs/data-model.md	copy	Data model notes placeholder.
+file	docs/security.md	copy	Security notes placeholder.
+file	docs/handoff.yaml	copy	Durable handoff state.
+file	docs/changelog.yaml	copy	Project changelog state.
+file	docs/enhancements.md	copy	Future improvement queue.
+file	docs/standards-history.md	copy	Standards and convention history.
+dir	.agents/templates/	ensure_dir	Reusable agent handoff templates.
+file	.agents/templates/work-item.md	copy	Atomic work-item handoff template.
+file	.codex/config.toml	copy	Minimal repo-local Codex config placeholder.
+dir	.codex/hooks/	ensure_dir	Opt-in hook examples directory.
+file	.codex/hooks/README.md	copy	Hook example guidance.
+dir	.codex/rules/	ensure_dir	Opt-in rule examples directory.
+file	.codex/rules/README.md	copy	Rule example guidance.
+transient_dir	.codex/state/tmp/	ensure_ignored	Transient Codex scratch directory.
+file	.codex/state/tmp/.gitignore	copy	Ignore all transient scratch contents except this placeholder.
+dir	.archive/	ensure_dir	Project-local archive directory.
+file	.archive/README.md	copy	Archive usage guidance.
