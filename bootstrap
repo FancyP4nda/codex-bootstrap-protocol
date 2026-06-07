@@ -12,71 +12,6 @@ script_dir() {
     (cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)
 }
 
-main() {
-    local source_dir target="" prefix="" dry_run=0 force=0
-    source_dir="$(script_dir)"
-
-    while (($#)); do
-        case "$1" in
-            -h|--help)
-                usage
-                return 0
-                ;;
-            --dry-run)
-                dry_run=1
-                shift
-                ;;
-            --force)
-                force=1
-                shift
-                ;;
-            --prefix)
-                shift
-                if (($# == 0)) || [[ "$1" == -* ]]; then
-                    die "--prefix requires a value"
-                fi
-                prefix="$1"
-                shift
-                ;;
-            --prefix=*)
-                prefix="${1#*=}"
-                if [[ -z "$prefix" ]]; then
-                    die "--prefix requires a value"
-                fi
-                shift
-                ;;
-            --)
-                shift
-                while (($#)); do
-                    set_target "$1" target
-                    shift
-                done
-                ;;
-            -*)
-                die "unknown option: $1"
-                ;;
-            *)
-                set_target "$1" target
-                shift
-                ;;
-        esac
-    done
-
-    [[ -n "$target" ]] || die "missing required <target>"
-    [[ -n "$prefix" ]] || die "missing required --prefix <PREFIX>"
-
-    if ((dry_run)); then
-        print_dry_run "$source_dir" "$target" "$prefix" "$force"
-        return 0
-    fi
-
-    printf 'bootstrap install is not implemented yet.\n' >&2
-    printf 'Parsed source directory: %s\n' "$source_dir" >&2
-    printf 'T003 will add install planning, conflict checks, and write behavior.\n' >&2
-    printf 'Use --dry-run to validate CLI arguments without making changes.\n' >&2
-    return 1
-}
-
 usage() {
     cat <<'EOF'
 Usage:
@@ -85,55 +20,503 @@ Usage:
 
 Required arguments:
   <target>              Target project directory to inspect or install into.
-  --prefix <PREFIX>     Short uppercase identifier used by generated project assets.
+  --prefix <PREFIX>     Short identifier used by the target Beads database.
 
 Options:
-  --dry-run             Parse arguments and print the planned inputs without writing files.
-  --force               Accepted for future conflict handling; no effect in the T002 skeleton.
+  --dry-run             Print planned creates, skips, and conflicts without
+                        writing files. Does not require bd.
+  --force               Overwrite differing managed scaffold files only.
+                        Does not overwrite .beads/, .git/, credentials,
+                        symlinks, transient state contents, or unmanaged paths.
   -h, --help            Show this help text.
 
 Notes:
-  The CLI resolves its source directory from the bootstrap executable path, so it
-  can be called through a symlink. Optional symlink or PATH setup is a user
-  choice; this command does not modify PATH, install packages, or create links.
-  Real install planning and safety checks are delegated to T003.
+  The installer reads assets/scaffold/manifest.txt as the managed-path
+  contract. Real installs require bd and fail before target writes when bd is
+  unavailable or when managed-path conflicts are present.
 EOF
 }
 
 die() {
     printf 'bootstrap: %s\n\n' "$1" >&2
     usage >&2
-    return 2
+    exit 2
+}
+
+error_exit() {
+    printf 'bootstrap: %s\n' "$1" >&2
+    exit "${2:-1}"
 }
 
 set_target() {
     local value="$1"
-    local -n target_ref="$2"
+    local -n target_var="$2"
 
-    if [[ -n "$target_ref" ]]; then
+    if [[ -n "$target_var" ]]; then
         die "unexpected extra argument: $value"
     fi
 
-    target_ref="$value"
+    target_var="$value"
 }
 
-print_dry_run() {
-    local source_dir="$1"
-    local target="$2"
-    local prefix="$3"
-    local force="$4"
+parse_args() {
+    local -n target_ref="$1"
+    local -n prefix_ref="$2"
+    local -n dry_run_ref="$3"
+    local -n force_ref="$4"
+    shift 4
+
+    while (($#)); do
+        case "$1" in
+            -h|--help)
+                usage
+                exit 0
+                ;;
+            --dry-run)
+                dry_run_ref=1
+                shift
+                ;;
+            --force)
+                force_ref=1
+                shift
+                ;;
+            --prefix)
+                shift
+                if (($# == 0)) || [[ "$1" == -* ]]; then
+                    die "--prefix requires a value"
+                fi
+                prefix_ref="$1"
+                shift
+                ;;
+            --prefix=*)
+                prefix_ref="${1#*=}"
+                if [[ -z "$prefix_ref" ]]; then
+                    die "--prefix requires a value"
+                fi
+                shift
+                ;;
+            --)
+                shift
+                while (($#)); do
+                    set_target "$1" target_ref
+                    shift
+                done
+                ;;
+            -*)
+                die "unknown option: $1"
+                ;;
+            *)
+                set_target "$1" target_ref
+                shift
+                ;;
+        esac
+    done
+
+    [[ -n "$target_ref" ]] || die "missing required <target>"
+    [[ -n "$prefix_ref" ]] || die "missing required --prefix <PREFIX>"
+    [[ "$prefix_ref" =~ ^[A-Za-z0-9_-]+$ ]] \
+        || die "invalid --prefix '$prefix_ref'; allowed: letters, digits, hyphen, underscore"
+}
+
+normalize_rel_path() {
+    local rel="$1"
+    rel="${rel#./}"
+    rel="${rel%/}"
+    printf '%s\n' "$rel"
+}
+
+path_has_parent_ref() {
+    local rel="$1" part
+    IFS='/' read -r -a parts <<<"$rel"
+    for part in "${parts[@]}"; do
+        [[ "$part" == ".." ]] && return 0
+    done
+    return 1
+}
+
+path_has_component() {
+    local rel="$1" wanted="$2" part
+    IFS='/' read -r -a parts <<<"$rel"
+    for part in "${parts[@]}"; do
+        [[ "$part" == "$wanted" ]] && return 0
+    done
+    return 1
+}
+
+is_credential_path() {
+    local rel="$1" base
+    base="$(basename -- "$rel")"
+    case "$base" in
+        .env|.env.*|*credential*|*credentials*|*secret*|*secrets*|*token*|*tokens*|id_rsa|id_dsa|id_ecdsa|id_ed25519)
+            return 0
+            ;;
+    esac
+    return 1
+}
+
+is_protected_manifest_path() {
+    local rel="$1"
+    path_has_component "$rel" ".git" && return 0
+    path_has_component "$rel" ".beads" && return 0
+    is_credential_path "$rel" && return 0
+    return 1
+}
+
+validate_manifest_path() {
+    local rel="$1"
+    [[ -n "$rel" ]] || return 1
+    [[ "$rel" != /* ]] || return 1
+    [[ "$rel" != "." ]] || return 1
+    path_has_parent_ref "$rel" && return 1
+    return 0
+}
+
+validate_source_tree() {
+    local scaffold_dir="$1" manifest="$2"
+    [[ -d "$scaffold_dir" ]] || error_exit "missing scaffold directory: $scaffold_dir"
+    [[ -f "$manifest" ]] || error_exit "missing scaffold manifest: $manifest"
+
+    local line_no=0 kind rel action description normalized src
+    while IFS=$'\t' read -r kind rel action description || [[ -n "${kind:-}" ]]; do
+        line_no=$((line_no + 1))
+        [[ -z "${kind:-}" || "${kind:0:1}" == "#" ]] && continue
+        normalized="$(normalize_rel_path "$rel")"
+
+        validate_manifest_path "$normalized" \
+            || error_exit "invalid manifest path at line $line_no: $rel"
+        is_protected_manifest_path "$normalized" \
+            && error_exit "manifest line $line_no targets protected path: $rel"
+
+        src="$scaffold_dir/$normalized"
+        case "$kind:$action" in
+            file:copy)
+                [[ -f "$src" ]] || error_exit "manifest line $line_no missing source file: $rel"
+                ;;
+            dir:ensure_dir|transient_dir:ensure_ignored)
+                [[ -d "$src" ]] || error_exit "manifest line $line_no missing source directory: $rel"
+                ;;
+            *)
+                error_exit "invalid manifest kind/action at line $line_no: $kind $action"
+                ;;
+        esac
+    done < "$manifest"
+}
+
+add_created() {
+    CREATED_LINES+=("  $1 | action=$2 | reason=$3")
+}
+
+add_skipped() {
+    SKIPPED_LINES+=("  $1 | action=$2 | reason=$3")
+}
+
+add_conflict() {
+    CONFLICT_LINES+=("  path: $1"$'\n'"    planned_action: $2"$'\n'"    reason: $3"$'\n'"    suggested_resolution: $4")
+}
+
+add_apply() {
+    APPLY_KINDS+=("$1")
+    APPLY_PATHS+=("$2")
+    APPLY_ACTIONS+=("$3")
+}
+
+file_matches_managed_content() {
+    local rel="$1" src="$2" dest="$3"
+    local src_text dest_text beads_gitignore_block
+    MANAGED_MATCH_REASON="already matches scaffold"
+
+    if cmp -s -- "$src" "$dest"; then
+        return 0
+    fi
+
+    if [[ "$rel" == ".gitignore" ]]; then
+        src_text="$(<"$src")"
+        dest_text="$(<"$dest")"
+        beads_gitignore_block=$'\n\n# Beads / Dolt files (added by bd init)\n.dolt/\n*.db\n.beads-credential-key'
+        if [[ "$dest_text" == "$src_text$beads_gitignore_block" ]]; then
+            MANAGED_MATCH_REASON="already matches scaffold plus Beads ignore rules"
+            return 0
+        fi
+    fi
+
+    return 1
+}
+
+print_lines_or_none() {
+    local -n lines_ref="$1"
+    if ((${#lines_ref[@]} == 0)); then
+        printf '  none\n'
+        return 0
+    fi
+
+    local line
+    for line in "${lines_ref[@]}"; do
+        printf '%s\n' "$line"
+    done
+}
+
+print_plan_report() {
+    local heading="$1" source_dir="$2" target_abs="$3" prefix="$4" force="$5" bd_required="$6"
 
     cat <<EOF
-bootstrap dry-run
+$heading
 source_dir: $source_dir
-target: $target
+target: $target_abs
 prefix: $prefix
 force: $force
-bd_required: no
-writes: none
+bd_required: $bd_required
 
-T003 will add install planning, conflict checks, and write behavior.
+created paths:
 EOF
+    print_lines_or_none CREATED_LINES
+
+    printf '\nskipped paths:\n'
+    print_lines_or_none SKIPPED_LINES
+
+    printf '\nconflicts:\n'
+    print_lines_or_none CONFLICT_LINES
+}
+
+parent_chain_conflicts() {
+    local target_abs="$1" rel="$2"
+    local parent_rel parent_abs
+    parent_rel="$(dirname -- "$rel")"
+    [[ "$parent_rel" == "." ]] && return 1
+
+    local current="" part
+    IFS='/' read -r -a parts <<<"$parent_rel"
+    for part in "${parts[@]}"; do
+        [[ -z "$part" ]] && continue
+        if [[ -z "$current" ]]; then
+            current="$part"
+        else
+            current="$current/$part"
+        fi
+        parent_abs="$target_abs/$current"
+        if [[ -L "$parent_abs" ]]; then
+            add_conflict "$current" "prepare_parent" "parent path is a symlink" "replace the symlink with a real directory before retrying"
+            return 0
+        fi
+        if [[ -e "$parent_abs" && ! -d "$parent_abs" ]]; then
+            add_conflict "$current" "prepare_parent" "parent path exists but is not a directory" "move or rename this path before retrying"
+            return 0
+        fi
+    done
+    return 1
+}
+
+plan_file() {
+    local scaffold_dir="$1" target_abs="$2" rel="$3" force="$4"
+    local src="$scaffold_dir/$rel" dest="$target_abs/$rel"
+
+    if parent_chain_conflicts "$target_abs" "$rel"; then
+        return 0
+    fi
+
+    if [[ -L "$dest" ]]; then
+        add_conflict "$rel" "copy" "target path is a symlink" "replace the symlink manually; --force will not write through symlinks"
+        return 0
+    fi
+
+    if [[ -e "$dest" ]]; then
+        if [[ ! -f "$dest" ]]; then
+            add_conflict "$rel" "copy" "target path exists but is not a regular file" "move or remove this path manually before retrying"
+            return 0
+        fi
+        if file_matches_managed_content "$rel" "$src" "$dest"; then
+            add_skipped "$rel" "copy" "$MANAGED_MATCH_REASON"
+            return 0
+        fi
+        if ((force)); then
+            add_created "$rel" "overwrite" "managed scaffold file differs and --force was supplied"
+            add_apply "file" "$rel" "copy"
+            return 0
+        fi
+
+        add_conflict "$rel" "copy" "managed scaffold file already exists with different content" "review the file, move it aside, or rerun with --force to overwrite this managed file"
+        return 0
+    fi
+
+    add_created "$rel" "copy" "managed scaffold file is absent"
+    add_apply "file" "$rel" "copy"
+}
+
+plan_dir() {
+    local target_abs="$1" rel="$2" action="$3"
+    local dest="$target_abs/$rel"
+
+    if parent_chain_conflicts "$target_abs" "$rel"; then
+        return 0
+    fi
+
+    if [[ -L "$dest" ]]; then
+        add_conflict "$rel" "$action" "target path is a symlink" "replace the symlink manually; --force will not write through symlinks"
+        return 0
+    fi
+
+    if [[ -d "$dest" ]]; then
+        add_skipped "$rel/" "$action" "directory already exists"
+        return 0
+    fi
+
+    if [[ -e "$dest" ]]; then
+        add_conflict "$rel/" "$action" "target path exists but is not a directory" "move or remove this path manually before retrying"
+        return 0
+    fi
+
+    add_created "$rel/" "$action" "managed scaffold directory is absent"
+    add_apply "dir" "$rel" "$action"
+}
+
+validate_existing_beads() {
+    local target_abs="$1"
+    if bd -C "$target_abs" ping --quiet >/dev/null 2>&1; then
+        return 0
+    fi
+    return 1
+}
+
+plan_beads() {
+    local target_abs="$1" prefix="$2" dry_run="$3"
+    local beads_path="$target_abs/.beads"
+
+    if [[ -L "$beads_path" ]]; then
+        add_conflict ".beads/" "validate_beads" "existing .beads path is a symlink" "replace it with a valid Beads database directory or choose a different target"
+        return 0
+    fi
+
+    if [[ -d "$beads_path" ]]; then
+        if ((dry_run)); then
+            add_skipped ".beads/" "validate_beads" "existing Beads database will be validated during real install"
+            return 0
+        fi
+        if validate_existing_beads "$target_abs"; then
+            add_skipped ".beads/" "validate_beads" "existing Beads database is valid"
+            return 0
+        fi
+        add_conflict ".beads/" "validate_beads" "bd could not validate the existing Beads database" "repair the database with bd doctor or move it aside manually before retrying"
+        return 0
+    fi
+
+    if [[ -e "$beads_path" ]]; then
+        add_conflict ".beads/" "bd_init" "path exists but is not a directory" "move or remove this path manually before retrying"
+        return 0
+    fi
+
+    add_created ".beads/" "bd_init" "Beads database is absent and will be initialized with prefix $prefix"
+}
+
+plan_install() {
+    local scaffold_dir="$1" manifest="$2" target_abs="$3" prefix="$4" dry_run="$5" force="$6"
+    local line_no=0 kind rel action description normalized
+
+    while IFS=$'\t' read -r kind rel action description || [[ -n "${kind:-}" ]]; do
+        line_no=$((line_no + 1))
+        [[ -z "${kind:-}" || "${kind:0:1}" == "#" ]] && continue
+        normalized="$(normalize_rel_path "$rel")"
+
+        case "$kind:$action" in
+            file:copy)
+                plan_file "$scaffold_dir" "$target_abs" "$normalized" "$force"
+                ;;
+            dir:ensure_dir|transient_dir:ensure_ignored)
+                plan_dir "$target_abs" "$normalized" "$action"
+                ;;
+            *)
+                error_exit "invalid manifest line $line_no after validation"
+                ;;
+        esac
+    done < "$manifest"
+
+    plan_beads "$target_abs" "$prefix" "$dry_run"
+}
+
+apply_install() {
+    local scaffold_dir="$1" target_abs="$2" prefix="$3"
+    local i kind rel action src dest parent
+
+    mkdir -p -- "$target_abs"
+
+    for i in "${!APPLY_PATHS[@]}"; do
+        kind="${APPLY_KINDS[$i]}"
+        rel="${APPLY_PATHS[$i]}"
+        action="${APPLY_ACTIONS[$i]}"
+        dest="$target_abs/$rel"
+
+        case "$kind:$action" in
+            file:copy)
+                src="$scaffold_dir/$rel"
+                parent="$(dirname -- "$dest")"
+                mkdir -p -- "$parent"
+                cp -f -- "$src" "$dest"
+                ;;
+            dir:ensure_dir|dir:ensure_ignored)
+                mkdir -p -- "$dest"
+                ;;
+            *)
+                error_exit "internal error: unknown apply operation $kind:$action"
+                ;;
+        esac
+    done
+
+    if [[ ! -d "$target_abs/.beads" ]]; then
+        (cd -- "$target_abs" && bd init --non-interactive --skip-agents --skip-hooks --prefix "$prefix")
+    fi
+}
+
+ensure_not_self_install() {
+    local source_dir="$1" target_abs="$2"
+    if [[ "$target_abs" == "$source_dir" ]]; then
+        error_exit "refusing to install the scaffold into itself: $target_abs"
+    fi
+}
+
+main() {
+    local source_dir target="" target_abs prefix="" dry_run=0 force=0
+    local scaffold_dir manifest
+    source_dir="$(script_dir)"
+    scaffold_dir="$source_dir/assets/scaffold"
+    manifest="$scaffold_dir/manifest.txt"
+
+    parse_args target prefix dry_run force "$@"
+    target_abs="$(realpath -m -- "$target")"
+
+    ensure_not_self_install "$source_dir" "$target_abs"
+    validate_source_tree "$scaffold_dir" "$manifest"
+
+    if ((!dry_run)) && ! command -v bd >/dev/null 2>&1; then
+        cat >&2 <<EOF
+bootstrap: bd is required for real installs and was not found on PATH.
+No target files were written.
+
+Install or expose bd, then retry:
+  bd --help
+  ./bootstrap --prefix $prefix $target_abs
+EOF
+        exit 1
+    fi
+
+    declare -g -a CREATED_LINES=()
+    declare -g -a SKIPPED_LINES=()
+    declare -g -a CONFLICT_LINES=()
+    declare -g -a APPLY_KINDS=()
+    declare -g -a APPLY_PATHS=()
+    declare -g -a APPLY_ACTIONS=()
+
+    plan_install "$scaffold_dir" "$manifest" "$target_abs" "$prefix" "$dry_run" "$force"
+
+    if ((dry_run)); then
+        print_plan_report "bootstrap dry-run" "$source_dir" "$target_abs" "$prefix" "$force" "no"
+        return 0
+    fi
+
+    if ((${#CONFLICT_LINES[@]})); then
+        print_plan_report "bootstrap install blocked" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
+        return 1
+    fi
+
+    apply_install "$scaffold_dir" "$target_abs" "$prefix"
+    print_plan_report "bootstrap install complete" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
 }
 
 main "$@"
