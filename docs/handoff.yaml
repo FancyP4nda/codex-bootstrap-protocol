@@ -10,6 +10,11 @@ active_work: []
 decisions:
   - date: 2026-06-07
     summary: >-
+      Updated the approved project plan with E05 and tasks T013-T019 for the
+      interactive bootstrap wizard, keeping T019 as HITL/non-execution-ready
+      optional scope.
+  - date: 2026-06-07
+    summary: >-
       Updated the approved Codex Bootstrap Protocol PRD with interactive
       bootstrap wizard requirements sourced from
       docs/decision-brief-bootstrap-interactive-wizard.md.
@@ -38,14 +43,18 @@ verification:
   - date: 2026-06-07
     command: rg -n "FR-012|FR-013|FR-014|FR-015|FR-016|AC-022|AC-035|Recommended Global Skills|Non-Destructive Retrofit|--interactive|--non-interactive" docs/codex-bootstrap-protocol-PRD.md
     result: passed
+  - date: 2026-06-07
+    command: python3 -c "import re, pathlib, collections; text=pathlib.Path('docs/codex-bootstrap-protocol-project-plan.md').read_text(); defs=re.findall(r'^### (E\\d+|T\\d+):', text, flags=re.M); assert not [k for k,v in collections.Counter(defs).items() if v>1]; print('plan ids ok')"
+    result: passed
 next_steps:
-  - bead_id: codex-bootstrap-protocol-a8v
-    title: Update project plan for interactive bootstrap wizard
+  - title: Convert interactive wizard plan tasks to Beads
     context:
       - docs/decision-brief-bootstrap-interactive-wizard.md
       - docs/codex-bootstrap-protocol-PRD.md
       - docs/codex-bootstrap-protocol-project-plan.md
       - docs/CONTEXT.md
     action: >-
-      Run project-planner against the updated approved PRD, then convert any
-      approved plan changes into Beads before implementation.
+      Run plan-to-beads-unified against the updated approved project plan and
+      parent PRD. Convert T013 through T018 into Beads and keep T019 out of
+      implementation Beads until the operator approves optional advanced flags
+      or machine-readable report mode.

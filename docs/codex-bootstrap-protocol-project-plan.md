@@ -70,6 +70,12 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **PRD coverage:** G-007, FR-011, M-001, M-002, M-003, R-001 through R-006, US-009.
 - **Completion signal:** Syntax checks, reference scans, relocation scans, conflict tests, and disposable `/tmp` install/readback pass or clearly identify prerequisite blockers.
 
+### E05: Interactive Bootstrap Wizard and Existing-Project Retrofit
+
+- **Goal:** Add a human-friendly `bootstrap` wizard that preserves automation-safe non-interactive behavior while guiding operators through global skill preflight, target mode confirmation, prefix choice, plan preview, final confirmation, and non-destructive retrofit.
+- **PRD coverage:** G-008, G-009, FR-012, FR-013, FR-014, FR-015, FR-016, NFR-007, NFR-008, C-007, C-008, C-009, M-004, US-010, US-011, US-012, US-013, AC-022 through AC-035.
+- **Completion signal:** `./bootstrap --help` documents interactive/non-interactive modes, TTY wizard flows require confirmation before writes, global skill changes are optional and confirmed, non-TTY/CI invocations do not prompt, existing targets are handled as Non-Destructive Retrofits, and scripted verification covers prompt/no-prompt behavior.
+
 ## Tasks
 
 ### T001: Create the Codex scaffold repo shell
@@ -471,6 +477,242 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **Verification command:** The finalized verification command set from T010, plus `./bootstrap --dry-run /tmp/codex-bootstrap-smoke --prefix CBS` and a real `/tmp` install when `bd` is available.
 - **Closeout criteria:** Acceptance evidence is recorded, blockers are explicit, and the plan is ready for `plan-to-beads-unified`.
 
+### T013: Add interactive and non-interactive mode contract
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T011
+- **Execution-ready:** Yes
+- **Parallel-safe:** No
+- **Collision domain:** `bootstrap`, CLI argument parsing, help text, TTY/CI mode detection.
+- **Can run with:** None
+- **Must not run with:** T014, T015, T016, T018
+- **What to build:** Extend `bootstrap` with explicit `--interactive` and `--non-interactive` flags, TTY/CI mode selection, and a no-prompt contract that preserves existing automation-safe behavior.
+- **PRD traceability:** FR-012, FR-014, NFR-007, US-010, US-012, AC-022, AC-023, AC-030, AC-031.
+
+**Acceptance criteria**
+
+- [ ] `./bootstrap --help` documents `--interactive` and `--non-interactive`.
+- [ ] `./bootstrap --non-interactive <target> --prefix <PREFIX>` does not prompt and preserves current validation/install behavior.
+- [ ] CI or non-TTY invocation defaults to non-interactive behavior and exits instead of waiting for input when required inputs are missing.
+- [ ] TTY invocation without required choices routes into interactive mode.
+- [ ] Conflicting mode flags fail with an actionable error before writes.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD FR-012, FR-014, NFR-007, US-010, US-012, AC-022, AC-023, AC-030, AC-031; `bootstrap`; `README.md`; `docs/decision-brief-bootstrap-interactive-wizard.md`.
+- **Expected public interface:** `./bootstrap --interactive`, `./bootstrap --non-interactive <target> --prefix <PREFIX>`, and existing `./bootstrap <target> --prefix <PREFIX>` behavior.
+- **What to build:** CLI mode parsing, help text, TTY/CI mode detection, and no-prompt behavior for non-interactive paths.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** Preserve dry-run write-free behavior; do not add global skill writes in this task; do not implement optional flags beyond `--interactive` and `--non-interactive`.
+- **Dependencies:** T011 completed; existing installer behavior must be stable.
+- **Parallelization:** Parallel-safe: No. Collision domain: `bootstrap` parser and mode selection. Can run with: None. Must not run with T014, T015, T016, T018.
+- **Verification command:** `bash -n ./bootstrap`; `./bootstrap --help`; `./bootstrap --non-interactive --dry-run /tmp/codex-bootstrap-smoke --prefix CBS`; `CI=1 ./bootstrap --dry-run /tmp/codex-bootstrap-smoke --prefix CBS`.
+- **Closeout criteria:** Mode contract is documented in help output, parser behavior is verified, Beads task is updated, and follow-ups are filed for any prompt behavior that needs terminal-specific testing.
+
+### T014: Add recommended global skill preflight
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T013
+- **Execution-ready:** Yes
+- **Parallel-safe:** No
+- **Collision domain:** `bootstrap`, `assets/scaffold/.agents/skills/`, global skill comparison/copy logic.
+- **Can run with:** T017
+- **Must not run with:** T013, T015, T016, T018
+- **What to build:** In interactive mode, check the recommended global skills before target mode selection, report missing/outdated/current state, and optionally install or update from scaffold-owned source files after confirmation.
+- **PRD traceability:** FR-013, C-007, C-009, US-011, AC-026, AC-027, AC-028, AC-029, A-005, A-006, R-008.
+
+**Acceptance criteria**
+
+- [ ] Recommended global skill set is exactly `brainstormer`, `grill-with-docs`, `product-architect`, `project-planner`, `plan-to-beads-unified`, `tdd`, and `minion`.
+- [ ] `session-start` and `session-wrapup` are not included in the recommended global skill set.
+- [ ] Missing global skills can be installed from `assets/scaffold/.agents/skills/<name>` only after confirmation.
+- [ ] Outdated global skills can be updated by scaffold-owned file comparison only after confirmation.
+- [ ] Destination-only extra files in global skill directories are preserved unless they directly conflict with scaffold-owned files.
+- [ ] Non-interactive mode does not perform global skill prompts or writes.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD FR-013, C-007, C-009, US-011, AC-026 through AC-029; `docs/CONTEXT.md`; `docs/decision-brief-bootstrap-interactive-wizard.md`; `assets/scaffold/.agents/skills/`; `bootstrap`.
+- **Expected public interface:** Interactive `bootstrap` global skill preflight prompt and report.
+- **What to build:** Global skill status detection, confirmed install/update behavior, destination-extra preservation, and no-op behavior in non-interactive mode.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** No network calls; no package installs; no global writes without confirmation; target-local skills remain installed through the managed scaffold contract even when global updates are skipped.
+- **Dependencies:** T013 mode contract.
+- **Parallelization:** Parallel-safe: No for `bootstrap`; can run with T017 if documentation uses the accepted public interface. Collision domain: `bootstrap` global skill logic. Must not run with T013, T015, T016, T018.
+- **Verification command:** `bash -n ./bootstrap`; run an interactive-path smoke test with a temporary `HOME` when practical; `rg -n "brainstormer|session-start|session-wrapup|\\.agents/skills" bootstrap`.
+- **Closeout criteria:** Global preflight behavior is verified with a temp-home or documented manual prompt test, no unconfirmed global writes occur, task is updated, and any machine-specific verification gaps are filed.
+
+### T015: Add target mode detection, prefix suggestion, and final confirmation
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T013
+- **Execution-ready:** Yes
+- **Parallel-safe:** No
+- **Collision domain:** `bootstrap`, interactive prompt flow, target classification, prefix derivation, plan preview.
+- **Can run with:** T017
+- **Must not run with:** T013, T014, T016, T018
+- **What to build:** Add the interactive target workflow: detect new versus existing target, ask for confirmation, suggest a prefix from the target basename, allow override, print the existing dry-run-style plan, and require final confirmation before writes.
+- **PRD traceability:** FR-012, FR-015, NFR-008, US-010, US-013, AC-023, AC-024, AC-025, AC-032, R-009, R-010.
+
+**Acceptance criteria**
+
+- [ ] Interactive mode identifies a missing or empty target as a new project before writes.
+- [ ] Interactive mode identifies a non-empty target as an existing-project retrofit before writes and asks for confirmation.
+- [ ] Interactive mode suggests a default prefix from the target directory name and allows override.
+- [ ] Interactive mode prints a dry-run-style plan before writing.
+- [ ] Interactive mode requires final confirmation before target writes.
+- [ ] Declining target mode confirmation or final confirmation exits without target writes.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD FR-012, FR-015, US-010, US-013, AC-023 through AC-025, AC-032; `bootstrap` functions `plan_install`, `print_plan_report`, and `print_install_summary`; `docs/decision-brief-bootstrap-interactive-wizard.md`.
+- **Expected public interface:** Interactive prompts for target path, target mode, prefix, plan preview, and final confirmation.
+- **What to build:** Prompt flow that reuses existing planning/report functions and gates writes on explicit confirmation.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** Keep prefix suggestion deterministic and previewed; do not add per-file merge prompts; preserve non-interactive no-prompt behavior from T013.
+- **Dependencies:** T013 mode contract.
+- **Parallelization:** Parallel-safe: No for `bootstrap`; can run with T017 if documentation uses the accepted public interface. Collision domain: interactive prompt flow. Must not run with T013, T014, T016, T018.
+- **Verification command:** `bash -n ./bootstrap`; use a pseudo-TTY/manual smoke test for `./bootstrap --interactive`; verify declined confirmation leaves no files in a clearly test-created `/tmp` target.
+- **Closeout criteria:** Prompt flow is verified, prefix suggestion and override are documented by output or notes, and any terminal automation limitation is captured as a follow-up.
+
+### T016: Implement non-destructive retrofit completion behavior
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T015
+- **Execution-ready:** Yes
+- **Parallel-safe:** No
+- **Collision domain:** `bootstrap`, existing-target retrofit behavior, `docs/changelog.yaml` or completion-note writes in target projects.
+- **Can run with:** T017
+- **Must not run with:** T013, T014, T015, T018
+- **What to build:** Complete the existing-project retrofit path by validating existing `.beads/`, preserving protected/unmanaged paths, keeping all conflicts all-or-nothing for v1, and writing a lightweight project-local completion note after successful install or retrofit.
+- **PRD traceability:** FR-015, FR-016, C-008, US-013, AC-033, AC-034, AC-035, Q-007, R-010.
+
+**Acceptance criteria**
+
+- [ ] Existing `.beads/` is validated instead of replaced during retrofit.
+- [ ] `.git/`, `.beads/`, credentials, symlinks, transient state contents, and unmanaged files are not overwritten.
+- [ ] Existing-project conflicts remain all-or-nothing for v1; per-file merge prompts are not offered.
+- [ ] `--force` remains limited to managed scaffold files.
+- [ ] Successful install or retrofit writes a lightweight completion note into target project docs.
+- [ ] Completion note does not store private global machine details.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD FR-015, FR-016, C-008, US-013, AC-033 through AC-035; `docs/CONTEXT.md` Non-Destructive Retrofit and Managed Scaffold Contract definitions; `assets/scaffold/docs/changelog.yaml`; `bootstrap`.
+- **Expected public interface:** Existing-project retrofit behavior and target-local completion note.
+- **What to build:** Retrofit validation and completion-note behavior that reuses the managed scaffold contract without broad migration semantics.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** No per-file merge prompts in v1; no private global machine details in target docs; no destructive operations against protected paths.
+- **Dependencies:** T015 target mode and final confirmation.
+- **Parallelization:** Parallel-safe: No for `bootstrap`; can run with T017 if documentation uses the accepted public interface. Collision domain: retrofit behavior and target-doc writes. Must not run with T013, T014, T015, T018.
+- **Verification command:** `bash -n ./bootstrap`; create a clearly test-created non-empty `/tmp` target and verify dry-run/retrofit behavior; inspect target `docs/changelog.yaml` or completion note after success.
+- **Closeout criteria:** Retrofit behavior is proven against a non-empty `/tmp` target, protected-path behavior is verified or documented with exact commands, task is updated, and any schema concerns are filed.
+
+### T017: Document the interactive bootstrap workflow
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T013
+- **Execution-ready:** Yes
+- **Parallel-safe:** Yes
+- **Collision domain:** `README.md`, `docs/opt-in-configs.md`, wizard examples, operator docs.
+- **Can run with:** T014, T015, T016
+- **Must not run with:** None
+- **What to build:** Update operator documentation for interactive mode, non-interactive automation, global skill preflight, existing-project retrofit, prefix prompts, and completion-note behavior.
+- **PRD traceability:** FR-012, FR-013, FR-014, FR-015, FR-016, NFR-005, US-010 through US-013, AC-022 through AC-035.
+
+**Acceptance criteria**
+
+- [ ] README documents `--interactive` and `--non-interactive`.
+- [ ] README explains when TTY mode enters the wizard and when CI/non-TTY mode stays non-interactive.
+- [ ] Docs explain recommended global skill preflight, optional install/update behavior, and skipped global updates.
+- [ ] Docs explain Non-Destructive Retrofit for existing projects and all-or-nothing conflict handling.
+- [ ] Docs describe prefix suggestion/override and completion-note behavior.
+- [ ] Documentation does not claim target projects depend on global skills.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD US-010 through US-013, AC-022 through AC-035; `docs/decision-brief-bootstrap-interactive-wizard.md`; `README.md`; `docs/opt-in-configs.md`; current `./bootstrap --help`.
+- **Expected public interface:** Operator-facing Markdown documentation.
+- **What to build:** Documentation for wizard and automation workflows without implementing CLI behavior.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** Keep examples WSL/Bash friendly; no package install or network instructions beyond existing prerequisites; do not imply global skills are required for target portability.
+- **Dependencies:** T013 establishes mode names; later T014/T015/T016 may require doc refinements if prompt wording changes.
+- **Parallelization:** Parallel-safe: Yes. Collision domain: docs. Can run with T014, T015, T016. Must not run with None.
+- **Verification command:** `rg -n "interactive|non-interactive|global skill|Non-Destructive Retrofit|prefix|completion" README.md docs/opt-in-configs.md`.
+- **Closeout criteria:** Docs match the current `./bootstrap --help`, acceptance criteria are checked, task is updated, and follow-ups are filed for any prompt wording still pending implementation.
+
+### T018: Add wizard verification coverage
+
+- **Epic:** E05
+- **Type:** AFK
+- **Depends on:** T014, T015, T016, T017
+- **Execution-ready:** Yes
+- **Parallel-safe:** No
+- **Collision domain:** `verification/`, `bootstrap`, README verification examples, `/tmp` smoke targets.
+- **Can run with:** None
+- **Must not run with:** T013, T014, T015, T016, T017
+- **What to build:** Extend verification scripts and documented smoke checks to cover interactive/no-prompt behavior, global skill preflight with temporary home directories, existing-project retrofit, and completion-note readback.
+- **PRD traceability:** FR-012, FR-013, FR-014, FR-015, FR-016, FR-011, M-004, AC-022 through AC-035.
+
+**Acceptance criteria**
+
+- [ ] Verification checks `./bootstrap --help` includes `--interactive` and `--non-interactive`.
+- [ ] Verification proves `--non-interactive` and non-TTY/CI paths do not prompt.
+- [ ] Verification covers global skill preflight using a temporary `HOME` or documents the exact manual check if full automation is impractical.
+- [ ] Verification covers existing non-empty target retrofit behavior.
+- [ ] Verification checks successful install or retrofit completion-note readback.
+- [ ] Verification remains safe for `/tmp` and does not mutate real global skill directories.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD M-004, FR-011 through FR-016, AC-022 through AC-035; T014/T015/T016 outputs; `verification/run-static-checks.sh`; `README.md`.
+- **Expected public interface:** Verification command output and documented smoke checks.
+- **What to build:** Wizard-specific verification coverage and safe smoke fixtures.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** Do not mutate real `$HOME/.agents/skills`; use temporary `HOME` or explicit manual checks; do not delete unrelated `/tmp` content; avoid network and package installs.
+- **Dependencies:** T014, T015, T016, T017.
+- **Parallelization:** Parallel-safe: No. Collision domain: verification suite and wizard acceptance state. Can run with: None. Must not run with T013, T014, T015, T016, T017.
+- **Verification command:** `./verification/run-static-checks.sh`; any new wizard smoke script added by this task; `git diff --check`.
+- **Closeout criteria:** Wizard verification passes or records exact skipped commands and blockers, task is updated, and the plan is ready for `plan-to-beads-unified`.
+
+### T019: Decide optional advanced wizard flags and report mode
+
+- **Epic:** E05
+- **Type:** HITL
+- **Depends on:** T013
+- **Execution-ready:** No
+- **Parallel-safe:** Yes
+- **Collision domain:** Future CLI contract, optional `--mode`, `--target`, `--global-skills`, and machine-readable report behavior.
+- **Can run with:** T014, T015, T016, T017
+- **Must not run with:** None
+- **What to build:** Human decision record for optional flags beyond `--interactive` and `--non-interactive`, and whether global skill checking should support a machine-readable report mode.
+- **PRD traceability:** Q-005, Q-008, FR-014, FR-013.
+
+**Acceptance criteria**
+
+- [ ] Decision states whether to add `--mode new|existing` in v1 or defer it.
+- [ ] Decision states whether to add `--target <path>` in v1 or keep positional target only.
+- [ ] Decision states whether to add `--global-skills ask|install|update|skip` in v1 or keep global skill management interactive-only.
+- [ ] Decision states whether machine-readable global skill report mode is in scope for v1.
+- [ ] Any approved advanced flag is reflected in PRD/plan follow-up before implementation.
+
+**Agent Handoff Packet**
+
+- **Context to read:** PRD Q-005, Q-008, FR-013, FR-014; `docs/decision-brief-bootstrap-interactive-wizard.md`; current `./bootstrap --help`; T013 implementation notes.
+- **Expected public interface:** Decision record or ADR candidate, not implementation.
+- **What to build:** A concise HITL decision artifact that approves or defers advanced CLI/report behavior.
+- **Acceptance criteria:** Same checklist as above.
+- **Constraints:** Do not implement advanced flags in this task; keep core v1 wizard unblocked by deferring optional scope.
+- **Dependencies:** T013 establishes the baseline mode contract.
+- **Parallelization:** Parallel-safe: Yes. Collision domain: decision docs only. Can run with T014, T015, T016, T017. Must not run with None.
+- **Verification command:** `rg -n "Q-005|Q-008|--mode|--global-skills|machine-readable" docs`.
+- **Closeout criteria:** Human decision is recorded, any resulting PRD/plan changes are filed, and execution-ready implementation Beads are created only for approved scope.
+
 ## Recommended Sequence
 
 1. **T001** - Establish the new repo shell; every other task depends on stable paths.
@@ -485,6 +727,13 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 10. **T010** - Add verification scripts/scans while implementation proceeds.
 11. **T011** - Integrate installer, assets, and docs once the CLI and assets are ready.
 12. **T012** - Run final acceptance validation after all implementation tasks land.
+13. **T013** - Establish the interactive/non-interactive mode contract before adding prompt behavior.
+14. **T014** - Add global skill preflight after mode handling prevents accidental non-interactive global writes.
+15. **T015** - Add target mode, prefix, plan preview, and final confirmation flow once mode handling is stable.
+16. **T016** - Complete retrofit and completion-note behavior after interactive target confirmation exists.
+17. **T017** - Update operator documentation after the public mode names are stable; refine alongside T014-T016 if prompt wording changes.
+18. **T018** - Add wizard verification after wizard behavior and docs are in place.
+19. **T019** - Resolve optional advanced flags/report mode only if the operator wants v1 scope beyond `--interactive` and `--non-interactive`.
 
 ## Risks and Open Questions
 
@@ -492,12 +741,20 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **Q-002 affects T008:** Exact `minion` report/state fields are not settled. T008 should define a minimal schema as part of its implementation.
 - **Q-003 affects T009:** Exact custom-agent TOML content is not settled. T009 should create narrow first-pass agents grounded in the PRD and source roles.
 - **Q-004 affects T006/T007/T008:** Legacy skill merge/rename choices beyond settled names may appear during rewrite. Default to preserving stable names and filing follow-ups for ambiguous merges.
+- **Q-005 affects T019:** Optional flags beyond `--interactive` and `--non-interactive` are not settled. Core v1 wizard tasks should not add `--mode`, `--target`, or `--global-skills` unless T019 records that decision.
+- **Q-006 affects T015:** Prefix derivation is not fully specified. T015 should choose a deterministic, previewed algorithm and allow override; if that choice feels product-significant, file a HITL follow-up before implementation.
+- **Q-007 affects T016:** Completion-note schema is not fully specified. T016 should use the existing version 1 state-doc shape unless implementation discovers a schema conflict.
+- **Q-008 affects T019:** Machine-readable global skill report mode is optional future automation scope and should not block the core v1 wizard.
 - **R-001:** Claude-specific path assumptions can survive migration. Mitigate through T010/T012 scans and manual readback.
 - **R-002:** All-skill rewrite scope is broad. Mitigate by keeping tasks vertical and preserving traceability.
 - **R-003:** Mandatory Beads can block real install validation. Mitigate by making dry-run independent and documenting exact commands when real install is skipped.
 - **R-004:** Large `minion` fanouts can become hard to synthesize. Mitigate through default 10-way fanout, warnings, and collision planning.
 - **R-005:** Codex project config/hooks may require project trust. Mitigate through `docs/opt-in-configs.md` and verification notes.
 - **R-006:** Relocation to `/home/echo/dev` can break if paths are hardcoded. Mitigate through relative path resolution and relocation scans.
+- **R-007:** Interactive Bash flows can become hard to test. Mitigate by reusing existing planner/report functions, keeping prompt functions thin, and adding T018 verification.
+- **R-008:** Global skill writes can erode trust. Mitigate through explicit source/destination/status reporting, temporary-home tests, and confirmation before writes.
+- **R-009:** Prefix suggestions can surprise operators. Mitigate through preview and override in T015.
+- **R-010:** Existing-project retrofits can be mistaken for whole-repo migrations. Mitigate through consistent Non-Destructive Retrofit language, plan preview, and all-or-nothing conflict behavior.
 
 ## Handoff to `plan-to-beads-unified`
 
@@ -507,3 +764,4 @@ Use this reviewed plan plus the parent PRD to update the existing Beads backlog 
 - Preserve task order, task IDs, epic IDs, dependencies, PRD traceability, Agent Handoff Packets, and parallel-safety metadata.
 - Keep `HITL` or `Execution-ready: No` items out of Beads until clarified.
 - Existing Beads should be reconciled so T003 depends on T004, T008 depends on T009, T008/T009 are no longer co-runnable, and conditional `Must not run with` language is removed before `scribe-refine` or equivalent JIT refinement promotes tasks beyond backlog.
+- For the interactive wizard update, convert T013 through T018 into Beads after plan approval. Keep T019 out of implementation Beads until the operator explicitly approves advanced optional flags or machine-readable report mode.

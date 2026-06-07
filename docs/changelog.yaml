@@ -2,6 +2,17 @@ version: 1
 changes:
   - date: 2026-06-07
     bead_ids:
+      - codex-bootstrap-protocol-a8v
+    changed_areas:
+      - docs/codex-bootstrap-protocol-project-plan.md
+      - docs/handoff.yaml
+      - docs/changelog.yaml
+      - .beads/issues.jsonl
+    summary: >-
+      Updated the approved project plan with an interactive bootstrap wizard
+      epic and tasks T013-T019, ready for plan-to-beads-unified after review.
+  - date: 2026-06-07
+    bead_ids:
       - codex-bootstrap-protocol-gni
     changed_areas:
       - docs/codex-bootstrap-protocol-PRD.md
