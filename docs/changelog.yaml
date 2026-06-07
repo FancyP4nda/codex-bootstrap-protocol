@@ -1,0 +1,12 @@
+version: 1
+changes:
+  - date: 2026-06-07
+    bead_ids:
+      - codex-bootstrap-protocol-wn4
+    changed_areas:
+      - docs/handoff.yaml
+      - docs/changelog.yaml
+      - .beads/issues.jsonl
+    summary: >-
+      Initialized root project state docs so session-start and session-wrapup
+      can read durable handoff and changelog state in this repository.

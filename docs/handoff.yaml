@@ -1,0 +1,40 @@
+version: 1
+project:
+  name: Codex Bootstrap Protocol
+  status: active
+  summary: >-
+    Codex-native Bootstrap Protocol scaffold for initializing or retrofitting
+    projects with AGENTS.md, repo-scoped skills, Codex config surfaces, durable
+    docs, and Beads task tracking.
+active_work: []
+decisions:
+  - date: 2026-06-07
+    summary: >-
+      Initialize root project state docs using the scaffold's version 1
+      handoff/changelog schemas instead of inventing a richer incompatible
+      format.
+  - date: 2026-06-07
+    summary: >-
+      Use normal Git for repository sync; do not require or run bd dolt
+      push/pull in this repository.
+verification:
+  - date: 2026-06-07
+    command: test -f docs/handoff.yaml && test -f docs/changelog.yaml
+    result: passed
+  - date: 2026-06-07
+    command: python3 -c "import pathlib, yaml; [yaml.safe_load(pathlib.Path(p).read_text()) for p in ('docs/handoff.yaml', 'docs/changelog.yaml')]"
+    result: passed
+  - date: 2026-06-07
+    command: ./verification/run-static-checks.sh
+    result: passed
+next_steps:
+  - bead_id: codex-bootstrap-protocol-gni
+    title: Update PRD for bootstrap interactive wizard
+    context:
+      - docs/decision-brief-bootstrap-interactive-wizard.md
+      - docs/codex-bootstrap-protocol-PRD.md
+      - docs/CONTEXT.md
+    action: >-
+      Use product-architect framing to update the PRD for interactive bootstrap
+      wizard behavior, global skill preflight, non-interactive compatibility,
+      and non-destructive existing-project retrofit.
