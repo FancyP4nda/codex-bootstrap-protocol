@@ -10,6 +10,11 @@ active_work: []
 decisions:
   - date: 2026-06-07
     summary: >-
+      Updated the approved Codex Bootstrap Protocol PRD with interactive
+      bootstrap wizard requirements sourced from
+      docs/decision-brief-bootstrap-interactive-wizard.md.
+  - date: 2026-06-07
+    summary: >-
       Initialize root project state docs using the scaffold's version 1
       handoff/changelog schemas instead of inventing a richer incompatible
       format.
@@ -27,14 +32,20 @@ verification:
   - date: 2026-06-07
     command: ./verification/run-static-checks.sh
     result: passed
+  - date: 2026-06-07
+    command: git diff --check
+    result: passed
+  - date: 2026-06-07
+    command: rg -n "FR-012|FR-013|FR-014|FR-015|FR-016|AC-022|AC-035|Recommended Global Skills|Non-Destructive Retrofit|--interactive|--non-interactive" docs/codex-bootstrap-protocol-PRD.md
+    result: passed
 next_steps:
-  - bead_id: codex-bootstrap-protocol-gni
-    title: Update PRD for bootstrap interactive wizard
+  - bead_id: codex-bootstrap-protocol-a8v
+    title: Update project plan for interactive bootstrap wizard
     context:
       - docs/decision-brief-bootstrap-interactive-wizard.md
       - docs/codex-bootstrap-protocol-PRD.md
+      - docs/codex-bootstrap-protocol-project-plan.md
       - docs/CONTEXT.md
     action: >-
-      Use product-architect framing to update the PRD for interactive bootstrap
-      wizard behavior, global skill preflight, non-interactive compatibility,
-      and non-destructive existing-project retrofit.
+      Run project-planner against the updated approved PRD, then convert any
+      approved plan changes into Beads before implementation.

@@ -2,6 +2,18 @@ version: 1
 changes:
   - date: 2026-06-07
     bead_ids:
+      - codex-bootstrap-protocol-gni
+    changed_areas:
+      - docs/codex-bootstrap-protocol-PRD.md
+      - docs/handoff.yaml
+      - docs/changelog.yaml
+      - .beads/issues.jsonl
+    summary: >-
+      Updated the approved PRD with interactive bootstrap wizard, global skill
+      preflight, non-interactive compatibility, and non-destructive retrofit
+      requirements.
+  - date: 2026-06-07
+    bead_ids:
       - codex-bootstrap-protocol-wn4
     changed_areas:
       - docs/handoff.yaml

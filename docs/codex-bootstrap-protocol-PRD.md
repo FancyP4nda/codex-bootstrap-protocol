@@ -13,16 +13,18 @@ canonical_next_artifact: project_plan
 ## 1. Executive Summary
 
 - **Target persona:** The repository owner/operator and Codex agents working in project repositories that need a repeatable planning-to-execution scaffold.
-- **Core problem:** The current `bootstrap-protocol` scaffold is Claude-first. It installs `.claude/` runtime surfaces, refers to Claude slash commands, and includes Falcon behavior built on Claude background-session primitives. The user needs a Codex-native scaffold that preserves the workflow intent while using documented Codex surfaces.
-- **Business goal:** Create a reusable local scaffold that initializes Codex-ready projects with repo-scoped skills, Beads-first execution tracking, Codex subagent workflows, and durable project documentation.
-- **Product outcome:** A relocation-safe `codex-bootstrap-protocol` repo that exposes a `bootstrap` command, installs Codex-native project assets, rewrites bundled workflows away from live `.claude/*` dependencies, and verifies clean disposable installs under `/tmp`.
+- **Core problem:** The current `bootstrap-protocol` scaffold is Claude-first, and the current Codex-native `bootstrap` command is automation-safe but non-interactive. It installs managed Codex-native assets, but it does not guide a human operator through recommended global skill checks, target mode selection, prefix choice, or existing-project retrofit confirmation.
+- **Business goal:** Create a reusable local scaffold that initializes or retrofits Codex-ready projects with repo-scoped skills, Beads-first execution tracking, Codex subagent workflows, durable project documentation, and a human-friendly wizard that preserves agent/script compatibility.
+- **Product outcome:** A relocation-safe `codex-bootstrap-protocol` repo that exposes a `bootstrap` command, installs Codex-native project assets, rewrites bundled workflows away from live `.claude/*` dependencies, offers an interactive operator path for new and existing targets, and verifies clean disposable installs under `/tmp`.
 - **Status:** Approved.
 - **Docs source of truth:** `\\wsl.localhost\Ubuntu\home\echo\ACC\codex-bootstrap-protocol\docs` is the operator-facing source-of-truth docs path. In-repo artifact links use `docs/...`; source-kit migration references use sibling paths under `../bootstrap-protocol/...`.
 
 ## 2. Upstream Traceability
 
 - **Source opportunity IDs:** None.
-- **Decision brief:** `docs/decision-brief-codex-bootstrap-protocol.md`
+- **Decision briefs:**
+  - `docs/decision-brief-codex-bootstrap-protocol.md`
+  - `docs/decision-brief-bootstrap-interactive-wizard.md`
 - **Key resolved decisions:**
   - Build a Codex-native-only fork; do not install Claude runtime compatibility files.
   - Deliver a scaffold repo first; plugin packaging is a later phase.
@@ -35,17 +37,30 @@ canonical_next_artifact: project_plan
   - Ship hooks/rules as opt-in examples with documentation, not active enforcement.
   - Make `minion` report-only in v1, default to 10-way fanout, and impose no scaffold-level hard cap.
   - Validate disposable installs under `/tmp` and keep the repo relocation-safe for a later move to `/home/echo/dev`.
+  - Add an interactive `bootstrap` wizard for human use when required choices are missing.
+  - Preserve non-interactive invocation for Codex agents, scripts, CI, and non-TTY contexts.
+  - Check recommended global skills before target project mode selection, and make global installs or updates optional.
+  - Source recommended global skill updates from `assets/scaffold/.agents/skills/<name>`.
+  - Keep `session-start` and `session-wrapup` target-local by default, outside the recommended global skill set.
+  - Treat existing-project conversion as a non-destructive retrofit using the managed scaffold contract.
+  - Show a dry-run-style plan before interactive writes and require final confirmation.
 - **Key unresolved HITL decisions:**
   - Whether `bootstrap` is a renamed script, a wrapper around an internal script, or installed through a setup flow.
   - Exact custom-agent TOML content.
   - Exact `minion` report/state schemas.
   - Whether any legacy skill concepts collapse into one renamed Codex-native skill during rewrite.
+  - Exact flag names beyond `--interactive` and `--non-interactive`; candidates include `--mode new|existing`, `--target <path>`, and `--global-skills ask|install|update|skip`.
+  - Exact prefix derivation algorithm beyond examples such as `mission-control -> MC` and `codex-bootstrap-protocol -> CBP`.
+  - Whether global skill checking should support a machine-readable report mode.
 - **Repo grounding:**
   - `../bootstrap-protocol/init-project.sh` currently copies `.claude/` assets and initializes Beads.
   - `../bootstrap-protocol/Starting-workflow.md` describes the existing idea-to-ship pipeline and Claude command entry points.
   - `../bootstrap-protocol/.claude/CLAUDE.md` defines current product-truth, workflow, and precedence rules.
   - `../bootstrap-protocol/.claude/skills/*` contains the bundled workflow skill source material.
   - `../bootstrap-protocol/.claude/templates/artifacts/prd.md.hbs` defines the PRD structure used for this PRD.
+  - `bootstrap` currently parses `--dry-run`, `--force`, `--prefix`, and one target path; it does not parse `--interactive`, `--non-interactive`, `--mode`, or `--global-skills`.
+  - `bootstrap` currently reads `assets/scaffold/manifest.txt`, plans managed file and directory operations, validates existing `.beads/`, initializes Beads with `bd init --non-interactive`, and prints install summaries.
+  - `docs/CONTEXT.md` defines Recommended Global Skills, Target-Local Skills, Non-Destructive Retrofit, and Managed Scaffold Contract.
 - **Official Codex documentation evidence:**
   - `AGENTS.md` project guidance, discovery, fallback filenames, and `project_doc_max_bytes`: https://developers.openai.com/codex/guides/agents-md
   - Agent skills and `.agents/skills` repo/user discovery: https://developers.openai.com/codex/skills
@@ -65,6 +80,8 @@ canonical_next_artifact: project_plan
 - **G-005:** Make Beads mandatory and fail safely before writes when Beads is unavailable.
 - **G-006:** Provide opt-in hooks/rules/config examples with clear documentation.
 - **G-007:** Validate the scaffold through syntax checks, reference scans, relocation checks, and disposable `/tmp` install/readback.
+- **G-008:** Provide an interactive bootstrap wizard that guides human operators through global skill preflight, target mode confirmation, prefix selection, plan preview, and final confirmation.
+- **G-009:** Preserve automation-safe non-interactive behavior for agents, scripts, CI, and non-TTY contexts.
 
 ### Non-Goals
 
@@ -74,6 +91,10 @@ canonical_next_artifact: project_plan
 - **NG-004:** Enable aggressive hooks, command blockers, telemetry, network calls, or auto-approval rules by default.
 - **NG-005:** Create PRs, push branches, deploy, comment on external systems, or call cloud services by default.
 - **NG-006:** Depend on deprecated Codex custom prompts as the shared command surface.
+- **NG-007:** Make target projects depend on globally installed skills.
+- **NG-008:** Add per-file merge prompts for existing-project conflicts in v1.
+- **NG-009:** Make global skill installs or updates mandatory.
+- **NG-010:** Store private global machine details in target project docs.
 
 ## 4. Users and Use Cases
 
@@ -90,6 +111,9 @@ canonical_next_artifact: project_plan
 - **UC-003:** The operator attempts to bootstrap an existing repo and receives a conflict report instead of accidental overwrites.
 - **UC-004:** A Project Agent invokes repo-scoped Codex skills for planning, PRD generation, project planning, Beads conversion, session start, session wrapup, TDD, and `minion` fanout.
 - **UC-005:** The operator reviews optional hook/rule/config examples and enables only the controls that fit the project.
+- **UC-006:** The operator runs `./bootstrap` in a TTY and is guided through global skill checks, target type confirmation, prefix selection, plan preview, and final confirmation.
+- **UC-007:** A Codex agent or automation script runs `./bootstrap --non-interactive <target> --prefix <PREFIX>` without prompts.
+- **UC-008:** The operator retrofits an existing non-empty project and receives non-destructive validation and conflict behavior before writes.
 
 ## 5. Functional Requirements
 
@@ -147,6 +171,31 @@ canonical_next_artifact: project_plan
   - **Priority:** Must
   - **Source:** Decision brief acceptance signals
   - **Acceptance criteria:** AC-020, AC-021
+
+- **FR-012 Interactive bootstrap wizard:** The `bootstrap` command must provide an interactive wizard for human TTY use when required choices are missing.
+  - **Priority:** Must
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`
+  - **Acceptance criteria:** AC-022, AC-023, AC-024, AC-025
+
+- **FR-013 Global skill preflight:** Interactive bootstrap must check the recommended global skill set before target mode selection and optionally install or update missing/outdated skills after confirmation.
+  - **Priority:** Must
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`
+  - **Acceptance criteria:** AC-026, AC-027, AC-028, AC-029
+
+- **FR-014 Non-interactive compatibility:** Automation-safe `bootstrap` invocations must keep working without prompts in CI, non-TTY contexts, and explicit `--non-interactive` mode.
+  - **Priority:** Must
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`
+  - **Acceptance criteria:** AC-030, AC-031
+
+- **FR-015 New versus existing target mode:** Interactive bootstrap must detect whether the target is new or existing, ask for confirmation, and route existing non-empty targets through non-destructive retrofit semantics.
+  - **Priority:** Must
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`
+  - **Acceptance criteria:** AC-032, AC-033, AC-034
+
+- **FR-016 Completion note:** After a successful interactive install or retrofit, `bootstrap` must record a lightweight project-local completion note without storing private global machine details.
+  - **Priority:** Should
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`
+  - **Acceptance criteria:** AC-035
 
 ## 6. BDD Scenarios and Acceptance Criteria
 
@@ -288,6 +337,72 @@ canonical_next_artifact: project_plan
 - **AC-020:** Shell syntax checks pass for the `bootstrap` executable and any helper shell scripts.
 - **AC-021:** A disposable `/tmp` target install/readback confirms the expected Codex-native tree.
 
+### US-010: Use the interactive bootstrap wizard
+
+**Requirement coverage:** FR-012
+
+**Scenario:** Operator launches bootstrap from a TTY without all required choices
+
+- **Given** the operator is in the `codex-bootstrap-protocol` repo and the command is running in a TTY
+- **When** the operator runs `./bootstrap` or omits required interactive choices
+- **Then** the command guides the operator through the missing choices before any writes
+
+**Acceptance criteria**
+
+- **AC-022:** `./bootstrap --help` documents `--interactive` and `--non-interactive`.
+- **AC-023:** In a TTY, `./bootstrap` enters interactive mode when required choices are missing.
+- **AC-024:** Interactive mode suggests a default prefix from the target directory name and allows the operator to override it.
+- **AC-025:** Interactive mode prints a dry-run-style plan and requires final confirmation before writing target or global skill files.
+
+### US-011: Check recommended global skills
+
+**Requirement coverage:** FR-013
+
+**Scenario:** Operator chooses whether to install or update global skills
+
+- **Given** interactive mode has started
+- **When** `bootstrap` checks `$HOME/.agents/skills` against the recommended global skill set
+- **Then** missing, outdated, and current skills are reported with optional install/update prompts
+
+**Acceptance criteria**
+
+- **AC-026:** The v1 recommended global skill set is `brainstormer`, `grill-with-docs`, `product-architect`, `project-planner`, `plan-to-beads-unified`, `tdd`, and `minion`.
+- **AC-027:** Missing recommended global skills can be installed from `assets/scaffold/.agents/skills/<name>` only after confirmation.
+- **AC-028:** Outdated recommended global skills can be updated by scaffold-owned file comparison only after confirmation.
+- **AC-029:** Destination-only extra files in global skill directories are preserved unless they directly conflict with scaffold-owned files.
+
+### US-012: Preserve non-interactive automation
+
+**Requirement coverage:** FR-014
+
+**Scenario:** Agent or script bootstraps without prompts
+
+- **Given** the command is running in CI, a non-TTY context, or explicit `--non-interactive` mode
+- **When** the caller runs `./bootstrap --non-interactive <target> --prefix <PREFIX>`
+- **Then** the command performs the existing automation-safe validation and install behavior without prompting
+
+**Acceptance criteria**
+
+- **AC-030:** `./bootstrap --non-interactive <target> --prefix <PREFIX>` does not prompt and requires all mandatory inputs to be supplied by flags or positional arguments.
+- **AC-031:** CI and non-TTY contexts default to non-interactive behavior instead of waiting for input.
+
+### US-013: Retrofit an existing project
+
+**Requirement coverage:** FR-015, FR-016
+
+**Scenario:** Operator applies the scaffold to a non-empty target
+
+- **Given** the target path exists and contains files
+- **When** the operator runs interactive `bootstrap`
+- **Then** the wizard identifies the target as an existing-project retrofit, previews the managed-path plan, and applies only confirmed non-destructive changes
+
+**Acceptance criteria**
+
+- **AC-032:** Interactive mode identifies non-empty existing targets as existing projects before writes and asks the operator to confirm retrofit mode.
+- **AC-033:** Existing-project retrofit validates existing `.beads/` instead of replacing it.
+- **AC-034:** Existing-project conflicts remain all-or-nothing for v1; per-file merge prompts are not offered, and `--force` is limited to managed scaffold files.
+- **AC-035:** Successful install or retrofit writes a lightweight completion note into target project docs without storing private global machine details.
+
 ## 7. Nonfunctional Requirements
 
 - **NFR-001 Security:** The scaffold must be secure by default: no secret exposure, no credential writes, no external publication, and no network/cloud operations by default.
@@ -296,6 +411,8 @@ canonical_next_artifact: project_plan
 - **NFR-004 Reliability:** The initializer must fail before partial writes for missing mandatory prerequisites and unmanaged conflicts.
 - **NFR-005 Accessibility:** Documentation should use plain Markdown with clear commands, paths, and expected outcomes.
 - **NFR-006 Observability:** Verification commands should produce enough output to identify failed prerequisites, conflicts, stale path references, and missing installed assets.
+- **NFR-007 Automation safety:** Non-interactive and non-TTY invocation paths must not block waiting for human input.
+- **NFR-008 Operator safety:** Interactive prompts must preview target writes and global skill writes before confirmation.
 
 ## 8. Technical and Operational Constraints
 
@@ -305,6 +422,9 @@ canonical_next_artifact: project_plan
 - **C-004 Deployment or rollout:** Phase one is local-first. No plugin publishing, marketplace setup, external PR creation, cloud deployment, or shared distribution is required.
 - **C-005 Data or migration:** Durable project continuity belongs under `docs/`; transient runtime state belongs under gitignored `.codex/state/tmp/`.
 - **C-006 Project config:** `.codex/config.toml` must stay minimal and must not set model, provider, auth, telemetry, network, sandbox, or auto-approval defaults.
+- **C-007 Global skill writes:** `bootstrap` may write to `$HOME/.agents/skills` only in interactive mode after explicit confirmation or through a future explicit global-skill flag; target projects must remain portable without those global skills.
+- **C-008 Protected paths:** `bootstrap` must never overwrite `.git/`, `.beads/`, credentials, symlinks, transient state contents, or unmanaged files.
+- **C-009 Recommended global skill source:** Global skill installs and updates must source files from `assets/scaffold/.agents/skills/<name>`.
 
 ## 9. AI Behavior and Evaluation
 
@@ -330,6 +450,11 @@ canonical_next_artifact: project_plan
   - **Target:** Existing managed-path conflicts stop before writes by default and print a conflict report.
   - **Measurement source:** Existing-repo dry-run and conflict test output.
 
+- **M-004:** Wizard compatibility.
+  - **Baseline:** Current `bootstrap` has no interactive wizard, global skill preflight, or explicit non-interactive flag.
+  - **Target:** TTY wizard flow, explicit `--non-interactive` invocation, and non-TTY invocation all exercise the expected prompt or no-prompt behavior.
+  - **Measurement source:** Shell smoke tests or scripted terminal checks for `bootstrap`.
+
 ## 11. Assumptions
 
 - **A-001:** The first build may happen under `/home/echo/ACC`, but the finished repo should move cleanly to `/home/echo/dev`.
@@ -343,6 +468,12 @@ canonical_next_artifact: project_plan
 
 - **A-004:** The target environment can provide Beads (`bd`) before a real install.
   - **Source:** Mandatory Beads decision.
+
+- **A-005:** The v1 recommended global skill set remains small and explicit: `brainstormer`, `grill-with-docs`, `product-architect`, `project-planner`, `plan-to-beads-unified`, `tdd`, and `minion`.
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`.
+
+- **A-006:** `session-start` and `session-wrapup` remain target-local by default.
+  - **Source:** `docs/decision-brief-bootstrap-interactive-wizard.md`.
 
 ## 12. Open Questions and HITL Decisions
 
@@ -361,6 +492,22 @@ canonical_next_artifact: project_plan
 - **Q-004:** Should any legacy workflow skills be merged or renamed during the Codex rewrite beyond the settled `session-start`, `session-wrapup`, and `minion` names?
   - **Blocks:** Skill inventory finalization.
   - **Needed from:** Operator / Engineering.
+
+- **Q-005:** What exact flag names should be added beyond `--interactive` and `--non-interactive`?
+  - **Blocks:** Does not block PRD approval; affects CLI design. Candidates include `--mode new|existing`, `--target <path>`, and `--global-skills ask|install|update|skip`.
+  - **Needed from:** Engineering / Operator.
+
+- **Q-006:** What exact prefix derivation algorithm should interactive mode use?
+  - **Blocks:** FR-012 implementation details.
+  - **Needed from:** Engineering / Operator.
+
+- **Q-007:** What exact target-doc schema should record install or retrofit completion?
+  - **Blocks:** FR-016 implementation details.
+  - **Needed from:** Product / Engineering.
+
+- **Q-008:** Should global skill checking support a machine-readable report mode?
+  - **Blocks:** Future automation support; does not block v1 interactive behavior.
+  - **Needed from:** Product / Engineering.
 
 ## 13. Risks
 
@@ -388,9 +535,26 @@ canonical_next_artifact: project_plan
   - **Impact:** Medium
   - **Mitigation:** Resolve paths relative to the script/repo root and run relocation-safety scans.
 
+- **R-007:** Interactive Bash flows can become difficult to test and maintain.
+  - **Impact:** Medium
+  - **Mitigation:** Keep prompts thin, reuse the existing planner/report behavior, and verify TTY and non-TTY paths separately.
+
+- **R-008:** Global skill updates can erode operator trust if prompts are vague.
+  - **Impact:** High
+  - **Mitigation:** Show source, destination, missing/outdated/current status, and planned writes before confirmation.
+
+- **R-009:** Prefix suggestions can surprise operators.
+  - **Impact:** Medium
+  - **Mitigation:** Always preview the suggested prefix and allow override before writes.
+
+- **R-010:** Existing-project retrofits can be mistaken for whole-repo migrations.
+  - **Impact:** High
+  - **Mitigation:** Use the Non-Destructive Retrofit term consistently, preview managed-path operations, and block by default on conflicts.
+
 ## 14. Proof Statement
 
 - **Repo evidence checked:** `docs/codex-bootstrap-protocol-PRD.md`, `docs/decision-brief-codex-bootstrap-protocol.md`, `docs/codex-bootstrap-protocol-project-plan.md`, `docs/codex-bootstrap-protocol-PRD-review-log.md`, and `.beads/issues.jsonl` were reviewed during the Round 2/3 cross-model review cycle.
+- **Wizard update evidence checked:** `docs/decision-brief-bootstrap-interactive-wizard.md`, `docs/CONTEXT.md`, `.agents/templates/artifacts/prd.md.hbs`, `bootstrap`, `README.md`, and `docs/handoff.yaml` were reviewed for the interactive wizard PRD update.
 - **Existing domain fit:** The sibling source kit remains a migration input under `../bootstrap-protocol/...`; direct checks confirmed `../bootstrap-protocol/.claude/commands/leroy.md` and `../bootstrap-protocol/.claude/commands/wrapup.md` exist.
 - **Schema/data contract checked:** Beads issue descriptions were treated as the execution contract, not only the passive `.beads/issues.jsonl` export.
 - **Security/privacy review points:** The Antigravity test showed raw repo workspace access can mutate Beads and Git despite a read-only prompt; the global review skill was hardened to use pasted-content or a no-write adapter for Antigravity by default.
@@ -401,7 +565,7 @@ canonical_next_artifact: project_plan
 
 ## 15. Planning Handoff
 
-This approved PRD has already been used to produce `docs/codex-bootstrap-protocol-project-plan.md` and the initial Beads backlog. Use it as the governing requirements source for subsequent plan updates and implementation work.
+This approved PRD has already been used to produce `docs/codex-bootstrap-protocol-project-plan.md` and the initial Beads backlog. The interactive wizard update adds new requirements that should be planned through `project-planner` before implementation work begins. Use this PRD as the governing requirements source for subsequent plan updates and implementation work.
 
 - Preserve decision, requirement, story, acceptance-criteria, constraint, assumption, open-question, and risk IDs.
 - Convert requirements into outcome-oriented epics and vertical-slice tasks in `docs/project-plan.md`.
