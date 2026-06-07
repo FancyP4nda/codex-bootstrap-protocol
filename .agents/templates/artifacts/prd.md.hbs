@@ -1,0 +1,178 @@
+---
+workflow_artifact: prd
+artifact_version: 1
+source_mode: {{ source_mode }}
+status: draft
+upstream_ids: {{ source_opportunity_ids }}
+recommended_next_skill: project-planner
+canonical_next_artifact: project_plan
+---
+
+# Product Requirements Document: {{ feature_name }}
+
+## 1. Executive Summary
+
+- **Target persona:** {{ target_persona }}
+- **Core problem:** {{ problem_statement }}
+- **Business goal:** {{ business_goal }}
+- **Product outcome:** {{ product_outcome }}
+- **Status:** Draft / Approved / Superseded
+
+## 2. Upstream Traceability
+
+- **Source opportunity IDs:** {{ source_opportunity_ids }}
+- **Decision brief:** {{ decision_brief_reference }}
+- **Key resolved decisions:** {{ key_resolved_decisions }}
+- **Key unresolved HITL decisions:** {{ key_unresolved_decisions }}
+- **Repo grounding:** {{ repo_grounding_reference }}
+
+## 3. Scope
+
+### Goals
+
+- **G-001:** {{ goal_001 }}
+- **G-002:** {{ goal_002 }}
+
+### Non-Goals
+
+- **NG-001:** {{ non_goal_001 }}
+- **NG-002:** {{ non_goal_002 }}
+
+## 4. Users And Use Cases
+
+### Personas
+
+- **P-001:** {{ persona_001 }}
+
+### Primary Use Cases
+
+- **UC-001:** {{ use_case_001 }}
+- **UC-002:** {{ use_case_002 }}
+
+## 5. Functional Requirements
+
+Each requirement must describe externally observable product behavior. Use stable IDs so downstream plans and tasks can preserve traceability.
+
+- **FR-001:** {{ functional_requirement_001 }}
+  - **Priority:** Must / Should / Could
+  - **Source:** {{ fr_001_source }}
+  - **Acceptance criteria:** AC-001, AC-002
+
+- **FR-002:** {{ functional_requirement_002 }}
+  - **Priority:** Must / Should / Could
+  - **Source:** {{ fr_002_source }}
+  - **Acceptance criteria:** AC-003
+
+## 6. BDD Scenarios And Acceptance Criteria
+
+Acceptance criteria must be verifiable through public user, API, CLI, or system interfaces. Avoid private implementation details unless they are explicit product requirements.
+
+### US-001: {{ user_story_001_title }}
+
+**Requirement coverage:** FR-001
+
+**Scenario:** {{ user_story_001_scenario }}
+
+- **Given** {{ user_story_001_given }}
+- **When** {{ user_story_001_when }}
+- **Then** {{ user_story_001_then }}
+
+**Acceptance criteria**
+
+- **AC-001:** {{ acceptance_001 }}
+- **AC-002:** {{ acceptance_002 }}
+
+### US-002: {{ user_story_002_title }}
+
+**Requirement coverage:** FR-002
+
+**Scenario:** {{ user_story_002_scenario }}
+
+- **Given** {{ user_story_002_given }}
+- **When** {{ user_story_002_when }}
+- **Then** {{ user_story_002_then }}
+
+**Acceptance criteria**
+
+- **AC-003:** {{ acceptance_003 }}
+
+## 7. Nonfunctional Requirements
+
+- **NFR-001 Security:** {{ security_requirement }}
+- **NFR-002 Privacy:** {{ privacy_requirement }}
+- **NFR-003 Performance:** {{ performance_requirement }}
+- **NFR-004 Reliability:** {{ reliability_requirement }}
+- **NFR-005 Accessibility:** {{ accessibility_requirement }}
+- **NFR-006 Observability:** {{ observability_requirement }}
+
+## 8. Technical And Operational Constraints
+
+Constraints are confirmed boundaries the implementation must respect. Do not use this section for speculative task design.
+
+- **C-001 Supported interfaces:** {{ supported_interfaces }}
+- **C-002 Compatibility:** {{ compatibility_constraints }}
+- **C-003 Dependency policy:** {{ dependency_policy }}
+- **C-004 Deployment or rollout:** {{ rollout_constraints }}
+- **C-005 Data or migration:** {{ data_constraints }}
+
+## 9. AI Behavior And Evaluation
+
+Use this section only when the feature includes AI or model-mediated behavior. For non-AI work, write "Not applicable" and rely on the nonfunctional requirements above.
+
+- **AI-001 Intended model behavior:** {{ ai_behavior }}
+- **AI-002 Evaluation dataset or rubric:** {{ ai_eval_rubric }}
+- **AI-003 Quality threshold:** {{ ai_quality_threshold }}
+- **AI-004 Safety constraints:** {{ ai_safety_constraints }}
+
+## 10. Success Metrics
+
+Do not invent baselines. If the baseline is unknown, mark it as unknown and add an open question.
+
+- **M-001:** {{ metric_001 }}
+  - **Baseline:** {{ metric_001_baseline }}
+  - **Target:** {{ metric_001_target }}
+  - **Measurement source:** {{ metric_001_source }}
+
+- **M-002:** {{ metric_002 }}
+  - **Baseline:** {{ metric_002_baseline }}
+  - **Target:** {{ metric_002_target }}
+  - **Measurement source:** {{ metric_002_source }}
+
+## 11. Assumptions
+
+- **A-001:** {{ assumption_001 }}
+  - **Source:** {{ assumption_001_source }}
+
+- **A-002:** {{ assumption_002 }}
+  - **Source:** {{ assumption_002_source }}
+
+## 12. Open Questions And HITL Decisions
+
+Open questions block planning or execution when a reasonable assumption would create product, security, operational, or user-visible risk.
+
+- **Q-001:** {{ open_question_001 }}
+  - **Blocks:** FR-001 / US-001 / NFR-001 / None
+  - **Needed from:** Product / Design / Engineering / Security / Legal / Operations
+
+- **Q-002:** {{ open_question_002 }}
+  - **Blocks:** {{ open_question_002_blocks }}
+  - **Needed from:** {{ open_question_002_owner }}
+
+## 13. Risks
+
+- **R-001:** {{ risk_001 }}
+  - **Impact:** Low / Medium / High
+  - **Mitigation:** {{ risk_001_mitigation }}
+
+- **R-002:** {{ risk_002 }}
+  - **Impact:** Low / Medium / High
+  - **Mitigation:** {{ risk_002_mitigation }}
+
+## 14. Planning Handoff
+
+Use this approved PRD as input to `project-planner`.
+
+- Preserve opportunity, decision, requirement, story, acceptance-criteria, constraint, assumption, open-question, and risk IDs.
+- Convert requirements into outcome-oriented epics and vertical-slice tasks in `docs/project-plan.md`.
+- Mark tasks blocked by unresolved questions as `HITL` or `Execution-ready: No`.
+- Do not create Beads items directly from this PRD; use `project-planner` first, then `plan-to-beads-unified`.
