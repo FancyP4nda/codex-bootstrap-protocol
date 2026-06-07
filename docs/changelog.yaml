@@ -2,6 +2,33 @@ version: 1
 changes:
   - date: 2026-06-07
     bead_ids:
+      - codex-bootstrap-protocol-q6u
+    changed_areas:
+      - .agents/skills/minion/
+      - .codex/agents/worker.toml
+      - assets/scaffold/.agents/skills/minion/
+      - assets/scaffold/.codex/agents/worker.toml
+      - docs/codex-bootstrap-protocol-PRD.md
+      - docs/codex-bootstrap-protocol-project-plan.md
+      - docs/decision-brief-codex-bootstrap-protocol.md
+      - docs/opt-in-configs.md
+    summary: >-
+      Updated minion from report-only-only to dual report/execution fanout,
+      defaulting to 6 workers with a hard cap of 6 and scoped execution
+      guardrails for Beads and file changes.
+  - date: 2026-06-07
+    bead_ids:
+      - codex-bootstrap-protocol-pm5.2
+    changed_areas:
+      - bootstrap
+      - .beads/issues.jsonl
+      - .beads/interactions.jsonl
+    summary: >-
+      Added the bootstrap interactive/non-interactive mode contract, preserving
+      automation-safe non-interactive behavior while routing TTY missing-input
+      calls into a no-write interactive entrypoint for later wizard tasks.
+  - date: 2026-06-07
+    bead_ids:
       - codex-bootstrap-protocol-pm5
       - codex-bootstrap-protocol-pm5.2
       - codex-bootstrap-protocol-pm5.3

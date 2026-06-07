@@ -10,6 +10,20 @@ active_work: []
 decisions:
   - date: 2026-06-07
     summary: >-
+      Minion is now dual-mode: report-only for analysis and guarded execution
+      for explicit implementation requests. Fanout defaults to 6 workers and
+      is hard-capped at 6; execution workers require disjoint write scopes and
+      steering-session Beads, verification, commit, and push coordination.
+  - date: 2026-06-07
+    summary: >-
+      The global minion skill and global worker agent TOML on this machine were
+      synced from the repository copies after the executable minion update.
+  - date: 2026-06-07
+    summary: >-
+      Bootstrap now accepts explicit --interactive and --non-interactive modes;
+      CI and non-TTY invocations remain no-prompt non-interactive paths.
+  - date: 2026-06-07
+    summary: >-
       Converted the approved interactive bootstrap wizard plan into Beads:
       E05 plus execution-ready T013-T018. T019 remained skipped because it is
       HITL and non-execution-ready.
@@ -33,6 +47,42 @@ decisions:
       Use normal Git for repository sync; do not require or run bd dolt
       push/pull in this repository.
 verification:
+  - date: 2026-06-07
+    command: ./verification/run-static-checks.sh
+    result: passed
+  - date: 2026-06-07
+    command: python3 -c "import tomllib, pathlib; [tomllib.load(open(p,'rb')) for p in pathlib.Path('.codex/agents').glob('*.toml')]; [tomllib.load(open(p,'rb')) for p in pathlib.Path('assets/scaffold/.codex/agents').glob('*.toml')]; print('toml ok')"
+    result: passed
+  - date: 2026-06-07
+    command: rg -n 'default to 10|10-way|no scaffold-level hard cap|report-only v1|write-capable implementation workers are out of scope|deferred to a later write-capable phase|must not execute write-heavy|Do not execute write-heavy|report-only `minion`|report-only worker' .agents/skills/minion .codex/agents docs assets/scaffold/.agents/skills/minion assets/scaffold/.codex/agents assets/scaffold/docs/opt-in-configs.md
+    result: passed
+    notes: >-
+      Remaining matches are historical review-log entries or unrelated
+      reviewer/navigator report-only agent descriptions, not active minion
+      product behavior.
+  - date: 2026-06-07
+    command: git diff --check
+    result: passed
+  - date: 2026-06-07
+    command: bash -n ./bootstrap
+    result: passed
+  - date: 2026-06-07
+    command: ./bootstrap --help | rg -- '--interactive|--non-interactive'
+    result: passed
+  - date: 2026-06-07
+    command: ./bootstrap --non-interactive --dry-run /tmp/codex-bootstrap-smoke --prefix CBS
+    result: passed
+  - date: 2026-06-07
+    command: CI=1 timeout 2s ./bootstrap
+    result: passed
+    notes: exited 2 quickly with non-interactive missing-input guidance
+  - date: 2026-06-07
+    command: env -u CI ./bootstrap
+    result: passed
+    notes: under a PTY, routed to the no-write interactive entrypoint
+  - date: 2026-06-07
+    command: diff -qr .agents/skills/minion /home/echo/.agents/skills/minion && diff -q .codex/agents/worker.toml /home/echo/.codex/agents/worker.toml
+    result: passed
   - date: 2026-06-07
     command: test -f docs/handoff.yaml && test -f docs/changelog.yaml
     result: passed
@@ -58,15 +108,37 @@ verification:
     command: bd ready
     result: passed
 next_steps:
-  - bead_id: codex-bootstrap-protocol-pm5.2
-    title: Refine and work T013 interactive/non-interactive mode contract
+  - bead_id: codex-bootstrap-protocol-pm5.6
+    title: Work T014 recommended global skill preflight
     context:
       - docs/decision-brief-bootstrap-interactive-wizard.md
       - docs/codex-bootstrap-protocol-PRD.md
       - docs/codex-bootstrap-protocol-project-plan.md
       - docs/CONTEXT.md
       - bootstrap
+      - assets/scaffold/.agents/skills/
+      - /home/echo/.agents/skills
     action: >-
-      Run readiness refinement for T013 before implementation, preserving the
-      plan's constraint that optional advanced flags remain out of scope unless
-      T019 is separately approved.
+      Implement interactive recommended global skill preflight only after
+      claiming the Bead; preserve non-interactive no-prompt behavior and use a
+      temporary HOME or explicit confirmation before any global writes.
+  - bead_id: codex-bootstrap-protocol-pm5.3
+    title: Work T015 target mode detection, prefix suggestion, and final confirmation
+    context:
+      - bootstrap
+      - docs/decision-brief-bootstrap-interactive-wizard.md
+      - docs/codex-bootstrap-protocol-PRD.md
+      - docs/codex-bootstrap-protocol-project-plan.md
+    action: >-
+      Add the real interactive target workflow after T014 or as the next
+      serialized bootstrap edit; do not run concurrently with T014 because both
+      modify bootstrap.
+  - bead_id: codex-bootstrap-protocol-pm5.5
+    title: Work T017 interactive bootstrap workflow docs
+    context:
+      - README.md
+      - docs/opt-in-configs.md
+      - ./bootstrap --help
+    action: >-
+      Update operator docs to match the current mode contract and refine again
+      after T014-T016 if prompt wording changes.
