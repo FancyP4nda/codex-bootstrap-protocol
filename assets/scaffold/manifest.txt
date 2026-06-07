@@ -33,9 +33,43 @@ file	docs/handoff.yaml	copy	Durable handoff state.
 file	docs/changelog.yaml	copy	Project changelog state.
 file	docs/enhancements.md	copy	Future improvement queue.
 file	docs/standards-history.md	copy	Standards and convention history.
+file	docs/opt-in-configs.md	copy	Opt-in Codex configuration guide.
+dir	.agents/skills/	ensure_dir	Repo-scoped Codex workflow skills directory.
+dir	.agents/skills/brainstormer/	ensure_dir	Brainstorming workflow skill directory.
+file	.agents/skills/brainstormer/SKILL.md	copy	Brainstorming workflow skill.
+dir	.agents/skills/grill-with-docs/	ensure_dir	Decision grilling workflow skill directory.
+file	.agents/skills/grill-with-docs/SKILL.md	copy	Decision grilling workflow skill.
+dir	.agents/skills/product-architect/	ensure_dir	Product architecture workflow skill directory.
+file	.agents/skills/product-architect/SKILL.md	copy	Product architecture workflow skill.
+dir	.agents/skills/project-planner/	ensure_dir	Project planning workflow skill directory.
+file	.agents/skills/project-planner/SKILL.md	copy	Project planning workflow skill.
+dir	.agents/skills/plan-to-beads-unified/	ensure_dir	Plan-to-Beads workflow skill directory.
+file	.agents/skills/plan-to-beads-unified/SKILL.md	copy	Plan-to-Beads workflow skill.
+dir	.agents/skills/session-start/	ensure_dir	Session-start workflow skill directory.
+file	.agents/skills/session-start/SKILL.md	copy	Session-start workflow skill.
+dir	.agents/skills/session-wrapup/	ensure_dir	Session-wrapup workflow skill directory.
+file	.agents/skills/session-wrapup/SKILL.md	copy	Session-wrapup workflow skill.
+dir	.agents/skills/minion/	ensure_dir	Report-only fanout workflow skill directory.
+file	.agents/skills/minion/SKILL.md	copy	Report-only fanout workflow skill.
+file	.agents/skills/minion/report-schema.md	copy	Report-only fanout report schema.
+dir	.agents/skills/minion/fixtures/	ensure_dir	Report-only fanout fixture directory.
+file	.agents/skills/minion/fixtures/report-only-prompt-readback.md	copy	Report-only fanout prompt/readback fixture.
+dir	.agents/skills/tdd/	ensure_dir	TDD workflow skill directory.
+file	.agents/skills/tdd/SKILL.md	copy	TDD workflow skill.
 dir	.agents/templates/	ensure_dir	Reusable agent handoff templates.
 file	.agents/templates/work-item.md	copy	Atomic work-item handoff template.
+dir	.agents/templates/artifacts/	ensure_dir	Reusable workflow artifact templates.
+file	.agents/templates/artifacts/README.md	copy	Workflow artifact template guidance.
+file	.agents/templates/artifacts/adr.md	copy	ADR artifact template.
+file	.agents/templates/artifacts/decision-brief.md	copy	Decision brief artifact template.
+file	.agents/templates/artifacts/opportunity-brief.md	copy	Opportunity brief artifact template.
+file	.agents/templates/artifacts/prd.md.hbs	copy	PRD artifact template.
+file	.agents/templates/artifacts/project-plan.md	copy	Project plan artifact template.
 file	.codex/config.toml	copy	Minimal repo-local Codex config placeholder.
+dir	.codex/agents/	ensure_dir	Project-local custom agent directory.
+file	.codex/agents/navigator.toml	copy	Navigator custom agent definition.
+file	.codex/agents/reviewer.toml	copy	Reviewer custom agent definition.
+file	.codex/agents/worker.toml	copy	Report-only worker custom agent definition.
 dir	.codex/hooks/	ensure_dir	Opt-in hook examples directory.
 file	.codex/hooks/README.md	copy	Hook example guidance.
 dir	.codex/rules/	ensure_dir	Opt-in rule examples directory.

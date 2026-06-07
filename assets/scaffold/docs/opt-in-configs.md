@@ -6,7 +6,7 @@ Use the default scaffold first. Enable an optional control only when the target 
 
 ## Relocation And Paths
 
-The scaffold should be relocation-safe. It may be checked out today at an example path such as `/home/echo/ACC/codex-bootstrap-protocol`, but installed targets and scripts should resolve paths relative to the repo or script root. Do not hardcode `/home/echo/ACC` in runtime logic after the repo moves.
+The scaffold should be relocation-safe. Installed targets and scripts should resolve paths relative to the repo or script root. Do not hardcode machine-specific checkout paths in runtime logic.
 
 ## Optional PATH Or Symlink
 
@@ -65,7 +65,7 @@ Then run the smallest command expected to trigger the hook and confirm the outpu
 
 ## Rules
 
-Purpose: Add project-local Codex rules for recurring local constraints, such as no active `.claude/` runtime paths, no network actions by default, required Beads usage, or protected overwrite paths.
+Purpose: Add project-local Codex rules for recurring local constraints, such as no active legacy runtime paths, no network actions by default, required Beads usage, or protected overwrite paths.
 
 Risk level: Low to Medium. Rules can improve consistency, but stale or overbroad rules can block legitimate work or duplicate `AGENTS.md` guidance.
 
@@ -85,7 +85,7 @@ Disable steps:
 Verify:
 
 ```bash
-rg -n "bd|bootstrap|network|\\.claude|force|managed" .codex/rules AGENTS.md
+rg -n "bd|bootstrap|network|legacy|force|managed" .codex/rules AGENTS.md
 ```
 
 ## Custom Subagents

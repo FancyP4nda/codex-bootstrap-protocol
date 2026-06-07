@@ -277,6 +277,33 @@ EOF
     print_lines_or_none CONFLICT_LINES
 }
 
+print_install_summary() {
+    local mode="$1" target_abs="$2"
+    local write_note
+
+    case "$mode" in
+        dry-run)
+            write_note="dry-run only; no target files were written"
+            ;;
+        blocked)
+            write_note="install blocked; no scaffold files were written"
+            ;;
+        *)
+            write_note="install completed"
+            ;;
+    esac
+
+    cat <<EOF
+
+installer summary:
+  result: $write_note
+  target instructions: $target_abs/AGENTS.md
+  opt-in config guide: $target_abs/docs/opt-in-configs.md
+  Beads status: $BEADS_STATUS
+  next workflow skills: session-start, brainstormer, grill-with-docs, product-architect, project-planner, plan-to-beads-unified, tdd, minion, session-wrapup
+EOF
+}
+
 parent_chain_conflicts() {
     local target_abs="$1" rel="$2"
     local parent_rel parent_abs
@@ -381,28 +408,34 @@ plan_beads() {
     local beads_path="$target_abs/.beads"
 
     if [[ -L "$beads_path" ]]; then
+        BEADS_STATUS="blocked: existing .beads path is a symlink"
         add_conflict ".beads/" "validate_beads" "existing .beads path is a symlink" "replace it with a valid Beads database directory or choose a different target"
         return 0
     fi
 
     if [[ -d "$beads_path" ]]; then
         if ((dry_run)); then
+            BEADS_STATUS="existing .beads/ will be validated during real install"
             add_skipped ".beads/" "validate_beads" "existing Beads database will be validated during real install"
             return 0
         fi
         if validate_existing_beads "$target_abs"; then
+            BEADS_STATUS="existing .beads/ validated with bd"
             add_skipped ".beads/" "validate_beads" "existing Beads database is valid"
             return 0
         fi
+        BEADS_STATUS="blocked: bd could not validate existing .beads/"
         add_conflict ".beads/" "validate_beads" "bd could not validate the existing Beads database" "repair the database with bd doctor or move it aside manually before retrying"
         return 0
     fi
 
     if [[ -e "$beads_path" ]]; then
+        BEADS_STATUS="blocked: .beads path exists but is not a directory"
         add_conflict ".beads/" "bd_init" "path exists but is not a directory" "move or remove this path manually before retrying"
         return 0
     fi
 
+    BEADS_STATUS="will initialize .beads/ with prefix $prefix during real install"
     add_created ".beads/" "bd_init" "Beads database is absent and will be initialized with prefix $prefix"
 }
 
@@ -461,6 +494,7 @@ apply_install() {
 
     if [[ ! -d "$target_abs/.beads" ]]; then
         (cd -- "$target_abs" && bd init --non-interactive --skip-agents --skip-hooks --prefix "$prefix")
+        BEADS_STATUS="initialized .beads/ with prefix $prefix"
     fi
 }
 
@@ -502,21 +536,25 @@ EOF
     declare -g -a APPLY_KINDS=()
     declare -g -a APPLY_PATHS=()
     declare -g -a APPLY_ACTIONS=()
+    declare -g BEADS_STATUS="not planned"
 
     plan_install "$scaffold_dir" "$manifest" "$target_abs" "$prefix" "$dry_run" "$force"
 
     if ((dry_run)); then
         print_plan_report "bootstrap dry-run" "$source_dir" "$target_abs" "$prefix" "$force" "no"
+        print_install_summary "dry-run" "$target_abs"
         return 0
     fi
 
     if ((${#CONFLICT_LINES[@]})); then
         print_plan_report "bootstrap install blocked" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
+        print_install_summary "blocked" "$target_abs"
         return 1
     fi
 
     apply_install "$scaffold_dir" "$target_abs" "$prefix"
     print_plan_report "bootstrap install complete" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
+    print_install_summary "install" "$target_abs"
 }
 
 main "$@"

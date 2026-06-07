@@ -2,12 +2,13 @@
 
 Codex Bootstrap Protocol is a local-first scaffold repo for creating Codex-native project workspaces from the legacy Bootstrap Protocol source kit. It is Codex-native only: installed target projects should use `AGENTS.md`, `.agents/skills/`, `.codex/`, durable `docs/`, and Beads (`bd`) instead of active Claude runtime directories.
 
-The repo-root `bootstrap` command is the primary operator entry point. Early implementation beads build out its argument parsing, dry-run planning, conflict handling, managed scaffold paths, and Beads initialization.
+The repo-root `bootstrap` command is the primary operator entry point. It reads `assets/scaffold/manifest.txt`, reports the managed asset tree in dry-run mode, copies the managed scaffold files during real installs, and initializes Beads when prerequisites are met.
 
 ## Current State
 
 - Planning source of truth: `docs/codex-bootstrap-protocol-PRD.md`
 - Execution plan: `docs/codex-bootstrap-protocol-project-plan.md`
+- Install contract: `assets/scaffold/manifest.txt`
 - Work tracker: Beads via `bd`
 - Migration input: sibling `../bootstrap-protocol`
 
@@ -38,6 +39,8 @@ Example:
 
 The `<PREFIX>` is the project-specific Beads prefix used when initializing work tracking in the target project. Use a short uppercase identifier that is meaningful for the target project.
 
+A successful real install creates the target directory when needed, copies every managed path from `assets/scaffold/manifest.txt`, initializes `.beads/`, and prints a summary pointing to target `AGENTS.md`, target `docs/opt-in-configs.md`, Beads status, and the next workflow skills.
+
 ## Dry Run
 
 Preview an install without writing scaffold files:
@@ -47,6 +50,44 @@ Preview an install without writing scaffold files:
 ```
 
 Dry-run output should show planned created paths, skipped paths, and conflicts. It must not create scaffold files and must not require `bd`.
+
+The dry-run summary uses the same managed-path names as a real install and ends with a note that no target files were written.
+
+## Managed Target Tree
+
+The manifest-driven install creates this Codex-native target surface:
+
+```text
+.
+|-- AGENTS.md
+|-- docs/
+|   |-- CONTEXT.md
+|   |-- opt-in-configs.md
+|   |-- adr/
+|   |-- prd.md
+|   |-- project-plan.md
+|   |-- architecture.md
+|   |-- backend.md
+|   |-- frontend.md
+|   |-- data-model.md
+|   |-- security.md
+|   |-- handoff.yaml
+|   |-- changelog.yaml
+|   |-- enhancements.md
+|   `-- standards-history.md
+|-- .agents/
+|   |-- skills/
+|   `-- templates/
+|-- .codex/
+|   |-- agents/
+|   |-- hooks/
+|   |-- rules/
+|   |-- state/tmp/
+|   `-- config.toml
+|-- .archive/
+|-- .beads/
+`-- .gitignore
+```
 
 ## Force Behavior
 
@@ -94,7 +135,14 @@ Run the T010 static verification suite from the repo root:
 ./verification/run-static-checks.sh
 ```
 
-The suite checks shell syntax, live `.claude/*` runtime references, hardcoded `/home/echo/ACC` runtime dependencies, and documented allowlists for migration/source references. See `verification/README.md` for the disposable `/tmp` dry-run check and the T012-deferred install/readback, conflict, protected-path, and missing-`bd` behavior commands.
+For installer smoke checks, use clearly test-created `/tmp` targets:
+
+```bash
+./bootstrap --dry-run /tmp/codex-bootstrap-smoke --prefix CBS
+./bootstrap /tmp/codex-bootstrap-smoke-real --prefix CBS
+```
+
+The suite checks shell syntax, live `.claude/*` runtime references, hardcoded `/home/echo/ACC` runtime dependencies, and documented allowlists for migration/source references. See `verification/README.md` for additional install/readback, conflict, protected-path, and missing-`bd` behavior commands.
 
 ## Relocation Safety
 
