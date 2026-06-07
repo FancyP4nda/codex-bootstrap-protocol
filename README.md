@@ -41,6 +41,84 @@ The `<PREFIX>` is the project-specific Beads prefix used when initializing work 
 
 A successful real install creates the target directory when needed, copies every managed path from `assets/scaffold/manifest.txt`, initializes `.beads/`, and prints a summary pointing to target `AGENTS.md`, target `docs/opt-in-configs.md`, Beads status, and the next workflow skills.
 
+## Bootstrap A New Project
+
+Use this sequence when creating a new Codex-ready project workspace.
+
+1. Start from this scaffold checkout:
+
+   ```bash
+   cd /path/to/codex-bootstrap-protocol
+   ```
+
+2. Confirm prerequisites:
+
+   ```bash
+   command -v bash
+   command -v bd
+   ./bootstrap --help
+   ```
+
+   `bd` is required for real installs because the target project is initialized with Beads. Dry-run mode does not require `bd`.
+
+3. Pick the target directory and prefix. The prefix should be short, stable, and meaningful for the target project:
+
+   ```bash
+   target=/tmp/my-new-project
+   prefix=MNP
+   ```
+
+4. Preview the install. This must not write target files:
+
+   ```bash
+   ./bootstrap --dry-run "$target" --prefix "$prefix"
+   ```
+
+   Review the created, skipped, and conflict sections. If conflicts are reported, inspect them before running a real install.
+
+5. Install the scaffold:
+
+   ```bash
+   ./bootstrap "$target" --prefix "$prefix"
+   ```
+
+   Use `--force` only after reviewing a conflict report and only when you intend to overwrite managed scaffold files:
+
+   ```bash
+   ./bootstrap "$target" --prefix "$prefix" --force
+   ```
+
+6. Enter the target project and verify the installed surface:
+
+   ```bash
+   cd "$target"
+   git status --short --branch
+   bd ready
+   test -f AGENTS.md
+   test -f docs/CONTEXT.md
+   test -d .agents/skills
+   test -d .codex/agents
+   ```
+
+7. Start Codex from the target project directory so repo-scoped instructions, skills, custom agents, and docs are discoverable.
+
+## Expected Target Workflow
+
+After bootstrapping, the target project should use this planning-to-execution flow:
+
+1. **Orient:** Run `$session-start` or manually read `AGENTS.md`, `docs/CONTEXT.md`, `docs/handoff.yaml`, `docs/changelog.yaml`, and Beads state.
+2. **Shape the idea:** Use `$brainstormer` for an Opportunity Brief when the idea is still broad.
+3. **Resolve decisions:** Use `$grill-with-docs` to turn an opportunity or rough plan into a Decision Brief grounded in existing docs.
+4. **Write product truth:** Use `$product-architect` to create or update `docs/prd.md`.
+5. **Plan execution:** Use `$project-planner` to create or update `docs/project-plan.md` from an approved PRD.
+6. **Create Beads work:** Use `$plan-to-beads-unified` to turn the approved project plan into Beads issues.
+7. **Implement one Bead at a time:** Use `bd ready`, `bd show <id>`, and `bd update <id> --claim`; keep work inside the Bead collision domain and run the Bead verification command.
+8. **Use report-only fanout when useful:** Use `$minion` for parallel review, research, or planning reports. In v1 it is report-only and does not run write-heavy implementation fanout.
+9. **Close out:** Use `$session-wrapup` to verify work, close completed Beads, update `docs/handoff.yaml` and `docs/changelog.yaml`, and create a local handoff.
+10. **Sync through Git:** Commit code, docs, and tracked Beads exports, then use normal `git push`. This repo does not require `bd dolt push/pull`.
+
+Durable project knowledge should live in `docs/`; task state should live in Beads; transient Codex scratch output should stay under `.codex/state/tmp/`.
+
 ## Dry Run
 
 Preview an install without writing scaffold files:
