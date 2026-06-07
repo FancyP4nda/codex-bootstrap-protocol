@@ -10,6 +10,11 @@ active_work: []
 decisions:
   - date: 2026-06-07
     summary: >-
+      Converted the approved interactive bootstrap wizard plan into Beads:
+      E05 plus execution-ready T013-T018. T019 remained skipped because it is
+      HITL and non-execution-ready.
+  - date: 2026-06-07
+    summary: >-
       Updated the approved project plan with E05 and tasks T013-T019 for the
       interactive bootstrap wizard, keeping T019 as HITL/non-execution-ready
       optional scope.
@@ -46,15 +51,22 @@ verification:
   - date: 2026-06-07
     command: python3 -c "import re, pathlib, collections; text=pathlib.Path('docs/codex-bootstrap-protocol-project-plan.md').read_text(); defs=re.findall(r'^### (E\\d+|T\\d+):', text, flags=re.M); assert not [k for k,v in collections.Counter(defs).items() if v>1]; print('plan ids ok')"
     result: passed
+  - date: 2026-06-07
+    command: bd dep cycles
+    result: passed
+  - date: 2026-06-07
+    command: bd ready
+    result: passed
 next_steps:
-  - title: Convert interactive wizard plan tasks to Beads
+  - bead_id: codex-bootstrap-protocol-pm5.2
+    title: Refine and work T013 interactive/non-interactive mode contract
     context:
       - docs/decision-brief-bootstrap-interactive-wizard.md
       - docs/codex-bootstrap-protocol-PRD.md
       - docs/codex-bootstrap-protocol-project-plan.md
       - docs/CONTEXT.md
+      - bootstrap
     action: >-
-      Run plan-to-beads-unified against the updated approved project plan and
-      parent PRD. Convert T013 through T018 into Beads and keep T019 out of
-      implementation Beads until the operator approves optional advanced flags
-      or machine-readable report mode.
+      Run readiness refinement for T013 before implementation, preserving the
+      plan's constraint that optional advanced flags remain out of scope unless
+      T019 is separately approved.

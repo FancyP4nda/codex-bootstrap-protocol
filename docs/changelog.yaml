@@ -2,6 +2,24 @@ version: 1
 changes:
   - date: 2026-06-07
     bead_ids:
+      - codex-bootstrap-protocol-pm5
+      - codex-bootstrap-protocol-pm5.2
+      - codex-bootstrap-protocol-pm5.3
+      - codex-bootstrap-protocol-pm5.4
+      - codex-bootstrap-protocol-pm5.5
+      - codex-bootstrap-protocol-pm5.6
+      - codex-bootstrap-protocol-pm5.7
+    changed_areas:
+      - .beads/issues.jsonl
+      - .beads/interactions.jsonl
+      - docs/handoff.yaml
+      - docs/changelog.yaml
+    summary: >-
+      Converted the approved interactive bootstrap wizard plan into E05 and
+      execution-ready Beads T013-T018; skipped T019 because it is HITL and
+      non-execution-ready.
+  - date: 2026-06-07
+    bead_ids:
       - codex-bootstrap-protocol-a8v
     changed_areas:
       - docs/codex-bootstrap-protocol-project-plan.md
