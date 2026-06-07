@@ -89,13 +89,13 @@ canonical_next_artifact: prd
     hooks = true
     ```
 
-  - Do not impose a scaffold-level hard cap on subagent count. `minion` should default to 10 subagents for fanout, allow the user to request more explicitly, warn on large fanouts, and state that practical limits are subject to Codex runtime/account/environment constraints.
+  - Cap `minion` fanout at 6 subagents. `minion` should default to 6 subagents for fanout, cap larger requests at 6, warn on execution fanouts, and state that practical limits are subject to Codex runtime/account/environment constraints.
   - Do not set model, provider, auth, telemetry, network, sandbox, or auto-approval defaults in project config.
   - Ship hooks/rules as opt-in examples, not active enforcement by default.
   - Add `docs/opt-in-configs.md` explaining optional hooks, rules, custom subagents, Codex-Falcon settings, stricter approval/sandbox profiles, and any memory/automation examples. Each entry must explain purpose, risk level, enable steps, disable steps, and verification.
-  - Use custom agents only for repeatable delegated roles: `navigator`, `reviewer`, report-only `worker` for `minion` v1, and optionally `scribe`. Write-capable implementer agents are deferred until a later phase explicitly adds write dispatch.
+  - Use custom agents only for repeatable delegated roles: `navigator`, `reviewer`, scoped `worker` for `minion`, and optionally `scribe`. `worker` supports report-only analysis and guarded write-capable execution when the steering session assigns disjoint write scopes.
   - Keep workflow orchestration as skills: `brainstormer`, `grill-with-docs`, `product-architect`, `project-planner`, `plan-to-beads-unified`, `session-start`, `session-wrapup`, `minion`, `tdd`, and related workflow skills.
-  - `minion` v1 is report-only parallel dispatch: explicit Codex subagents, file-scope/collision planning for future write-capable phases, structured reports, transient report files under `.codex/state/tmp/minion-*`, and steering-session synthesis. Defer lock registry, cron/watch, auto-amend, auto-ack, cross-branch orchestration, PR actions, and write-capable implementation workers.
+  - `minion` is dual-mode parallel dispatch: explicit Codex subagents, report-only analysis, guarded write-capable execution, file-scope/collision planning before execution, structured reports, transient report files under `.codex/state/tmp/minion-*`, and steering-session synthesis. Defer lock registry, cron/watch, auto-amend, auto-ack, cross-branch orchestration, and PR actions.
   - Adopt secure-by-default, local-first behavior. No network calls, package installs, external service publication, cloud changes, PR creation, comments, deploys, or pushes by default.
   - Disposable install validation should run under `/tmp`. The scaffold must be relocation-safe because the project is expected to move from `/home/echo/ACC` to `/home/echo/dev` after it is built.
   - First produce this Decision Brief, then scaffold the new repo only after user approval.
@@ -129,7 +129,7 @@ canonical_next_artifact: prd
     - `bootstrap <target> --prefix <PREFIX>` fails before writes if `bd` is missing.
     - With `bd` present, the target gets `AGENTS.md`, `.agents/skills/*`, `.agents/templates/*`, `.codex/config.toml`, `.codex/agents/*.toml`, `.codex/hooks/`, `.codex/rules/`, `docs/CONTEXT.md`, `docs/adr/`, `docs/prd.md`, `docs/project-plan.md`, `docs/architecture.md`, `docs/backend.md`, `docs/frontend.md`, `docs/data-model.md`, `docs/security.md`, `docs/handoff.yaml`, `docs/changelog.yaml`, `docs/enhancements.md`, `docs/standards-history.md`, `.beads/`, and `.archive/`.
     - All bundled workflow skills are rewritten away from live `.claude/*` runtime dependencies.
-    - `minion` is redesigned around Codex subagents, defaults to 10-way fanout, allows explicit larger fanout without a scaffold hard cap, and warns on large or write-heavy fanouts.
+    - `minion` is redesigned around Codex subagents, defaults to 6-way fanout, caps fanout at 6 workers, and warns on execution fanouts.
     - `docs/opt-in-configs.md` explains optional configs, purpose, risk, enable/disable steps, and verification.
     - Verification includes shell syntax checks, scoped path/reference scans showing no live `.claude` runtime dependencies in installed Codex runtime assets, scoped relocation-safety checks for hardcoded `/home/echo/ACC` runtime paths, and disposable `/tmp` install/readback.
   - **Risks:** Over-porting Claude-specific assumptions; making the first fork too broad; Beads dependency blocking users without clear instructions; Codex hooks requiring trust review; `.codex/config.toml` ignored in untrusted projects; skill path rewrites missing hidden references.

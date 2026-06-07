@@ -6,7 +6,7 @@ Use the default scaffold first. Enable an optional control only when the target 
 
 ## Relocation And Paths
 
-The scaffold should be relocation-safe. Installed targets and scripts should resolve paths relative to the repo or script root. Do not hardcode machine-specific checkout paths in runtime logic.
+The scaffold should be relocation-safe. Installed targets and scripts should resolve paths relative to the repo or script root. Do not hardcode source-machine paths in runtime logic.
 
 ## Optional PATH Or Symlink
 
@@ -85,12 +85,12 @@ Disable steps:
 Verify:
 
 ```bash
-rg -n "bd|bootstrap|network|legacy|force|managed" .codex/rules AGENTS.md
+rg -n "bd|bootstrap|network|\\.claude|force|managed" .codex/rules AGENTS.md
 ```
 
 ## Custom Subagents
 
-Purpose: Define repeatable delegated roles under `.codex/agents/`, such as navigator, reviewer, report-only worker, or scribe.
+Purpose: Define repeatable delegated roles under `.codex/agents/`, such as navigator, reviewer, scoped worker, or scribe.
 
 Risk level: Medium. Subagents can multiply token use and may produce conflicting recommendations if their role instructions overlap. Write-capable subagent fanout needs explicit collision-domain planning.
 
@@ -117,31 +117,32 @@ Expected result: required fields are present, and any provider/model/auth/approv
 
 ## Minion Settings
 
-Purpose: Configure the `minion` workflow for explicit report-only fanout. In v1, `minion` should plan fanout, launch explicit subagents when available, collect structured reports, and summarize results without performing write-heavy implementation.
+Purpose: Configure the `minion` workflow for explicit subagent fanout. `minion` supports report-only analysis and guarded write-capable execution when the operator explicitly asks for implementation, fixes, refactors, migrations, or Beads work.
 
-Risk level: Medium to High. Fanout increases token use, approval volume, synthesis overhead, and the chance of conflicting outputs. Large fanouts are subject to Codex runtime, account, and environment limits.
+Risk level: High for execution mode. Fanout increases token use, approval volume, synthesis overhead, merge work, and the chance of conflicting edits. Execution fanout is capped at 6 workers and remains subject to Codex runtime, account, environment, sandbox, approval, token, and local resource limits.
 
 Enable steps:
 
 1. Confirm `.agents/skills/minion/SKILL.md` exists in the target project.
 2. Confirm `.codex/agents/worker.toml` exists in the target project.
 3. Keep transient reports under `.codex/state/tmp/minion-*`.
-4. Use the default 10-way fanout unless the task justifies a different count.
+4. Use the default 6-way fanout unless the task justifies fewer workers.
+5. For execution mode, assign disjoint write scopes and keep commits, pushes, and Beads closeout in the steering session.
 
 Disable steps:
 
 1. Do not invoke the `minion` skill for the task.
 2. Rename or remove `.agents/skills/minion/` if a target project should not expose the workflow.
-3. Remove or disable the report-only worker agent if it should not be used.
+3. Remove or disable the worker agent if it should not be used.
 4. Clear stale transient reports from `.codex/state/tmp/` when they are no longer needed.
 
 Verify:
 
 ```bash
-rg -n "minion|10|report-only|write-heavy|\\.codex/state/tmp/minion" .agents/skills .codex/agents docs
+rg -n "minion|6|report-only|execution|write scope|\\.codex/state/tmp/minion" .agents/skills .codex/agents docs
 ```
 
-Expected result: write-heavy fanout is deferred or converted to planning/review, and transient reports stay in gitignored state paths.
+Expected result: execution fanout is capped at 6 workers, worker prompts require disjoint write scopes, worker agents do not commit or push, Beads closeout stays coordinated by the steering session, and transient reports stay in gitignored state paths.
 
 ## Stricter Approval And Sandbox Profiles
 

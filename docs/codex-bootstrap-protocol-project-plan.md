@@ -308,7 +308,7 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **Verification command:** `rg -n "claude|/leroy|/wrapup|\\.claude|handoff.yaml|changelog.yaml" .agents/skills/session-start .agents/skills/session-wrapup`.
 - **Closeout criteria:** `session-start/SKILL.md` and `session-wrapup/SKILL.md` exist, both reference `docs/handoff.yaml` and `docs/changelog.yaml`, the verification scan has no live Claude runtime dependency, and each skill includes a short smoke-prompt example for an initialized target.
 
-### T008: Design and implement `minion` report-only fanout
+### T008: Design and implement `minion` fanout
 
 - **Epic:** E03
 - **Type:** AFK
@@ -318,30 +318,30 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **Collision domain:** `.agents/skills/minion`, `.codex/state/tmp/minion-*`, minion report schema docs.
 - **Can run with:** T006, T007, T010
 - **Must not run with:** T009
-- **What to build:** Create the Codex-native `minion` skill for explicit report-only subagent fanout with default 10-way fanout, no scaffold hard cap, warnings for large fanouts, clear deferral of write-heavy execution to a later write-capable phase, and references to the report-only worker agent owned by T009.
+- **What to build:** Create the Codex-native `minion` skill for explicit subagent fanout with report-only and guarded execution modes, default 6-way fanout, a hard cap of 6 workers, warnings for execution fanout, disjoint write-scope requirements, and references to the worker agent owned by T009.
 - **PRD traceability:** FR-008, R-004, AI-001, US-007, AC-015, AC-016, AC-017.
 
 **Acceptance criteria**
 
 - [ ] `minion` skill exists under `.agents/skills/minion`.
-- [ ] `minion` defaults to 10-way fanout when no count is specified.
-- [ ] `minion` imposes no scaffold-level hard cap and warns that practical limits are subject to Codex runtime/account/environment constraints.
-- [ ] Write-heavy fanout is not executed in v1; requests are converted to report-only planning/review or deferred to a later write-capable phase with file-scope and collision-domain planning.
-- [ ] Report-only v1 explicitly defers locks, cron/watch, auto-amend, auto-ack, cross-branch orchestration, and PR actions.
+- [ ] `minion` defaults to 6-way fanout when no count is specified.
+- [ ] `minion` caps fanout at 6 workers and warns that practical limits are subject to Codex runtime/account/environment constraints.
+- [ ] Execution fanout is allowed only with disjoint write scopes, steering-session integration, and file-scope plus collision-domain planning.
+- [ ] `minion` explicitly defers locks, cron/watch, auto-amend, auto-ack, cross-branch orchestration, and PR actions.
 - [ ] Transient report path convention is documented under `.codex/state/tmp/minion-*`.
-- [ ] `minion` references a report-only worker custom agent but does not create or edit `.codex/agents/worker.toml`.
+- [ ] `minion` references a scoped worker custom agent but does not create or edit `.codex/agents/worker.toml`.
 
 **Agent Handoff Packet**
 
 - **Context to read:** PRD FR-008, R-004, AI-001; source Falcon files under `../bootstrap-protocol/.claude/skills/falcon/` only as conceptual input; official Codex subagent documentation cited in the PRD.
-- **Expected public interface:** `$minion` Codex skill invocation and structured report summaries.
-- **What to build:** Report-only Codex subagent fanout workflow and report/state contract. Do not create custom-agent TOML files in this task.
+- **Expected public interface:** `$minion` Codex skill invocation, structured report summaries, and execution worker summaries.
+- **What to build:** Codex subagent fanout workflow and report/execution state contract. Do not create custom-agent TOML files in this task.
 - **Acceptance criteria:** Same checklist as above.
 - **Constraints:** Do not invoke Claude commands; do not implement background cron/watch; do not create PRs; keep transient state gitignored.
 - **Dependencies:** T004, T009.
 - **Parallelization:** Parallel-safe: Yes. Collision domain: minion skill and report schema. Can run with T006, T007, T010. Must not run with T009 because T009 owns `.codex/agents/worker.toml`.
-- **Verification command:** `rg -n "claude --bg|claude agents|claude rm|\\.claude/tmp|auto-amend|auto-ack|cron|PR|write-capable|implementation worker" .agents/skills/minion .codex/agents docs`; expected matches must be explicit deferred-scope statements, not active v1 behavior.
-- **Closeout criteria:** `minion/SKILL.md` and the report schema doc exist, prohibited active behaviors appear only as deferred-scope statements, and a sample report-only prompt/readback fixture is included.
+- **Verification command:** `rg -n "auto-amend|auto-ack|cron|PR actions|default 6|cap.*6|execution mode|disjoint write" .agents/skills/minion .codex/agents docs`; expected matches must show autonomous behaviors as deferred and executable fanout as capped, scoped, and parent-coordinated.
+- **Closeout criteria:** `minion/SKILL.md` and the report schema doc exist, prohibited autonomous behaviors appear only as deferred-scope statements, and sample report-only plus execution prompt/readback fixtures are included.
 
 ### T009: Add Codex custom agents for delegated roles
 
@@ -353,14 +353,14 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **Collision domain:** `.codex/agents/*.toml`, agent role docs, references from session/minion skills.
 - **Can run with:** T007, T010
 - **Must not run with:** T008
-- **What to build:** Add project-scoped custom agent TOML files for repeatable delegated roles such as `navigator`, `reviewer`, report-only `worker`, and optional `scribe`. This task owns `.codex/agents/worker.toml`.
+- **What to build:** Add project-scoped custom agent TOML files for repeatable delegated roles such as `navigator`, `reviewer`, scoped `worker`, and optional `scribe`. This task owns `.codex/agents/worker.toml`.
 - **PRD traceability:** FR-006, FR-008, AI-001, Q-003.
 
 **Acceptance criteria**
 
 - [ ] `.codex/agents/navigator.toml` exists with `name`, `description`, and `developer_instructions`.
 - [ ] `.codex/agents/reviewer.toml` exists with correctness/security/test-gap review instructions.
-- [ ] `.codex/agents/worker.toml` or equivalent exists for `minion` report-only review/research workers; write-capable implementation workers are out of scope for v1.
+- [ ] `.codex/agents/worker.toml` or equivalent exists for `minion` report-only review/research workers and guarded execution workers.
 - [ ] Optional `scribe` role is included only if session-wrapup delegates doc maintenance.
 - [ ] Agent files avoid model/provider/auth assumptions unless explicitly needed and documented.
 
@@ -368,7 +368,7 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 
 - **Context to read:** PRD AI-001, FR-008, Q-003; Decision Brief custom-agent split; official Codex custom-agent documentation cited in the PRD; source navigator/scribe/quartermaster/herald agents under `../bootstrap-protocol/.claude/agents/`.
 - **Expected public interface:** Codex custom agents available to spawned subagent workflows.
-- **What to build:** Narrow TOML custom-agent role definitions, with any `worker` role constrained to report-only `minion` v1 behavior.
+- **What to build:** Narrow TOML custom-agent role definitions, with any `worker` role constrained to explicit minion modes, assigned write scopes, and steering-session integration.
 - **Acceptance criteria:** Same checklist as above.
 - **Constraints:** Include required TOML fields; avoid setting model/provider/auth defaults; keep roles narrow.
 - **Dependencies:** T004.
@@ -723,7 +723,7 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 6. **T006** - Port the planning-chain skills after templates and docs paths are stable.
 7. **T007** - Rewrite session-start/session-wrapup after core skills and state paths exist.
 8. **T009** - Add custom agents; can run alongside T007 after target paths are stable.
-9. **T008** - Implement report-only `minion` after the report-only worker agent contract exists.
+9. **T008** - Implement dual-mode `minion` after the worker agent contract exists.
 10. **T010** - Add verification scripts/scans while implementation proceeds.
 11. **T011** - Integrate installer, assets, and docs once the CLI and assets are ready.
 12. **T012** - Run final acceptance validation after all implementation tasks land.
@@ -748,7 +748,7 @@ Every task intended for Beads fanout must be assignable to one subagent without 
 - **R-001:** Claude-specific path assumptions can survive migration. Mitigate through T010/T012 scans and manual readback.
 - **R-002:** All-skill rewrite scope is broad. Mitigate by keeping tasks vertical and preserving traceability.
 - **R-003:** Mandatory Beads can block real install validation. Mitigate by making dry-run independent and documenting exact commands when real install is skipped.
-- **R-004:** Large `minion` fanouts can become hard to synthesize. Mitigate through default 10-way fanout, warnings, and collision planning.
+- **R-004:** `minion` fanouts can become hard to synthesize and merge. Mitigate through default 6-way fanout, a hard cap of 6 workers, execution warnings, and collision planning.
 - **R-005:** Codex project config/hooks may require project trust. Mitigate through `docs/opt-in-configs.md` and verification notes.
 - **R-006:** Relocation to `/home/echo/dev` can break if paths are hardcoded. Mitigate through relative path resolution and relocation scans.
 - **R-007:** Interactive Bash flows can become hard to test. Mitigate by reusing existing planner/report functions, keeping prompt functions thin, and adding T018 verification.

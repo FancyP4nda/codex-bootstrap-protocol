@@ -35,7 +35,7 @@ canonical_next_artifact: project_plan
   - Require Beads (`bd`) as a mandatory preinstalled dependency.
   - Keep project `.codex/config.toml` minimal and non-invasive.
   - Ship hooks/rules as opt-in examples with documentation, not active enforcement.
-  - Make `minion` report-only in v1, default to 10-way fanout, and impose no scaffold-level hard cap.
+  - Make `minion` dual-mode: report-only for analysis and guarded write-capable execution for explicit implementation requests, defaulting to 6-way fanout with a hard cap of 6 workers.
   - Validate disposable installs under `/tmp` and keep the repo relocation-safe for a later move to `/home/echo/dev`.
   - Add an interactive `bootstrap` wizard for human use when required choices are missing.
   - Preserve non-interactive invocation for Codex agents, scripts, CI, and non-TTY contexts.
@@ -152,7 +152,7 @@ canonical_next_artifact: project_plan
   - **Source:** Follow-up skill naming decision
   - **Acceptance criteria:** AC-014
 
-- **FR-008 Minion fanout:** The scaffold must include a report-only `minion` workflow for explicit Codex subagent fanout.
+- **FR-008 Minion fanout:** The scaffold must include a `minion` workflow for explicit Codex subagent fanout in report-only or guarded execution mode.
   - **Priority:** Must
   - **Source:** Follow-up minion decision
   - **Acceptance criteria:** AC-015, AC-016, AC-017
@@ -295,17 +295,17 @@ canonical_next_artifact: project_plan
 
 **Requirement coverage:** FR-008
 
-**Scenario:** Operator asks for parallel subagent review or research
+**Scenario:** Operator asks for parallel subagent review, research, or implementation
 
 - **Given** the target contains the `minion` skill and Codex subagent support is available
 - **When** the operator invokes `minion` with a fanout request
-- **Then** the workflow plans the fanout, launches explicit subagents, collects structured reports, and summarizes outcomes
+- **Then** the workflow plans the fanout, launches explicit subagents, collects structured reports or execution results, and summarizes outcomes
 
 **Acceptance criteria**
 
-- **AC-015:** `minion` defaults to 10-way fanout when the user does not request a different number.
-- **AC-016:** `minion` imposes no scaffold-level hard cap and warns that practical limits are subject to Codex runtime, account, and environment constraints.
-- **AC-017:** `minion` v1 is report-only. Write-heavy fanout requests must be converted to planning/review reports or explicitly deferred; write-capable dispatch requires a later phase with file-scope and collision-domain planning.
+- **AC-015:** `minion` defaults to 6-way fanout when the user does not request a different number.
+- **AC-016:** `minion` caps fanout at 6 workers and warns that practical limits are subject to Codex runtime, account, and environment constraints.
+- **AC-017:** `minion` supports report-only work and explicit write-capable execution. Execution fanout must define disjoint write scopes, keep commits/pushes/Beads closeout in the steering session, and require file-scope plus collision-domain planning before dispatch.
 
 ### US-008: Review optional configs before enabling
 
@@ -523,9 +523,9 @@ canonical_next_artifact: project_plan
   - **Impact:** Medium
   - **Mitigation:** Fail before writes with exact corrective instructions.
 
-- **R-004:** Large `minion` fanouts can create token, approval, resource, and synthesis overhead.
+- **R-004:** `minion` fanouts can create token, approval, resource, merge, and synthesis overhead.
   - **Impact:** Medium
-  - **Mitigation:** Default to 10, warn on large fanout, and require collision-domain planning for write-heavy fanout.
+  - **Mitigation:** Default to 6, cap fanout at 6 workers, warn on execution fanout, and require collision-domain planning for write-capable work.
 
 - **R-005:** `.codex/config.toml` and project-local hooks may be ignored until the project is trusted.
   - **Impact:** Medium
