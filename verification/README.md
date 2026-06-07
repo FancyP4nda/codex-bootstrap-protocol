@@ -133,3 +133,39 @@ find "$tmp_target" -maxdepth 2 -type f -o -type d
 Expected T012 result: real install fails before writing scaffold files, prints
 an actionable missing-`bd` message, and does not try to install packages or use
 network access. Dry-run mode remains allowed without `bd`.
+
+## T012 Final Acceptance Evidence
+
+Recorded 2026-06-07 for Beads issue `codex-bootstrap-protocol-u2f.3`.
+
+- `./verification/run-static-checks.sh`: passed. Evidence covered shell syntax
+  for `bootstrap` and verification helpers, no live `.claude/*` runtime
+  references in installed Codex asset roots, documented `.claude` migration
+  allowlists, and no hardcoded `/home/echo/ACC` runtime dependencies outside
+  documented allowlists.
+- `./bootstrap --help`: passed and documented `<target>`, `--prefix`,
+  `--dry-run`, `--force`, Beads prerequisite behavior, and manifest-driven
+  install planning.
+- `./bootstrap --dry-run /tmp/cbp-t012-dry-run.D3lXDG --prefix T12`: passed.
+  Output reported `bd_required: no`, all manifest-managed scaffold paths plus
+  planned `.beads/` initialization, `conflicts: none`, and the dry-run target
+  readback showed only the target root directory.
+- Missing-`bd` simulation using a constrained `PATH` with no `bd`: passed.
+  `./bootstrap /tmp/cbp-t012-missing-bd.7bPYmv --prefix T12` exited non-zero,
+  printed the missing-`bd` prerequisite message, and target readback showed only
+  the target root directory.
+- Disposable install/readback:
+  `./bootstrap /tmp/cbp-t012-install.YoiloL --prefix T12` passed. Readback
+  confirmed `AGENTS.md`, `.agents/`, `.codex/`, `docs/`, `.beads/`, and no
+  `.claude/` runtime directory.
+- Managed-path conflict check:
+  `/tmp/cbp-t012-conflict.kGvixS` with a preexisting differing `AGENTS.md`
+  passed. Install exited non-zero, reported the `AGENTS.md` conflict with
+  planned action, reason, and suggested resolution, and wrote no scaffold files.
+- Protected-path check:
+  `/tmp/cbp-t012-protected.G2LBX3` with preexisting `.git/` and invalid
+  `.beads/` passed. `--force` did not overwrite protected paths; install
+  blocked on invalid Beads validation and readback confirmed both directories
+  remained present.
+
+No validation was skipped.
