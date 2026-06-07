@@ -3,3 +3,6 @@
 .dolt/
 *.db
 .beads-credential-key
+
+# Codex transient state
+.codex/state/tmp/

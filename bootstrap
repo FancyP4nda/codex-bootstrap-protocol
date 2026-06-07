@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+script_dir() {
+    local src="${BASH_SOURCE[0]}"
+    while [[ -h "$src" ]]; do
+        local dir
+        dir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
+        src="$(readlink "$src")"
+        [[ "$src" != /* ]] && src="$dir/$src"
+    done
+    (cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)
+}
+
+main() {
+    local root
+    root="$(script_dir)"
+    printf 'bootstrap CLI skeleton placeholder\n'
+    printf 'repo root: %s\n' "$root"
+    printf 'T002 implements argument parsing, help text, dry-run, and install planning.\n'
+}
+
+main "$@"
