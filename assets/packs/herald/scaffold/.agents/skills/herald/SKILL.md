@@ -46,7 +46,7 @@ instructions/sandbox through Codex exec. Keep report-only audits read-only.
 
 1. Determine intent using the routing map.
 2. Read relevant context files first (docs/frontend.md, docs/architecture.md, existing components, design docs).
-3. Launch the selected specialist with the spawn_agent tool (`agent_type: <agent name>`), passing the request and the relevant file paths.
+3. Launch the selected specialist through the available native role selector or the compatibility helper described above, passing a bounded request and relevant paths. Do not send unsupported agent_type fields to a generic spawn interface.
 4. Present the specialist's output with design context if needed.
 
 ---
@@ -65,12 +65,12 @@ Check for existing design context:
 ## Cross-Agent Coordination
 
 **Herald:** Reviews, designs, and recommends UI/UX improvements
-**Scribe:** Documents requirements and user stories
-**Quartermaster:** Evaluates technical implementation approach
+**Product architecture workflow:** Documents requirements and user stories
+**Project planning workflow:** Evaluates technical implementation approach
 
-- When Herald work affects requirements → produce handoff for Scribe
-- When Herald recommendations have technical implications → involve Quartermaster
-- Herald NEVER modifies beads directly — coordinate through Scribe
+- When Herald work affects requirements → produce a handoff for `$product-architect`
+- When recommendations have technical implications → hand off to `$project-planner`
+- Herald never modifies Beads directly; steering owns issue coordination
 
 ---
 
@@ -83,4 +83,4 @@ All Herald outputs should include:
 4. **Accessibility Considerations** (always)
 
 User request:
-$ARGUMENTS
+Use the user's current request; no harness-specific argument variable is assumed.

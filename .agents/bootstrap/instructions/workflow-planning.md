@@ -3,7 +3,7 @@
 Purpose: How to scope, structure, and track work items.
 
 > "Work item" / "item" / "issue" here means a **bead**, managed with the beads (`bd`) CLI.
-> **Scope:** installed globally (`~/.agents/bootstrap/instructions/`), so this loads in every repo. The beads (`bd`) steps apply where the repo has a `.beads/` directory; elsewhere, follow the parts that don't depend on it.
+> **Scope:** globally installed reference guidance, loaded only when relevant. Beads steps apply only where .beads exists; Markdown is not an auto-loaded execution rule.
 
 Use this file when **scoping new work** — breaking features into items, setting
 priorities, linking dependencies, and capturing user-requested work mid-session.

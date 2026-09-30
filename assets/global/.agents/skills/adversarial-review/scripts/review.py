@@ -41,6 +41,14 @@ try:
         result = subprocess.run(command, cwd=isolated, stdin=subprocess.DEVNULL, capture_output=True, text=True,
                                 timeout=args.timeout)
 except (OSError, subprocess.TimeoutExpired) as exc:
+    if provider == 'claude' and args.provider == 'auto' and shutil.which('codex'):
+        fallback = subprocess.run([sys.executable, str(Path(__file__).resolve()), str(p),
+                                   '--provider', 'codex', '--timeout', str(args.timeout)],
+                                  stdin=subprocess.DEVNULL, capture_output=True, text=True)
+        if fallback.returncode == 0:
+            output = json.loads(fallback.stdout)
+            output['skipped_claude'] = f'Claude unavailable ({type(exc).__name__}); same-provider fallback used'
+            print(json.dumps(output)); sys.exit(0)
     sys.exit(f'review: {provider} failed: {exc}; no approval. Retry explicitly with --provider codex if appropriate.')
 if result.returncode:
     if provider == 'claude' and args.provider == 'auto' and shutil.which('codex'):

@@ -146,12 +146,15 @@ def load_stamp(path):
     if not text:
         return {"format": 1, "managed": {}}
     value = json.loads(text)
-    if value.get("format") != 1 or not isinstance(value.get("managed"), dict):
+    if not isinstance(value, dict) or value.get("format") != 1 or not isinstance(value.get("managed"), dict):
         raise ValueError(f"unknown bootstrap metadata format: {path}")
     for rel, digest in value["managed"].items():
         parts = Path(rel).parts
-        if Path(rel).is_absolute() or ".." in parts or not parts or not re.fullmatch(r"[a-f0-9]{64}", digest):
+        if Path(rel).is_absolute() or ".." in parts or not parts or not isinstance(digest,str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
             raise ValueError(f"unsafe managed stamp entry: {rel}")
+    packs = value.get("packs", [])
+    if not isinstance(packs,list) or any(p not in ("falcon","herald","web-design") for p in packs):
+        raise ValueError(f"unsafe pack metadata: {path}")
     return value
 
 
@@ -200,7 +203,8 @@ def main():
                 stamp["managed"].pop(rel, None)
             elif state in ("create", "overwrite", "identical") and Path(full).is_file():
                 stamp["managed"][rel] = hash_file(full)
-        stamp.update({"format": 1, "version": "1.0.0", "source_commit": args.extra[0], "packs": args.extra[1:]})
+        packs = list(dict.fromkeys([*stamp.get("packs", []), *args.extra[1:]]))
+        stamp.update({"format": 1, "version": "1.0.0", "source_commit": args.extra[0], "packs": packs})
         result = json.dumps(stamp, indent=2, sort_keys=True) + "\n"
     sys.stdout.write(result)
 

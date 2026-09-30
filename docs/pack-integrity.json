@@ -4,11 +4,11 @@
     "validation": "first-party native adaptation"
   },
   "herald": {
-    "sha256": "748948e81a619c2621aa813be5487df9c1a64e3de6c430ead8bfdecc97140c54",
+    "sha256": "a79bca3d22a682a13d2d2cd71d46d8c7bb8f22fef9b55ecedc6040cff1f89067",
     "validation": "first-party native adaptation"
   },
   "web-design": {
-    "sha256": "8d19968decccf1922e67d5712e22b1b3139933f2a9acd3c7e7f7251c208887b8",
+    "sha256": "0aeef8d3a4ffee57d2fd6fcd9914f81293d07edf054b667a7da0fabf1be428e5",
     "validation": "unverified: evidence fields remain null"
   }
 }

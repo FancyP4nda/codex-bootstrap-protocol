@@ -67,9 +67,9 @@ export IMPECCABLE_NO_TELEMETRY=1      # stops the concept-choice ping (DO_NOT_TR
 
 Also note: if `OPENAI_API_KEY` is set in your environment, `scripts/generate-image.mjs` can spend that credit against `api.openai.com`.
 
-### Triage findings (2026-07-26)
+### Source-reported triage findings (2026-07-26)
 
-A targeted human read of the executable surface was performed before airlock. **No malicious behavior was found.** Full detail and the adjudication checklist live on bead `z7f`; the open telemetry-payload question is `saa`.
+The source kit reports a targeted human read before airlock with no malicious behavior found. Its source-only beads `z7f` and `saa` were not imported. This inherited report is not new migration evidence or certification; changes still need adjudicated review.
 
 What the code does well: `live-server` binds loopback only and validates origins by exact hostname (defeating `localhost.evil.com` substring attacks); there is **no `eval` or `new Function` anywhere** in the tree; **the edit hook makes no network calls at all**, so the file contents it inspects never leave the machine; it explicitly skips `.env`, `.git/`, `id_rsa*`, `*.pem`, and `*secret*`/`*credential*` files; the audit log is local-only and off unless configured.
 

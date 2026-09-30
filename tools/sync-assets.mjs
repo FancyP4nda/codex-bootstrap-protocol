@@ -25,7 +25,7 @@ for(const rel of ['.agents/skills/minion','.codex/agents']) {
 for(const dir of ['.agents/skills','.codex/agents']) {
   for(const p of files(path.join(scaffold,dir))) fs.unlinkSync(p);
 }
-for(const dir of ['.agents/skills','.codex/agents','.agents/bootstrap/instructions']) {
+for(const dir of ['.agents/skills','.codex/agents','.agents/bootstrap/instructions','.agents/bootstrap/scripts']) {
   for(const p of files(path.join(global,dir))) {
     const dest=path.join(root,dir,path.relative(path.join(global,dir),p));
     fs.mkdirSync(path.dirname(dest),{recursive:true}); fs.copyFileSync(p,dest);

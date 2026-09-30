@@ -3,7 +3,7 @@
 Purpose: Multi-agent coordination and Playwright testing conventions.
 
 > "Work item" / "item" / "issue" here means a **bead**, managed with the beads (`bd`) CLI.
-> **Scope:** installed globally (`~/.agents/bootstrap/instructions/`), so this loads in every repo. The beads (`bd`) steps apply where the repo has a `.beads/` directory; elsewhere, follow the parts that don't depend on it.
+> **Scope:** installed globally (`~/.agents/bootstrap/instructions/`) and loaded only when referenced instructions are relevant. Markdown is not an automatically executed rule. Beads steps apply where the repo has `.beads`; elsewhere, omit them.
 
 Use this file when **coordinating multiple agents** on the same project or running
 **Playwright tests** for UI verification. It is not needed for single-agent
@@ -122,12 +122,12 @@ Examples:
 ### Testing Workflow
 
 1. **Before testing:** Ensure the dev server is running
-2. **Install browser if needed:** Use `browser_install` tool
-3. **Navigate to app:** Use `browser_navigate` to load the application
+2. **Check browser tooling:** Use the available Playwright/browser integration. Missing tooling needs explicit dependency-install approval; no browser tool is assumed bundled.
+3. **Navigate to app:** Use that integration's documented navigation interface
 4. **Take baseline screenshot:** Capture initial state with work item ID (or slug) prefix
 5. **Test interactions:** Use keyboard/mouse tools to test functionality
 6. **Capture results:** Screenshot each significant state change
-7. **Close browser:** Clean up with `browser_close` when done
+7. **Close browser:** Clean up through the available integration when done
 
 ### Screenshot Storage
 

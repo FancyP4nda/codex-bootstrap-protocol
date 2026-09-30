@@ -3,7 +3,7 @@
 Purpose: How to implement work — branching, claiming work items, writing code, committing, and creating pull requests.
 
 > "Work item" / "item" / "issue" here means a **bead**, managed with the beads (`bd`) CLI.
-> **Scope:** installed globally (`~/.agents/bootstrap/instructions/`), so this loads in every repo. The beads (`bd`) steps apply where the repo has a `.beads/` directory; elsewhere, follow the parts that don't depend on it.
+> **Scope:** globally installed reference guidance, loaded only when relevant. Beads steps apply only where .beads exists; Markdown is not an auto-loaded execution rule.
 
 Use this file **during implementation**. It is the primary reference while you
 are actively writing code. It covers the claim/execute checklists, branching
