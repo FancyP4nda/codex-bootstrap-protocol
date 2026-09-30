@@ -15,7 +15,7 @@ canonical_next_artifact: prd
 - **Resolved terminology:** Canonical terms and definitions decided in this session.
 - **Resolved decisions:** Product, domain, architecture, security, privacy, data, or rollout decisions that are now settled.
 - **Unresolved decisions:** Questions that still need HITL input, with likely owner.
-- **Code/doc contradictions:** Any mismatch between stated intent, code behavior, `docs/CONTEXT.md`, ADRs, or other docs.
+- **Code/doc contradictions:** Any mismatch between stated intent, code behavior, `CONTEXT.md`, ADRs, or other docs.
 - **CONTEXT.md updates:** Terms added or changed, or "None".
 - **ADR candidates:** Candidate title and rationale, or "None".
 - **PRD inputs:** Goals, non-goals, constraints, assumptions, risks, and acceptance signals ready for `product-architect`.

@@ -31,6 +31,12 @@ for(const dir of ['.agents/skills','.codex/agents','.agents/bootstrap/instructio
     fs.mkdirSync(path.dirname(dest),{recursive:true}); fs.copyFileSync(p,dest);
   }
 }
+// The builder's reusable artifact templates mirror the project payload too;
+// durable project docs and repo-specific AGENTS remain intentionally distinct.
+for(const p of files(path.join(scaffold,'.agents/templates'))) {
+  const dest=path.join(root,path.relative(scaffold,p));
+  fs.mkdirSync(path.dirname(dest),{recursive:true}); fs.copyFileSync(p,dest);
+}
 function manifest(base,out,filter=()=>true,transient=false) {
   const entries=files(base).map(p=>path.relative(base,p)).filter(p=>filter(p)&&!p.endsWith('manifest.txt')).sort();
   const rows=entries.map(p=>`file\t${p}\tcopy\tManaged Codex asset.`);

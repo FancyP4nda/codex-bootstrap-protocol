@@ -1,6 +1,6 @@
-# {Short Title Of The Decision}
+# {Short title of the decision}
 
-{1-3 sentences: what is the context, what was decided, and why.}
+{1-3 sentences: what's the context, what did we decide, and why.}
 
 <!-- Optional frontmatter when useful:
 ---

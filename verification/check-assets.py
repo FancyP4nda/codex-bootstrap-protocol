@@ -80,10 +80,11 @@ def check(root):
             assert 'model' not in data, p
             agents.append(data['name'])
     assert len(agents) == len(set(agents)), 'duplicate canonical agents'
-    for base in (root/'assets/global/.agents', root/'assets/global/.codex/agents'):
+    for base in (root/'assets/global/.agents', root/'assets/global/.codex/agents', root/'assets/scaffold/.agents/templates'):
         for p in base.rglob('*'):
             if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc':
-                dest = root/p.relative_to(root/'assets/global')
+                payload=root/'assets/scaffold' if base==root/'assets/scaffold/.agents/templates' else root/'assets/global'
+                dest = root/p.relative_to(payload)
                 assert dest.is_file() and p.read_bytes() == dest.read_bytes(), f'kit mirror drift: {dest}'
     inventory = json.loads((root/'docs/source-inventory.json').read_text())
     assert inventory['source_commit'] == 'f89f7f3dffb1150fa7df30b180b397dd25a711f9'
