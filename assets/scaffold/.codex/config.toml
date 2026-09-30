@@ -1,7 +1,2 @@
-project_doc_max_bytes = 65536
-
-[agents]
-max_depth = 1
-
-[features]
-hooks = true
+# Optional native settings are merged by bootstrap only when requested.
+# Project trust and /hooks review remain under the user's control.

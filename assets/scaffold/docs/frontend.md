@@ -1,17 +1,19 @@
 # Frontend
 
-## Runtime
+<!-- Frontend reference: pages, components and conventions. -->
 
-- 
+## Pages
 
-## User Workflows
+<!-- Routes/pages and what each one does. -->
 
-- 
+## Component Patterns
 
-## Design System
+<!-- How components are built and composed. -->
 
-- 
+## Conventions
 
-## Verification
+<!-- Styling, state management, accessibility. -->
 
-- 
+## Key Components
+
+<!-- Shared components worth knowing. -->

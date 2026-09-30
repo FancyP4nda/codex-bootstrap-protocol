@@ -1,17 +1,19 @@
 # Backend
 
-## Runtime
+<!-- Backend reference: routes, services and conventions. -->
 
-- 
+## API Routes
 
-## Interfaces
+<!-- Endpoints: method, path, purpose. -->
 
-- 
+## Service Pattern
 
-## Persistence
+<!-- How services are structured. -->
 
-- 
+## Conventions
 
-## Verification
+<!-- Error handling, validation, logging. -->
 
-- 
+## Key Modules
+
+<!-- The modules a newcomer should know about. -->

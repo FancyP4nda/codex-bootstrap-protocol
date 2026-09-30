@@ -1,2 +1,4 @@
+# Transient scratch space (session temp files). Everything here is ignored.
+# Ignore everything in here except this placeholder.
 *
 !.gitignore

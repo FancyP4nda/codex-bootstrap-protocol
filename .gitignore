@@ -6,3 +6,9 @@
 
 # Codex transient state
 .codex/state/tmp/
+__pycache__/
+*.pyc
+.beads.gate.lock
+.beads/*.lock
+.beads/.auto-import-issues.jsonl
+bootstrap-backups/

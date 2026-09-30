@@ -1,13 +1,16 @@
 # Artifact Templates
 
-Canonical templates for Bootstrap Protocol planning artifacts.
+Templates for the planning artifacts the workflow skills write. Edit them to change the shape of this project's briefs, PRD and plans; the skills fall back to their own bundled copies when a file here is missing.
 
-These files are references for skills and operators. They are not copied into `docs/` as active project artifacts during initialization. Real artifacts are created by the owning skills when that workflow stage runs.
+These files are references for skills and operators. The installer ships short
+placeholders in `docs/` (e.g. `prd.md`, `decision-brief.md`) to mark where real
+artifacts go; the owning skills write the real artifacts from these templates when that
+workflow stage runs, replacing the placeholders.
 
 | Artifact | Template | Owner |
 |---|---|---|
 | Opportunity Brief | `opportunity-brief.md` | `brainstormer` |
 | Decision Brief | `decision-brief.md` | `grill-with-docs` |
 | ADR | `adr.md` | `grill-with-docs` |
-| PRD | `prd.md.hbs` | `product-architect` |
+| PRD | `prd.md` | `product-architect` |
 | Project Plan | `project-plan.md` | `project-planner` |

@@ -2,7 +2,7 @@
 workflow_artifact: project_plan
 artifact_version: 1
 source_mode: existing_project
-status: approved
+status: draft
 upstream_ids: [OPP-001]
 recommended_next_skill: plan-to-beads-unified
 canonical_next_artifact: execution_task
@@ -21,7 +21,7 @@ canonical_next_artifact: execution_task
 
 ## Epics
 
-### E01: Epic Title
+### E01: Epic title
 
 - **Goal:** Outcome this epic unlocks.
 - **PRD coverage:** PRD section, requirement, or user story references.
@@ -29,7 +29,7 @@ canonical_next_artifact: execution_task
 
 ## Tasks
 
-### T001: Task Title
+### T001: Task title
 
 - **Epic:** E01
 - **Type:** AFK / HITL
@@ -39,7 +39,6 @@ canonical_next_artifact: execution_task
 - **Collision domain:** Files/modules/contracts/data likely to be touched.
 - **Can run with:** T000 / Unknown
 - **Must not run with:** T000 / None
-- **What to build:** One narrow end-to-end behavior.
 - **PRD traceability:** PRD section, requirement, or user story references.
 
 **Acceptance criteria**
@@ -52,11 +51,8 @@ canonical_next_artifact: execution_task
 
 - **Context to read:** `docs/prd.md` sections, relevant files, or commands.
 - **Expected public interface:** UI/API/CLI/event/config/documented behavior.
-- **What to build:** One narrow end-to-end behavior.
-- **Acceptance criteria:** Same checklist as above.
 - **Constraints:** Relevant security, privacy, compatibility, dependency, rollout, or data constraints.
 - **Dependencies:** Hard blockers and assumptions.
-- **Parallelization:** Parallel-safe, collision domain, can run with, must not run with.
 - **Verification command:** Smallest relevant test/check command, plus broader command if known.
 - **Closeout criteria:** Tests pass, acceptance criteria checked, tracker updated, follow-ups filed.
 
@@ -65,11 +61,11 @@ canonical_next_artifact: execution_task
 1. T001 - reason it comes first.
 2. T002 - dependency or value rationale.
 
-## Risks And Open Questions
+## Risks and Open Questions
 
 - Risk or question, with the task or epic it affects.
 
-## Handoff To `plan-to-beads-unified`
+## Handoff to `plan-to-beads-unified`
 
 Use this approved plan plus the parent PRD as input to `plan-to-beads-unified`.
 

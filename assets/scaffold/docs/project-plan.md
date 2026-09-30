@@ -1,12 +1,16 @@
 # Project Plan
 
+> Placeholder — the implementation plan is generated here by `project-planner`
+> from the template at `.agents/templates/artifacts/project-plan.md`, then
+> bridged to beads via `plan-to-beads-unified`.
+
 ## Status
 
 draft
 
 ## Epics
 
-- 
+-
 
 ## Tasks
 
@@ -16,4 +20,4 @@ criteria.
 
 ## Execution Notes
 
-- 
+-

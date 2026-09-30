@@ -8,7 +8,7 @@ recommended_next_skill: grill-with-docs
 canonical_next_artifact: decision_brief
 ---
 
-## OPP-001: Opportunity Title
+## OPP-001: Opportunity title
 
 - **Mode:** New idea / Existing project
 - **Problem:** Pain point or unmet need.

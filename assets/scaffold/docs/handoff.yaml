@@ -1,8 +1,6 @@
-version: 1
-project:
-  name: ""
-  status: draft
-active_work: []
-decisions: []
-verification: []
-next_steps: []
+# Handoff — session state log
+# Captures where work stands at the end of each session. Newest entry first.
+# $session-start reads entries[0]; $session-wrapup prepends a new entry.
+# Schema reference: ~/.agents/skills/session-wrapup/handoff-schema.md (installed by codex-bootstrap)
+# Quote commit hashes — e.g. ["abc1234"] not [abc1234].
+entries: []

@@ -1,32 +1,9 @@
-# Project Context
+# Context
 
-## Purpose
+<!-- The project's domain glossary: each term defined once here and referenced everywhere else. grill-with-docs and $session-wrapup add entries under Language. No implementation details. -->
 
-Describe what this project exists to accomplish, who it serves, and what outcome
-the current work should produce.
+## Language
 
-## Domain Language
-
-Define project-specific terms here so future agents use the same vocabulary.
-
-## Current Shape
-
-- Product surface:
-- Runtime surface:
-- Data surface:
-- Operational surface:
-
-## Constraints
-
-- Security:
-- Privacy:
-- Compatibility:
-- Deployment:
-
-## Active Decisions
-
-Link durable decisions to files under `docs/adr/`.
-
-## Verification
-
-List the commands that prove the current project is healthy.
+<!-- **Term**:
+Definition in one or two sentences.
+_Avoid_: synonyms not to use -->

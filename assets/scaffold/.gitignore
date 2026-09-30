@@ -1,3 +1,16 @@
 # Target-local transient Codex state
+bootstrap-backups/
 .codex/state/tmp/*
 !.codex/state/tmp/.gitignore
+.playwright-mcp/
+
+# Local credentials — never commit.
+# `.env.*` covers .env.local, .env.production, and similar; the negation keeps a
+# committed .env.example working as onboarding documentation.
+.env
+.env.*
+!.env.example
+
+# bd runtime state (lock file, auto-import staging)
+.beads.gate.lock
+.beads/.auto-import-issues.jsonl

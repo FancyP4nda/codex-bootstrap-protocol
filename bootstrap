@@ -1,656 +1,419 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-script_dir() {
-    local src="${BASH_SOURCE[0]}"
-    while [[ -h "$src" ]]; do
-        local dir
-        dir="$(cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)"
-        src="$(readlink "$src")"
-        [[ "$src" != /* ]] && src="$dir/$src"
+resolve_script_dir() {
+    local src="${BASH_SOURCE[0]}" dir
+    while [[ -L "$src" ]]; do
+        dir="$(cd -P -- "$(dirname -- "$src")" && pwd)"
+        src="$(readlink -- "$src")"
+        [[ "$src" == /* ]] || src="$dir/$src"
     done
-    (cd -P "$(dirname "$src")" >/dev/null 2>&1 && pwd)
+    cd -P -- "$(dirname -- "$src")" && pwd
 }
-
+KIT_DIR="$(resolve_script_dir)"
+info() { printf '[*] %s\n' "$*"; }
+die() { printf 'bootstrap: %s\n' "$*" >&2; exit 2; }
 usage() {
     cat <<'EOF'
 Usage:
-  ./bootstrap [--interactive] [--dry-run] [--force] [<target>] [--prefix <PREFIX>]
-  ./bootstrap --non-interactive [--dry-run] [--force] <target> --prefix <PREFIX>
-  ./bootstrap [--dry-run] [--force] --prefix <PREFIX> <target>
-  ./bootstrap [--dry-run] [--force] <target> --prefix <PREFIX>
-
-Required arguments:
-  <target>              Target project directory to inspect or install into.
-  --prefix <PREFIX>     Short identifier used by the target Beads database.
+  ./bootstrap --install-command [--update-path]
+  codex-bootstrap [--interactive]
+  codex-bootstrap <target> --prefix <PREFIX> [options]
+  codex-bootstrap --global-only [--update-global]
+  codex-bootstrap --doctor
+  codex-bootstrap --uninstall-command [--update-path]
 
 Options:
-  --interactive         Run the guided TTY wizard when required choices are
-                        missing. Requires a terminal and is not used in CI.
-  --non-interactive     Never prompt. Requires <target> and --prefix <PREFIX>.
-                        This is the default in CI or non-TTY contexts.
-  --dry-run             Print planned creates, skips, and conflicts without
-                        writing files. Does not require bd.
-  --force               Overwrite differing managed scaffold files only.
-                        Does not overwrite .beads/, .git/, credentials,
-                        symlinks, transient state contents, or unmanaged paths.
-  -h, --help            Show this help text.
+  --interactive | --non-interactive  Wizard or deterministic automation.
+  --dry-run                          Combined write-free preflight; no launch.
+  --force                            Back up and overwrite base/core managed files.
+  --pack <falcon|herald|web-design>    Repeat for multiple packs.
+  --allow-unverified-pack             Acknowledge web-design's incomplete evidence.
+  --local-core                       Self-contained project; skip global core.
+  --update-global                    Back up differing global files; retire unchanged obsolete files.
+  --promote-global | --no-promote-global
+                                     Opt in/out of personal configuration promotion.
+  --status-line --notifications --hooks --docs-mcp
+                                     Optional native configuration (project by default).
+  --launch | --no-launch              Launch only with a TTY, after successful setup.
+  --install-command --uninstall-command
+                                     Manage ~/.local/bin/codex-bootstrap symlink.
+  --update-path                      Opt-in idempotent Bash/Zsh/Fish PATH setup/removal.
+  --global-only                      Global core/config only; Beads not required.
+  --doctor                           Read-only prerequisite/config/discovery checks.
+  -h, --help                         Show this help.
 
-Notes:
-  TTY invocations with missing required choices route into interactive mode.
-  CI, non-TTY, and explicit --non-interactive invocations require all inputs and
-  exit instead of waiting for input.
-  The installer reads assets/scaffold/manifest.txt as the managed-path
-  contract. Real installs require bd and fail before target writes when bd is
-  unavailable or when managed-path conflicts are present.
+Missing global core is installed automatically. Existing differences require
+--update-global; local extras and modified obsolete files are kept. Existing
+Beads skips --prefix and is validated; new initialization requires a prefix.
+Non-TTY/CI never prompts or launches. Real project setup requires Bash, Python
+3.11+, Git, Codex CLI and Beads; dry-run does not require Codex/Beads.
+Hooks must be reviewed through /hooks after trusting the project in Codex.
 EOF
 }
-
-die() {
-    printf 'bootstrap: %s\n\n' "$1" >&2
-    usage >&2
-    exit 2
+TARGET_DIR="" BD_PREFIX="" FORCE=0 DRY_RUN=0 UPDATE_GLOBAL=0 GLOBAL_ONLY=0 LOCAL_CORE=0
+MODE=auto LAUNCH=ask PROMOTE=0 STATUS=0 NOTIFICATIONS=0 HOOKS=0 DOCS_MCP=0
+ALLOW_UNVERIFIED=0 COMMAND_MODE="" UPDATE_PATH=0 DOCTOR=0
+PACKS=()
+ENTRY_KIND=() ENTRY_PATH=() ENTRY_SRCROOT=() ENTRY_DESTROOT=() ENTRY_POLICY=()
+PLAN_STATE=() PLAN_FATAL=() OBSOLETE_ROOT=() OBSOLETE_REL=() OBSOLETE_STATE=()
+STAGE="" RUN_ID="$(date -u +%Y%m%dT%H%M%S)-$$" NEW_PROJECT=0
+SOURCE_COMMIT=f89f7f3dffb1150fa7df30b180b397dd25a711f9
+source "$KIT_DIR/lib/plan-engine.sh"
+need() {
+    command -v "$1" >/dev/null 2>&1 || die "missing prerequisite '$1'. Install $2, then rerun the same command; bootstrap installs no packages."
 }
-
-error_exit() {
-    printf 'bootstrap: %s\n' "$1" >&2
-    exit "${2:-1}"
-}
-
-set_target() {
-    local value="$1"
-    local -n target_var="$2"
-
-    if [[ -n "$target_var" ]]; then
-        die "unexpected extra argument: $value"
-    fi
-
-    target_var="$value"
-}
-
+canon() { python3 -c 'import os,sys; p=os.path.abspath(os.path.expanduser(sys.argv[1])); assert not any(c in p for c in "\t\n\r"), "control characters in path"; print(p)' "$1"; }
+confirm() { local answer; read -r -p "$1 [y/N] " answer || return 1; [[ "$answer" == [yY] || "$answer" == [yY][eE][sS] ]]; }
 parse_args() {
-    local -n target_ref="$1"
-    local -n prefix_ref="$2"
-    local -n dry_run_ref="$3"
-    local -n force_ref="$4"
-    local -n mode_ref="$5"
-    shift 5
-
     while (($#)); do
         case "$1" in
-            -h|--help)
-                usage
-                exit 0
-                ;;
-            --dry-run)
-                dry_run_ref=1
-                shift
-                ;;
-            --force)
-                force_ref=1
-                shift
-                ;;
-            --interactive)
-                if [[ "$mode_ref" == "non_interactive" ]]; then
-                    die "choose either --interactive or --non-interactive, not both"
-                fi
-                mode_ref="interactive"
-                shift
-                ;;
-            --non-interactive)
-                if [[ "$mode_ref" == "interactive" ]]; then
-                    die "choose either --interactive or --non-interactive, not both"
-                fi
-                mode_ref="non_interactive"
-                shift
-                ;;
-            --prefix)
-                shift
-                if (($# == 0)) || [[ "$1" == -* ]]; then
-                    die "--prefix requires a value"
-                fi
-                prefix_ref="$1"
-                shift
-                ;;
-            --prefix=*)
-                prefix_ref="${1#*=}"
-                if [[ -z "$prefix_ref" ]]; then
-                    die "--prefix requires a value"
-                fi
-                shift
-                ;;
-            --)
-                shift
-                while (($#)); do
-                    set_target "$1" target_ref
-                    shift
-                done
-                ;;
-            -*)
-                die "unknown option: $1"
-                ;;
-            *)
-                set_target "$1" target_ref
-                shift
-                ;;
+            --prefix|--pack)
+                [[ $# -ge 2 && -n "$2" && "$2" != -* ]] || die "$1 requires a value"
+                if [[ "$1" == --prefix ]]; then BD_PREFIX="$2"; else PACKS+=("$2"); fi
+                shift 2;;
+            --prefix=*) BD_PREFIX="${1#*=}"; shift;;
+            --pack=*) PACKS+=("${1#*=}"); shift;;
+            --force) FORCE=1; shift;;
+            --dry-run) DRY_RUN=1; shift;;
+            --global-only) GLOBAL_ONLY=1; shift;;
+            --local-core) LOCAL_CORE=1; shift;;
+            --update-global) UPDATE_GLOBAL=1; shift;;
+            --interactive|--non-interactive)
+                [[ "$MODE" == auto || "$MODE" == "${1#--}" ]] || die "choose one interaction mode"
+                MODE="${1#--}"; shift;;
+            --launch) LAUNCH=yes; shift;;
+            --no-launch) LAUNCH=no; shift;;
+            --promote-global) PROMOTE=1; shift;;
+            --no-promote-global) PROMOTE=0; shift;;
+            --status-line) STATUS=1; shift;;
+            --notifications) NOTIFICATIONS=1; shift;;
+            --hooks) HOOKS=1; shift;;
+            --docs-mcp) DOCS_MCP=1; shift;;
+            --allow-unverified-pack) ALLOW_UNVERIFIED=1; shift;;
+            --install-command|--uninstall-command)
+                [[ -z "$COMMAND_MODE" ]] || die "choose one command setup action"
+                COMMAND_MODE="${1#--}"; shift;;
+            --update-path) UPDATE_PATH=1; shift;;
+            --doctor) DOCTOR=1; shift;;
+            -h|--help) usage; exit 0;;
+            --) shift; [[ $# == 1 && -z "$TARGET_DIR" ]] || die "expected one target"; TARGET_DIR="$1"; shift;;
+            -*) die "unknown option: $1";;
+            *) [[ -z "$TARGET_DIR" ]] || die "unexpected extra target: $1"; TARGET_DIR="$1"; shift;;
         esac
     done
 }
-
-is_ci_context() {
-    [[ -n "${CI:-}" ]]
+prepare_stage() {
+    STAGE="$(mktemp -d "${TMPDIR:-/tmp}/codex-bootstrap.XXXXXX")"
+    trap 'if [[ -n "$STAGE" && -d "$STAGE" ]]; then rm -rf -- "$STAGE"; fi' EXIT
 }
-
-has_tty_context() {
-    [[ -t 0 && -t 1 ]]
-}
-
-resolve_mode() {
-    local requested_mode="$1" target="$2" prefix="$3"
-    local -n resolved_mode_ref="$4"
-
-    if [[ "$requested_mode" != "auto" ]]; then
-        resolved_mode_ref="$requested_mode"
-        return 0
-    fi
-
-    if [[ -n "$target" && -n "$prefix" ]]; then
-        resolved_mode_ref="non_interactive"
-        return 0
-    fi
-
-    if ! is_ci_context && has_tty_context; then
-        resolved_mode_ref="interactive"
-        return 0
-    fi
-
-    resolved_mode_ref="non_interactive"
-}
-
-validate_non_interactive_inputs() {
-    local target="$1" prefix="$2"
-    local -a missing=()
-
-    [[ -n "$target" ]] || missing+=("<target>")
-    [[ -n "$prefix" ]] || missing+=("--prefix <PREFIX>")
-
-    if ((${#missing[@]})); then
-        die "missing required inputs in non-interactive mode: ${missing[*]}"
-    fi
-
-    [[ "$prefix" =~ ^[A-Za-z0-9_-]+$ ]] \
-        || die "invalid --prefix '$prefix'; allowed: letters, digits, hyphen, underscore"
-}
-
-run_interactive_mode() {
-    local target="$1" prefix="$2"
-    local reason="interactive mode was selected"
-    if [[ -z "$target" || -z "$prefix" ]]; then
-        reason="required choices are missing"
-    fi
-
-    cat >&2 <<'EOF'
-bootstrap: starting interactive mode.
-EOF
-    printf 'Reason: %s.\n' "$reason" >&2
-    cat >&2 <<'EOF'
-Interactive prompt collection is reserved for the follow-on wizard tasks, so no
-target files were written.
-
-For automation, provide all required inputs:
-  ./bootstrap --non-interactive <target> --prefix <PREFIX>
-EOF
-    return 2
-}
-
-normalize_rel_path() {
-    local rel="$1"
-    rel="${rel#./}"
-    rel="${rel%/}"
-    printf '%s\n' "$rel"
-}
-
-path_has_parent_ref() {
-    local rel="$1" part
-    IFS='/' read -r -a parts <<<"$rel"
-    for part in "${parts[@]}"; do
-        [[ "$part" == ".." ]] && return 0
-    done
-    return 1
-}
-
-path_has_component() {
-    local rel="$1" wanted="$2" part
-    IFS='/' read -r -a parts <<<"$rel"
-    for part in "${parts[@]}"; do
-        [[ "$part" == "$wanted" ]] && return 0
-    done
-    return 1
-}
-
-is_credential_path() {
-    local rel="$1" base
-    base="$(basename -- "$rel")"
-    case "$base" in
-        .env|.env.*|*credential*|*credentials*|*secret*|*secrets*|*token*|*tokens*|id_rsa|id_dsa|id_ecdsa|id_ed25519)
-            return 0
-            ;;
+helper() { python3 "$KIT_DIR/lib/native-config.py" "$@"; }
+stage_candidate() {
+    local rel="$1" dest="$2" mode="$3" source="${4:-}"
+    local candidate="$STAGE/$dest/$rel" parent
+    # stage namespace contains no user-derived relative components.
+    mkdir -p -- "$(dirname -- "$candidate")"
+    case "$mode" in
+        instructions|ignore) helper "$mode" "$5/$rel" "$source" > "$candidate";;
+        *) die "unknown stage mode";;
     esac
-    return 1
 }
-
-is_protected_manifest_path() {
-    local rel="$1"
-    path_has_component "$rel" ".git" && return 0
-    path_has_component "$rel" ".beads" && return 0
-    is_credential_path "$rel" && return 0
-    return 1
+append_file() {
+    ENTRY_KIND+=(file); ENTRY_PATH+=("$1"); ENTRY_SRCROOT+=("$2")
+    ENTRY_DESTROOT+=("$3"); ENTRY_POLICY+=("${4:-merge}")
 }
-
-validate_manifest_path() {
-    local rel="$1"
-    [[ -n "$rel" ]] || return 1
-    [[ "$rel" != /* ]] || return 1
-    [[ "$rel" != "." ]] || return 1
-    path_has_parent_ref "$rel" && return 1
+config_layer() {
+    local dest="$1" namespace="$2" config hooks command existing global_hooks
+    config="$dest/config.toml"; hooks="$dest/hooks.json"
+    check_ancestors "$dest" config.toml; check_ancestors "$dest" hooks.json
+    local opts=()
+    [[ "$STATUS" != 1 ]] || opts+=(--status-line)
+    [[ "$NOTIFICATIONS" != 1 ]] || opts+=(--notifications)
+    [[ "$DOCS_MCP" != 1 ]] || opts+=(--docs-mcp)
+    mkdir -p -- "$STAGE/$namespace"
+    local config_source="$config"
+    [[ -f "$config" ]] || config_source="$KIT_DIR/assets/scaffold/.codex/config.toml"
+    helper config "$config_source" "${opts[@]}" > "$STAGE/$namespace/config.toml"
+    if [[ -s "$STAGE/$namespace/config.toml" || -f "$config" ]]; then
+        append_file config.toml "$STAGE/$namespace" "$dest" merge
+        [[ ! -f "$config" ]] || diff -u -- "$config" "$STAGE/$namespace/config.toml" || [[ $? == 1 ]]
+    fi
+    if [[ "$HOOKS" == 1 ]]; then
+        if [[ "$namespace" == project && "$dest" != "$CODEX_USER_DIR" ]]; then
+            global_hooks="$(python3 -c 'import json,sys,tomllib,pathlib; p=pathlib.Path(sys.argv[1]); t=(p/"hooks.json"); c=(p/"config.toml"); data=[json.loads(t.read_text()) if t.exists() else {},tomllib.loads(c.read_text()) if c.exists() else {}]; print(int(any("Codex bootstrap orientation" in json.dumps(x.get("hooks",{})) for x in data)))' "$CODEX_USER_DIR")"
+            if [[ "$global_hooks" == 1 ]]; then info "Global bootstrap orientation hook already exists; project duplicate skipped."; return; fi
+        fi
+        command="$(python3 -c 'import shlex,sys; print("python3 "+shlex.quote(sys.argv[1]))' "$dest/hooks/session-context.py")"
+        helper hooks "$hooks" "$command" "$config" > "$STAGE/$namespace/hooks.json"
+        append_file hooks.json "$STAGE/$namespace" "$dest" merge
+        append_file hooks/session-context.py "$KIT_DIR/assets/native-parent" "$dest" merge
+        # source helper is staged at the install-relative path.
+        mkdir -p -- "$STAGE/$namespace/hooks"
+        cp -p -- "$KIT_DIR/assets/native/session-context.py" "$STAGE/$namespace/hooks/session-context.py"
+        ENTRY_SRCROOT[${#ENTRY_SRCROOT[@]}-1]="$STAGE/$namespace"
+    fi
+}
+doctor() {
+    local failures=0 cmd p
+    for cmd in bash python3 git codex bd; do
+        if command -v "$cmd" >/dev/null 2>&1; then info "$cmd: $(command -v "$cmd")"
+        else info "$cmd: missing (install before project bootstrap)"; failures=1; fi
+    done
+    for p in "$CODEX_USER_DIR/config.toml" "${TARGET_DIR:-$PWD}/.codex/config.toml"; do
+        [[ ! -f "$p" ]] || python3 -c 'import tomllib,sys; tomllib.load(open(sys.argv[1],"rb"))' "$p" || failures=1
+    done
+    for p in "$CODEX_USER_DIR/hooks.json" "${TARGET_DIR:-$PWD}/.codex/hooks.json"; do
+        [[ ! -f "$p" ]] || python3 -m json.tool "$p" >/dev/null || failures=1
+    done
+    info "Skills: $USER_SKILLS_DIR; agents/config: $CODEX_USER_DIR"
+    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR" || failures=1
+    info "Review project trust in Codex, then use /hooks; no trust records are created."
+    return "$failures"
+}
+command_setup() {
+    local bin="$USER_ROOT/.local/bin" link rcfile="" path_text="" shell_name="${SHELL##*/}"
+    link="$bin/codex-bootstrap"
+    check_ancestors "$bin" .; # final command symlink is allowed only when owned.
+    if [[ -e "$link" || -L "$link" ]]; then
+        [[ -L "$link" && "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "$KIT_DIR/bootstrap" ]] || die "command collision at $link; move the existing command explicitly"
+    fi
+    if [[ "$COMMAND_MODE" == install-command ]]; then
+        local resolved
+        resolved="$(command -v codex-bootstrap || true)"
+        [[ -z "$resolved" || "$resolved" == "$link" ]] || die "another codex-bootstrap shadows $link on PATH: $resolved; reconcile PATH before setup"
+    fi
+    if [[ "$UPDATE_PATH" == 1 ]]; then
+        case "$shell_name" in
+            bash) rcfile="$USER_ROOT/.bashrc"; path_text='export PATH="$HOME/.local/bin:$PATH"';;
+            zsh) rcfile="$USER_ROOT/.zshrc"; path_text='export PATH="$HOME/.local/bin:$PATH"';;
+            fish) rcfile="$USER_ROOT/.config/fish/config.fish"; path_text='fish_add_path -m "$HOME/.local/bin"';;
+            *) die "unknown shell $shell_name; add $bin to PATH manually, then rerun without --update-path";;
+        esac
+        check_ancestors "$(dirname -- "$rcfile")" "${rcfile##*/}"
+        python3 "$KIT_DIR/lib/command-path.py" "$COMMAND_MODE" "$rcfile" "$path_text" > "$STAGE/path-candidate"
+    fi
+    info "$COMMAND_MODE: $link -> $KIT_DIR/bootstrap"
+    [[ "$UPDATE_PATH" != 1 ]] || diff -u -- "${rcfile:-/dev/null}" "$STAGE/path-candidate" 2>/dev/null || true
+    [[ "$DRY_RUN" != 1 ]] || return 0
+    if [[ "$COMMAND_MODE" == install-command ]]; then
+        mkdir -p -- "$bin"
+        [[ -L "$link" ]] || ln -s -- "$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "$KIT_DIR/bootstrap" "$bin")" "$link"
+        [[ "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "$KIT_DIR/bootstrap" ]] || die "command resolution failed; rerun --install-command"
+        "$link" --help >/dev/null || die "installed command failed verification"
+    elif [[ -L "$link" ]]; then
+        rm -f -- "$link"
+    fi
+    if [[ "$UPDATE_PATH" == 1 ]] && ! cmp -s -- "$rcfile" "$STAGE/path-candidate"; then
+        [[ ! -f "$rcfile" ]] || backup_file "$rcfile" "$USER_ROOT" "${rcfile#"$USER_ROOT/"}"
+        mkdir -p -- "$(dirname -- "$rcfile")"; cp -p -- "$STAGE/path-candidate" "$rcfile"
+    fi
+    if [[ ":$PATH:" != *":$bin:"* ]]; then
+        info "PATH lacks $bin. Restart your shell after --update-path, or add it manually."
+    else
+        local resolved
+        resolved="$(command -v codex-bootstrap || true)"
+        [[ -z "$resolved" || "$resolved" == "$link" ]] || die "another codex-bootstrap shadows $link on PATH: $resolved"
+    fi
+}
+wizard() {
+    local answer pack
+    [[ -t 0 && -t 1 && -z "${CI:-}" ]] || die "--interactive requires a TTY outside CI; use --non-interactive"
+    info "Global assets are installed when missing; differing assets require an update choice."
+    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR" || true
+    confirm "Update differing global core files with backups?" && UPDATE_GLOBAL=1
+    read -r -p "Target project [$PWD]: " answer || die "input ended; nothing written"
+    TARGET_DIR="${answer:-${TARGET_DIR:-$PWD}}"
+    TARGET_DIR="$(canon "$TARGET_DIR")"
+    info "Target: $TARGET_DIR ($(if [[ -d "$TARGET_DIR" ]] && [[ -n "$(ls -A -- "$TARGET_DIR")" ]]; then printf retrofit; else printf new-project; fi))"
+    if [[ ! -d "$TARGET_DIR/.beads" && -z "$BD_PREFIX" ]]; then
+        local suggested
+        suggested="$(helper prefix "$TARGET_DIR")"
+        read -r -p "Beads prefix [$suggested]: " answer || die "input ended; nothing written"
+        BD_PREFIX="${answer:-$suggested}"
+    fi
+    if [[ ${#PACKS[@]} == 0 ]]; then
+        for pack in falcon herald web-design; do
+            if confirm "Install optional $pack pack?"; then
+                PACKS+=("$pack")
+                if [[ "$pack" == web-design ]]; then
+                    confirm "Web-design lacks upstream review evidence. Acknowledge unverified provenance?" || die "unverified pack declined; nothing written"
+                    ALLOW_UNVERIFIED=1
+                fi
+            fi
+        done
+    fi
+    confirm "Configure native status line?" && STATUS=1
+    confirm "Enable native attention notifications?" && NOTIFICATIONS=1
+    confirm "Install orientation/compaction hook for review through /hooks?" && HOOKS=1
+    confirm "Add official documentation MCP (authentication separate)?" && DOCS_MCP=1
+    confirm "Promote selected personal settings to global Codex config?" && PROMOTE=1
     return 0
 }
-
-validate_source_tree() {
-    local scaffold_dir="$1" manifest="$2"
-    [[ -d "$scaffold_dir" ]] || error_exit "missing scaffold directory: $scaffold_dir"
-    [[ -f "$manifest" ]] || error_exit "missing scaffold manifest: $manifest"
-
-    local line_no=0 kind rel action description normalized src
-    while IFS=$'\t' read -r kind rel action description || [[ -n "${kind:-}" ]]; do
-        line_no=$((line_no + 1))
-        [[ -z "${kind:-}" || "${kind:0:1}" == "#" ]] && continue
-        normalized="$(normalize_rel_path "$rel")"
-
-        validate_manifest_path "$normalized" \
-            || error_exit "invalid manifest path at line $line_no: $rel"
-        is_protected_manifest_path "$normalized" \
-            && error_exit "manifest line $line_no targets protected path: $rel"
-
-        src="$scaffold_dir/$normalized"
-        case "$kind:$action" in
-            file:copy)
-                [[ -f "$src" ]] || error_exit "manifest line $line_no missing source file: $rel"
-                ;;
-            dir:ensure_dir|transient_dir:ensure_ignored)
-                [[ -d "$src" ]] || error_exit "manifest line $line_no missing source directory: $rel"
-                ;;
-            *)
-                error_exit "invalid manifest kind/action at line $line_no: $kind $action"
-                ;;
-        esac
-    done < "$manifest"
-}
-
-add_created() {
-    CREATED_LINES+=("  $1 | action=$2 | reason=$3")
-}
-
-add_skipped() {
-    SKIPPED_LINES+=("  $1 | action=$2 | reason=$3")
-}
-
-add_conflict() {
-    CONFLICT_LINES+=("  path: $1"$'\n'"    planned_action: $2"$'\n'"    reason: $3"$'\n'"    suggested_resolution: $4")
-}
-
-add_apply() {
-    APPLY_KINDS+=("$1")
-    APPLY_PATHS+=("$2")
-    APPLY_ACTIONS+=("$3")
-}
-
-file_matches_managed_content() {
-    local rel="$1" src="$2" dest="$3"
-    local src_text dest_text beads_gitignore_block
-    MANAGED_MATCH_REASON="already matches scaffold"
-
-    if cmp -s -- "$src" "$dest"; then
-        return 0
-    fi
-
-    if [[ "$rel" == ".gitignore" ]]; then
-        src_text="$(<"$src")"
-        dest_text="$(<"$dest")"
-        beads_gitignore_block=$'\n\n# Beads / Dolt files (added by bd init)\n.dolt/\n*.db\n.beads-credential-key'
-        if [[ "$dest_text" == "$src_text$beads_gitignore_block" ]]; then
-            MANAGED_MATCH_REASON="already matches scaffold plus Beads ignore rules"
-            return 0
+validate_beads() {
+    [[ ! -L "$TARGET_DIR/.beads" ]] || die "symlink Beads directory"
+    if [[ -e "$TARGET_DIR/.beads" ]]; then
+        [[ -d "$TARGET_DIR/.beads" ]] || die ".beads exists but is not a directory"
+        if [[ "$DRY_RUN" != 1 ]]; then
+            (cd -- "$TARGET_DIR" && bd --readonly stats >/dev/null) || die "existing Beads database invalid. Run bd doctor in '$TARGET_DIR'; no scaffold/global writes occurred."
         fi
+    else
+        [[ "$BD_PREFIX" =~ ^[A-Za-z0-9_-]+$ ]] || die "new project requires --prefix (letters, digits, hyphens, underscores)"
     fi
-
-    return 1
 }
-
-print_lines_or_none() {
-    local -n lines_ref="$1"
-    if ((${#lines_ref[@]} == 0)); then
-        printf '  none\n'
-        return 0
-    fi
-
-    local line
-    for line in "${lines_ref[@]}"; do
-        printf '%s\n' "$line"
+global_obsolete() {
+    local root="$1" stamp="$2" prefix="$3" i state rel
+    check_ancestors "$root" "$stamp"; helper check "$root/$stamp"
+    [[ ! -f "$root/$stamp" ]] || check_ancestors "$root" "bootstrap-backups/$RUN_ID/$stamp"
+    for i in "${!ENTRY_PATH[@]}"; do
+        [[ "${ENTRY_DESTROOT[i]}" != "$root" || "${ENTRY_KIND[i]}" != file ]] || printf '%s\n' "${ENTRY_PATH[i]}"
+    done | helper obsolete "$root/$stamp" "$root" > "$STAGE/obsolete-$prefix"
+    while IFS=$'\t' read -r state rel; do
+        [[ -n "$rel" ]] || continue
+        validate_entry_path stamp "$rel"; check_ancestors "$root" "$rel"
+        info "Global obsolete $state: $root/$rel"
+        if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 ]]; then
+            check_ancestors "$root" "bootstrap-backups/$RUN_ID/$rel"
+            OBSOLETE_ROOT+=("$root"); OBSOLETE_REL+=("$rel"); OBSOLETE_STATE+=("$state")
+        fi
+    done < "$STAGE/obsolete-$prefix"
+}
+record_layer() {
+    local root="$1" stamp="$2" i rel
+    for i in "${!ENTRY_PATH[@]}"; do
+        [[ "${ENTRY_KIND[i]}" == file ]] || continue
+        if [[ "${ENTRY_DESTROOT[i]}" == "$root" ]]; then rel="${ENTRY_PATH[i]}"
+        elif [[ "$root" == "$TARGET_DIR" && "${ENTRY_DESTROOT[i]}" == "$root/.codex" ]]; then rel=".codex/${ENTRY_PATH[i]}"
+        else continue; fi
+        printf '%s\t%s\t%s\n' "$rel" "${PLAN_STATE[i]}" "$root/$rel"
+    done > "$STAGE/record-rows"
+    for i in "${!OBSOLETE_REL[@]}"; do
+        [[ "${OBSOLETE_ROOT[i]}" != "$root" ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
     done
+    helper record "$root/$stamp" "$SOURCE_COMMIT" "${PACKS[@]}" < "$STAGE/record-rows" > "$STAGE/stamp"
+    mkdir -p -- "$(dirname -- "$root/$stamp")"
+    [[ ! -f "$root/$stamp" ]] || backup_file "$root/$stamp" "$root" "$stamp"
+    cp -p -- "$STAGE/stamp" "$root/$stamp"
 }
-
-print_plan_report() {
-    local heading="$1" source_dir="$2" target_abs="$3" prefix="$4" force="$5" bd_required="$6"
-
-    cat <<EOF
-$heading
-source_dir: $source_dir
-target: $target_abs
-prefix: $prefix
-force: $force
-bd_required: $bd_required
-
-created paths:
-EOF
-    print_lines_or_none CREATED_LINES
-
-    printf '\nskipped paths:\n'
-    print_lines_or_none SKIPPED_LINES
-
-    printf '\nconflicts:\n'
-    print_lines_or_none CONFLICT_LINES
-}
-
-print_install_summary() {
-    local mode="$1" target_abs="$2"
-    local write_note
-
-    case "$mode" in
-        dry-run)
-            write_note="dry-run only; no target files were written"
-            ;;
-        blocked)
-            write_note="install blocked; no scaffold files were written"
-            ;;
-        *)
-            write_note="install completed"
-            ;;
-    esac
-
-    cat <<EOF
-
-installer summary:
-  result: $write_note
-  target instructions: $target_abs/AGENTS.md
-  opt-in config guide: $target_abs/docs/opt-in-configs.md
-  Beads status: $BEADS_STATUS
-  next workflow skills: session-start, brainstormer, grill-with-docs, product-architect, project-planner, plan-to-beads-unified, tdd, minion, session-wrapup
-EOF
-}
-
-parent_chain_conflicts() {
-    local target_abs="$1" rel="$2"
-    local parent_rel parent_abs
-    parent_rel="$(dirname -- "$rel")"
-    [[ "$parent_rel" == "." ]] && return 1
-
-    local current="" part
-    IFS='/' read -r -a parts <<<"$parent_rel"
-    for part in "${parts[@]}"; do
-        [[ -z "$part" ]] && continue
-        if [[ -z "$current" ]]; then
-            current="$part"
-        else
-            current="$current/$part"
-        fi
-        parent_abs="$target_abs/$current"
-        if [[ -L "$parent_abs" ]]; then
-            add_conflict "$current" "prepare_parent" "parent path is a symlink" "replace the symlink with a real directory before retrying"
-            return 0
-        fi
-        if [[ -e "$parent_abs" && ! -d "$parent_abs" ]]; then
-            add_conflict "$current" "prepare_parent" "parent path exists but is not a directory" "move or rename this path before retrying"
-            return 0
-        fi
-    done
-    return 1
-}
-
-plan_file() {
-    local scaffold_dir="$1" target_abs="$2" rel="$3" force="$4"
-    local src="$scaffold_dir/$rel" dest="$target_abs/$rel"
-
-    if parent_chain_conflicts "$target_abs" "$rel"; then
-        return 0
-    fi
-
-    if [[ -L "$dest" ]]; then
-        add_conflict "$rel" "copy" "target path is a symlink" "replace the symlink manually; --force will not write through symlinks"
-        return 0
-    fi
-
-    if [[ -e "$dest" ]]; then
-        if [[ ! -f "$dest" ]]; then
-            add_conflict "$rel" "copy" "target path exists but is not a regular file" "move or remove this path manually before retrying"
-            return 0
-        fi
-        if file_matches_managed_content "$rel" "$src" "$dest"; then
-            add_skipped "$rel" "copy" "$MANAGED_MATCH_REASON"
-            return 0
-        fi
-        if ((force)); then
-            add_created "$rel" "overwrite" "managed scaffold file differs and --force was supplied"
-            add_apply "file" "$rel" "copy"
-            return 0
-        fi
-
-        add_conflict "$rel" "copy" "managed scaffold file already exists with different content" "review the file, move it aside, or rerun with --force to overwrite this managed file"
-        return 0
-    fi
-
-    add_created "$rel" "copy" "managed scaffold file is absent"
-    add_apply "file" "$rel" "copy"
-}
-
-plan_dir() {
-    local target_abs="$1" rel="$2" action="$3"
-    local dest="$target_abs/$rel"
-
-    if parent_chain_conflicts "$target_abs" "$rel"; then
-        return 0
-    fi
-
-    if [[ -L "$dest" ]]; then
-        add_conflict "$rel" "$action" "target path is a symlink" "replace the symlink manually; --force will not write through symlinks"
-        return 0
-    fi
-
-    if [[ -d "$dest" ]]; then
-        add_skipped "$rel/" "$action" "directory already exists"
-        return 0
-    fi
-
-    if [[ -e "$dest" ]]; then
-        add_conflict "$rel/" "$action" "target path exists but is not a directory" "move or remove this path manually before retrying"
-        return 0
-    fi
-
-    add_created "$rel/" "$action" "managed scaffold directory is absent"
-    add_apply "dir" "$rel" "$action"
-}
-
-validate_existing_beads() {
-    local target_abs="$1"
-    if bd -C "$target_abs" ping --quiet >/dev/null 2>&1; then
-        return 0
-    fi
-    return 1
-}
-
-plan_beads() {
-    local target_abs="$1" prefix="$2" dry_run="$3"
-    local beads_path="$target_abs/.beads"
-
-    if [[ -L "$beads_path" ]]; then
-        BEADS_STATUS="blocked: existing .beads path is a symlink"
-        add_conflict ".beads/" "validate_beads" "existing .beads path is a symlink" "replace it with a valid Beads database directory or choose a different target"
-        return 0
-    fi
-
-    if [[ -d "$beads_path" ]]; then
-        if ((dry_run)); then
-            BEADS_STATUS="existing .beads/ will be validated during real install"
-            add_skipped ".beads/" "validate_beads" "existing Beads database will be validated during real install"
-            return 0
-        fi
-        if validate_existing_beads "$target_abs"; then
-            BEADS_STATUS="existing .beads/ validated with bd"
-            add_skipped ".beads/" "validate_beads" "existing Beads database is valid"
-            return 0
-        fi
-        BEADS_STATUS="blocked: bd could not validate existing .beads/"
-        add_conflict ".beads/" "validate_beads" "bd could not validate the existing Beads database" "repair the database with bd doctor or move it aside manually before retrying"
-        return 0
-    fi
-
-    if [[ -e "$beads_path" ]]; then
-        BEADS_STATUS="blocked: .beads path exists but is not a directory"
-        add_conflict ".beads/" "bd_init" "path exists but is not a directory" "move or remove this path manually before retrying"
-        return 0
-    fi
-
-    BEADS_STATUS="will initialize .beads/ with prefix $prefix during real install"
-    add_created ".beads/" "bd_init" "Beads database is absent and will be initialized with prefix $prefix"
-}
-
-plan_install() {
-    local scaffold_dir="$1" manifest="$2" target_abs="$3" prefix="$4" dry_run="$5" force="$6"
-    local line_no=0 kind rel action description normalized
-
-    while IFS=$'\t' read -r kind rel action description || [[ -n "${kind:-}" ]]; do
-        line_no=$((line_no + 1))
-        [[ -z "${kind:-}" || "${kind:0:1}" == "#" ]] && continue
-        normalized="$(normalize_rel_path "$rel")"
-
-        case "$kind:$action" in
-            file:copy)
-                plan_file "$scaffold_dir" "$target_abs" "$normalized" "$force"
-                ;;
-            dir:ensure_dir|transient_dir:ensure_ignored)
-                plan_dir "$target_abs" "$normalized" "$action"
-                ;;
-            *)
-                error_exit "invalid manifest line $line_no after validation"
-                ;;
-        esac
-    done < "$manifest"
-
-    plan_beads "$target_abs" "$prefix" "$dry_run"
-}
-
-apply_install() {
-    local scaffold_dir="$1" target_abs="$2" prefix="$3"
-    local i kind rel action src dest parent
-
-    mkdir -p -- "$target_abs"
-
-    for i in "${!APPLY_PATHS[@]}"; do
-        kind="${APPLY_KINDS[$i]}"
-        rel="${APPLY_PATHS[$i]}"
-        action="${APPLY_ACTIONS[$i]}"
-        dest="$target_abs/$rel"
-
-        case "$kind:$action" in
-            file:copy)
-                src="$scaffold_dir/$rel"
-                parent="$(dirname -- "$dest")"
-                mkdir -p -- "$parent"
-                cp -f -- "$src" "$dest"
-                ;;
-            dir:ensure_dir|dir:ensure_ignored)
-                mkdir -p -- "$dest"
-                ;;
-            *)
-                error_exit "internal error: unknown apply operation $kind:$action"
-                ;;
-        esac
-    done
-
-    if [[ ! -d "$target_abs/.beads" ]]; then
-        (cd -- "$target_abs" && bd init --non-interactive --skip-agents --skip-hooks --prefix "$prefix")
-        BEADS_STATUS="initialized .beads/ with prefix $prefix"
-    fi
-}
-
-ensure_not_self_install() {
-    local source_dir="$1" target_abs="$2"
-    if [[ "$target_abs" == "$source_dir" ]]; then
-        error_exit "refusing to install the scaffold into itself: $target_abs"
-    fi
-}
-
 main() {
-    local source_dir target="" target_abs prefix="" dry_run=0 force=0 mode="auto" resolved_mode
-    local scaffold_dir manifest
-    source_dir="$(script_dir)"
-    scaffold_dir="$source_dir/assets/scaffold"
-    manifest="$scaffold_dir/manifest.txt"
-
-    parse_args target prefix dry_run force mode "$@"
-    resolve_mode "$mode" "$target" "$prefix" resolved_mode
-
-    if [[ "$resolved_mode" == "interactive" ]]; then
-        if ! has_tty_context || is_ci_context; then
-            die "--interactive requires a TTY and cannot run in CI or non-TTY mode"
+    parse_args "$@"
+    need python3 "Python 3.11+"; python3 -c 'import tomllib' || die "Python 3.11+ is required"
+    [[ -n "${HOME:-}" ]] || die "HOME must be set"
+    USER_ROOT="$(canon "$HOME")"; USER_SKILLS_DIR="$USER_ROOT/.agents/skills"
+    CODEX_USER_DIR="$(canon "${CODEX_HOME:-$USER_ROOT/.codex}")"
+    [[ "$DOCTOR" != 1 ]] || { doctor; return; }
+    prepare_stage
+    [[ -z "$COMMAND_MODE" ]] || { command_setup; return; }
+    need git "Git"
+    [[ "$GLOBAL_ONLY" != 1 || "$LOCAL_CORE" != 1 ]] || die "--local-core and --global-only are mutually exclusive"
+    [[ "$GLOBAL_ONLY" != 1 || ${#PACKS[@]} == 0 ]] || die "packs require a project target"
+    if [[ "$MODE" == auto ]]; then
+        MODE=non-interactive
+        if [[ "$DRY_RUN" != 1 && "$GLOBAL_ONLY" != 1 && -z "$TARGET_DIR" && -t 0 && -t 1 && -z "${CI:-}" ]]; then MODE=interactive; fi
+    fi
+    if [[ "$DRY_RUN" != 1 ]]; then
+        need codex "Codex CLI (https://developers.openai.com/codex/cli)"
+        [[ "$GLOBAL_ONLY" == 1 ]] || need bd "Beads (bd); configure its supported local backend first"
+    fi
+    [[ "$MODE" != interactive || "$DRY_RUN" == 1 ]] || wizard
+    if [[ "$GLOBAL_ONLY" != 1 ]]; then
+        [[ -n "$TARGET_DIR" ]] || die "missing target in non-interactive mode; pass <target> --prefix <PREFIX>"
+        TARGET_DIR="$(canon "$TARGET_DIR")"
+        [[ "$TARGET_DIR" != / && "$TARGET_DIR" != "$USER_ROOT" && "$TARGET_DIR" != "$KIT_DIR" ]] || die "refusing broad or builder target: $TARGET_DIR"
+        check_ancestors "$TARGET_DIR" .
+        [[ ! -e "$TARGET_DIR" || -d "$TARGET_DIR" ]] || die "target must be a directory"
+        if [[ ! -d "$TARGET_DIR" || -z "$(ls -A -- "$TARGET_DIR")" ]]; then NEW_PROJECT=1; fi
+        validate_beads
+        load_manifest "$KIT_DIR/assets/scaffold/manifest.txt" "$KIT_DIR/assets/scaffold" "$TARGET_DIR" project
+        local i rel pack old_packs=()
+        for i in "${!ENTRY_PATH[@]}"; do
+            rel="${ENTRY_PATH[i]}"
+            case "$rel" in
+                AGENTS.md|.gitignore)
+                    local operation=instructions
+                    [[ "$rel" != .gitignore ]] || operation=ignore
+                    mkdir -p -- "$STAGE/scaffold"
+                    helper "$operation" "$TARGET_DIR/$rel" "$KIT_DIR/assets/scaffold/$rel" > "$STAGE/scaffold/$rel"
+                    ENTRY_SRCROOT[i]="$STAGE/scaffold"; ENTRY_POLICY[i]=merge;;
+                docs/*) ENTRY_POLICY[i]=durable;;
+            esac
+        done
+        if [[ "$LOCAL_CORE" == 1 ]]; then
+            load_manifest "$KIT_DIR/assets/global/manifest.txt" "$KIT_DIR/assets/global" "$TARGET_DIR" project
+        else
+            for rel in "$KIT_DIR"/assets/global/.agents/skills/*; do
+                [[ ! -d "$TARGET_DIR/.agents/skills/${rel##*/}" ]] || info "Duplicate project skill shadows global: ${rel##*/}. Reconcile manually or choose --local-core."
+            done
         fi
-        run_interactive_mode "$target" "$prefix"
-        return $?
+        for pack in "${PACKS[@]}"; do
+            case "$pack" in falcon|herald|web-design) ;; *) die "unknown pack: $pack";; esac
+            [[ "$pack" != web-design || "$ALLOW_UNVERIFIED" == 1 ]] || die "web-design is UNVERIFIED; acknowledge with --allow-unverified-pack"
+            [[ "$pack" != web-design || "$DRY_RUN" == 1 ]] || need node "Node.js 22+ for web-design helpers"
+            if [[ "$pack" == web-design && "$DRY_RUN" != 1 ]]; then
+                node -e 'if(Number(process.versions.node.split(".")[0])<22)process.exit(1)' || die "web-design requires Node.js 22+"
+            fi
+            [[ -f "$KIT_DIR/assets/packs/$pack/pack.yaml" ]] || die "missing pack metadata: $pack"
+            load_manifest "$KIT_DIR/assets/packs/$pack/manifest.txt" "$KIT_DIR/assets/packs/$pack/scaffold" "$TARGET_DIR" pack
+        done
+        check_ancestors "$TARGET_DIR" .codex/bootstrap.json; helper check "$TARGET_DIR/.codex/bootstrap.json"
+        [[ ! -f "$TARGET_DIR/.codex/bootstrap.json" ]] || check_ancestors "$TARGET_DIR" "bootstrap-backups/$RUN_ID/.codex/bootstrap.json"
+        if [[ "$PROMOTE" != 1 ]]; then config_layer "$TARGET_DIR/.codex" project; fi
     fi
-
-    validate_non_interactive_inputs "$target" "$prefix"
-    target_abs="$(realpath -m -- "$target")"
-
-    ensure_not_self_install "$source_dir" "$target_abs"
-    validate_source_tree "$scaffold_dir" "$manifest"
-
-    if ((!dry_run)) && ! command -v bd >/dev/null 2>&1; then
-        cat >&2 <<EOF
-bootstrap: bd is required for real installs and was not found on PATH.
-No target files were written.
-
-Install or expose bd, then retry:
-  bd --help
-  ./bootstrap --prefix $prefix $target_abs
-EOF
-        exit 1
+    if [[ "$LOCAL_CORE" != 1 ]]; then
+        load_manifest "$KIT_DIR/assets/global/agents-manifest.txt" "$KIT_DIR/assets/global/.codex" "$CODEX_USER_DIR" global
+        load_manifest "$KIT_DIR/assets/global/skills-manifest.txt" "$KIT_DIR/assets/global/.agents" "$USER_ROOT/.agents" global
     fi
-
-    declare -g -a CREATED_LINES=()
-    declare -g -a SKIPPED_LINES=()
-    declare -g -a CONFLICT_LINES=()
-    declare -g -a APPLY_KINDS=()
-    declare -g -a APPLY_PATHS=()
-    declare -g -a APPLY_ACTIONS=()
-    declare -g BEADS_STATUS="not planned"
-
-    plan_install "$scaffold_dir" "$manifest" "$target_abs" "$prefix" "$dry_run" "$force"
-
-    if ((dry_run)); then
-        print_plan_report "bootstrap dry-run" "$source_dir" "$target_abs" "$prefix" "$force" "no"
-        print_install_summary "dry-run" "$target_abs"
-        return 0
+    if [[ "$PROMOTE" == 1 || "$GLOBAL_ONLY" == 1 && ( "$STATUS" == 1 || "$NOTIFICATIONS" == 1 || "$HOOKS" == 1 || "$DOCS_MCP" == 1 ) ]]; then
+        if [[ "$HOOKS" == 1 && -n "$TARGET_DIR" && -f "$TARGET_DIR/.codex/hooks.json" ]]; then
+            if python3 -c 'import json,sys; sys.exit(0 if "Codex bootstrap orientation" in json.dumps(json.load(open(sys.argv[1]))) else 1)' "$TARGET_DIR/.codex/hooks.json"; then
+                die "project bootstrap hooks already exist; remove their managed SessionStart entry through /hooks before promoting globally to avoid duplicate execution"
+            fi
+        fi
+        config_layer "$CODEX_USER_DIR" global-config
     fi
-
-    if ((${#CONFLICT_LINES[@]})); then
-        print_plan_report "bootstrap install blocked" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
-        print_install_summary "blocked" "$target_abs"
-        return 1
+    detect_collisions; build_plan
+    if [[ "$LOCAL_CORE" != 1 ]]; then
+        global_obsolete "$USER_ROOT/.agents" bootstrap/managed.json skills
+        global_obsolete "$CODEX_USER_DIR" bootstrap-managed.json agents
     fi
-
-    apply_install "$scaffold_dir" "$target_abs" "$prefix"
-    print_plan_report "bootstrap install complete" "$source_dir" "$target_abs" "$prefix" "$force" "yes"
-    print_install_summary "install" "$target_abs"
+    local i msg
+    # Preflight every prospective backup location before writing anything.
+    for i in "${!ENTRY_PATH[@]}"; do
+        [[ "${PLAN_STATE[i]}" != overwrite ]] || check_ancestors "${ENTRY_DESTROOT[i]}" "bootstrap-backups/$RUN_ID/${ENTRY_PATH[i]}"
+    done
+    print_plan_and_summary
+    [[ ${#PLAN_FATAL[@]} == 0 ]] || { for msg in "${PLAN_FATAL[@]}"; do printf '%s\n' "$msg" >&2; done; die "conflicts found; nothing written"; }
+    [[ "$DRY_RUN" != 1 ]] || { info "Dry run complete; nothing written to project or user configuration."; return; }
+    [[ "$MODE" != interactive ]] || confirm "Apply this combined project/global plan?" || { info "Declined; nothing written."; return; }
+    if [[ "$GLOBAL_ONLY" != 1 ]]; then
+        mkdir -p -- "$TARGET_DIR"
+        if [[ "$NEW_PROJECT" == 1 ]] && ! git -C "$TARGET_DIR" rev-parse --git-dir >/dev/null 2>&1; then
+            git -C "$TARGET_DIR" init -q || die "Git initialization failed. Correct permissions and rerun bootstrap for '$TARGET_DIR'."
+        fi
+        if [[ ! -d "$TARGET_DIR/.beads" ]]; then
+            if ! (cd -- "$TARGET_DIR" && bd init --prefix "$BD_PREFIX" --non-interactive --skip-agents --skip-hooks); then
+                die "Beads initialization failed before scaffold/global apply. Inspect '$TARGET_DIR/.beads' with bd doctor, then rerun bootstrap '$TARGET_DIR' --prefix '$BD_PREFIX'."
+            fi
+        fi
+    fi
+    if ! apply_plan; then
+        die "partial file apply failed. Backups are under bootstrap-backups/$RUN_ID in affected layers. Correct permissions and rerun the same command."
+    fi
+    for i in "${!OBSOLETE_REL[@]}"; do
+        backup_file "${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}" "${OBSOLETE_ROOT[i]}" "${OBSOLETE_REL[i]}"
+        rm -f -- "${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}"
+    done
+    if [[ "$LOCAL_CORE" != 1 ]]; then
+        record_layer "$USER_ROOT/.agents" bootstrap/managed.json
+        record_layer "$CODEX_USER_DIR" bootstrap-managed.json
+    fi
+    [[ "$GLOBAL_ONLY" == 1 ]] || record_layer "$TARGET_DIR" .codex/bootstrap.json
+    info "Setup verified by preflight and installed payload hashes. Backups: bootstrap-backups/$RUN_ID"
+    [[ "$HOOKS" != 1 ]] || info "Trust the project in Codex and review new/changed hook definitions with /hooks. Installation does not trust hooks."
+    [[ "$GLOBAL_ONLY" == 1 ]] && return 0
+    info "Start a session: codex -C '$TARGET_DIR' '\$session-start'"
+    if [[ -t 0 && -t 1 && -z "${CI:-}" ]]; then
+        if [[ "$LAUNCH" == yes ]] || { [[ "$MODE" == interactive && "$LAUNCH" == ask ]] && confirm "Launch Codex now?"; }; then
+            codex -C "$TARGET_DIR" '$session-start'
+        fi
+    fi
 }
-
 main "$@"

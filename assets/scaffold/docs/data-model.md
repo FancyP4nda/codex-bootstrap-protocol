@@ -1,17 +1,23 @@
 # Data Model
 
-## Entities
+<!-- Entities, relationships and migration conventions. -->
 
-- 
+## Entity Relationship Overview
 
-## Relationships
+<!-- How the main entities relate. -->
 
-- 
+## Models
 
-## Storage
+<!-- Each model: key fields and constraints. -->
 
-- 
+## Enums
 
-## Migration Notes
+<!-- Enumerated values and their meaning. -->
 
-- 
+## Migration Conventions
+
+<!-- How schema changes are made and reviewed. -->
+
+## Design Decisions
+
+<!-- Non-obvious modeling choices and why. -->

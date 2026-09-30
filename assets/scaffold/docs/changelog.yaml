@@ -1,2 +1,6 @@
-version: 1
-changes: []
+# Changelog — structured session log
+# Each entry is one session/branch. Newest entry first.
+# $session-start reads entries[0]; $session-wrapup prepends a new entry.
+# Schema reference: ~/.agents/skills/session-wrapup/changelog-schema.md (installed by codex-bootstrap)
+# Quote commit hashes — e.g. ["abc1234"] not [abc1234].
+entries: []
