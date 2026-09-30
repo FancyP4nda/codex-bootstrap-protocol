@@ -1,5 +1,31 @@
 version: 1
 changes:
+  - date: 2026-09-30
+    bead_ids:
+      - codex-bootstrap-protocol-ung
+      - codex-bootstrap-protocol-ung.1
+      - codex-bootstrap-protocol-ung.2
+      - codex-bootstrap-protocol-ung.3
+      - codex-bootstrap-protocol-ung.4
+    changed_areas:
+      - bootstrap
+      - lib/
+      - assets/global/
+      - assets/scaffold/
+      - assets/packs/
+      - .agents/
+      - .codex/agents/
+      - verification/
+      - tools/
+      - docs/
+      - README.md
+    summary: >-
+      Complete source migration: all 17 source skills plus minion, native roles,
+      global-first/local-core installer, safe hash-tracked updates and backups,
+      full command/wizard, trust-gated hooks/footer/MCP and all optional packs.
+      Expanded isolated suites, real CLI skill invocation and authenticated
+      Beads/session/reviewer/footer smoke. Preserve web-design missing evidence
+      and native-role compatibility limits; archive old planning documents.
   - date: 2026-06-07
     bead_ids:
       - codex-bootstrap-protocol-q6u

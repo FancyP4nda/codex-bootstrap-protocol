@@ -1,256 +1,64 @@
 # Codex Bootstrap Protocol
 
-Codex Bootstrap Protocol is a local-first scaffold repo for creating Codex-native project workspaces from the legacy Bootstrap Protocol source kit. It is Codex-native only: installed target projects should use `AGENTS.md`, `.agents/skills/`, `.codex/`, durable `docs/`, and Beads (`bd`) instead of active Claude runtime directories.
+Relocatable Bash setup for native Codex projects. Global workflow skills are the default; projects receive concise instructions, durable documentation and Beads tracking. The authoritative migration source is sibling `claude-bootstrap-protocol` at `f89f7f3`. Existing destination history and Beads records are preserved.
 
-The repo-root `bootstrap` command is the primary operator entry point. It reads `assets/scaffold/manifest.txt`, reports the managed asset tree in dry-run mode, copies the managed scaffold files during real installs, and initializes Beads when prerequisites are met.
+## Quickstart
 
-## Current State
-
-- Planning source of truth: `docs/codex-bootstrap-protocol-PRD.md`
-- Execution plan: `docs/codex-bootstrap-protocol-project-plan.md`
-- Install contract: `assets/scaffold/manifest.txt`
-- Work tracker: Beads via `bd`
-- Migration input: sibling `../bootstrap-protocol`
-
-This repo is Codex-native. Claude runtime files from the source kit are migration references only and must not be installed into target projects as active runtime surfaces.
-
-## Requirements
-
-- Ubuntu or WSL shell with Bash.
-- Codex installed and launched from the target repo when using repo-scoped skills.
-- Beads (`bd`) preinstalled for real installs.
-- No automatic package installs, network calls, Git remote changes, cloud calls, or PATH changes are performed by this scaffold.
-
-Dry-run mode is allowed to run without `bd` because it only previews planned file operations. A real install must fail before writing target files when `bd` is missing.
-
-## Primary Usage
-
-From this repo checkout:
+Prerequisites: Bash, Python 3.11+, Git, Codex CLI and Beads (`bd`) with its supported local backend. Linux, macOS and WSL Bash are supported; real CLI integration baseline is Codex 0.159.2. Bootstrap installs no packages and makes no network calls.
 
 ```bash
-./bootstrap <target-project-path> --prefix <PREFIX>
+./bootstrap --install-command --update-path
+# Restart your shell if PATH changed.
+codex-bootstrap                         # interactive wizard on a TTY
+codex-bootstrap /path/to/project --prefix MY --non-interactive
+codex -C /path/to/project '$session-start'
 ```
 
-Example:
+Command setup creates an owned symlink in `~/.local/bin`. PATH editing is explicit and idempotent for Bash, Zsh and Fish. Unknown shells receive manual guidance. Preserve the kit checkout: relocating the checkout together with the home tree keeps the relative link valid; moving only the kit requires repairing the old owned link and reinstalling. `./bootstrap` also works directly.
+
+## Setup choices
 
 ```bash
-./bootstrap /tmp/codex-bootstrap-smoke --prefix CBS
+codex-bootstrap /path/to/project --prefix MY --dry-run
+codex-bootstrap /path/to/project --prefix MY --local-core
+codex-bootstrap /path/to/project --pack falcon --pack herald
+codex-bootstrap /path/to/project --pack web-design --allow-unverified-pack
+codex-bootstrap /path/to/project --hooks --status-line --notifications --docs-mcp
+codex-bootstrap --global-only --update-global
+codex-bootstrap --doctor
+codex-bootstrap --uninstall-command --update-path
 ```
 
-The `<PREFIX>` is the project-specific Beads prefix used when initializing work tracking in the target project. Use a short uppercase identifier that is meaningful for the target project.
+An existing valid Beads database needs no prefix. Fresh setup requires one. Missing global core is installed under `~/.agents/skills` and `${CODEX_HOME:-~/.codex}/agents`; differences are preserved unless you choose `--update-global`. Global-only setup needs no Beads. `--local-core` installs the same core into the project and skips global core. Duplicate local skills are reported because they shadow global skills.
 
-A successful real install creates the target directory when needed, copies every managed path from `assets/scaffold/manifest.txt`, initializes `.beads/`, and prints a summary pointing to target `AGENTS.md`, target `docs/opt-in-configs.md`, Beads status, and the next workflow skills.
+The wizard checks prerequisites, reports global asset state, chooses target/prefix/packs/settings, shows a combined preview, confirms once, applies and offers launch. CI/non-TTY never prompts or launches. Use `--launch` or `--no-launch` for explicit launch preference; launch still requires a TTY. `--promote-global` explicitly promotes chosen personal settings, with a diff and backup; the default is project configuration.
 
-## Bootstrap A New Project
+## Safety and native configuration
 
-Use this sequence when creating a new Codex-ready project workspace.
+Preflight rejects malformed manifests, traversal, protected paths, symlinks and cross-layer collisions before file installation. User-owned Claude files, credentials, Git/Beads data, extra files and existing durable docs are preserved. Managed instruction sections and ignore entries merge; native TOML keys and hook JSON update without replacing unrelated configuration. Unrepresentable TOML layouts fail with guidance.
 
-1. Start from this scaffold checkout:
+`--force` backs up base/core conflicts; it never overrides structural protection or pack conflicts. Backups live in affected layers under `bootstrap-backups/<run-id>/`. Hash metadata tracks managed files; an explicit global update retires obsolete files only when unchanged. Modified obsolete files and destination-only extras remain.
 
-   ```bash
-   cd /path/to/codex-bootstrap-protocol
-   ```
+Hooks are advisory and opt-in. Trust the project through Codex, then inspect and approve definitions using `/hooks`; installation never trusts them. Inline TOML hooks and JSON hooks cannot compete in one layer. The footer uses native identifiers, not Claude token accounting. Documentation MCP is opt-in; authentication and secrets remain separate.
 
-2. Confirm prerequisites:
+## Workflows and packs
 
-   ```bash
-   command -v bash
-   command -v bd
-   ./bootstrap --help
-   ```
+The core contains all 17 source skills plus the retained dual-mode `$minion`, six native agents, standards and supporting templates. On clients without a named-role selector, the [native role compatibility helper](docs/native-agents.md) loads the same TOML through supported Codex exec settings. Session skills also work in ordinary Git repos without scaffold docs or Beads. Codex owns adversarial-review revisions; optional Claude critique is read-only, with an isolated read-only Codex fallback.
 
-   `bd` is required for real installs because the target project is initialized with Beads. Dry-run mode does not require `bd`.
+Falcon uses isolated Codex CLI worktrees and structured reports. Its local monitor is stoppable and never an OS service. Steering owns Beads, integration and PR creation. Herald adds design/prototype/accessibility/review specialists.
 
-3. Pick the target directory and prefix. The prefix should be short, stable, and meaningful for the target project:
+Web-design preserves pinned Impeccable and Taste components and licenses. It remains **unverified and release-invalid** because upstream review evidence is absent. Explicit opt-in does not certify it. Node.js 22+ is required. Optional browser, detector and image-generation features require their own dependencies/consent; vendor update pings and concept telemetry default off.
 
-   ```bash
-   target=/tmp/my-new-project
-   prefix=MNP
-   ```
-
-4. Preview the install. This must not write target files:
-
-   ```bash
-   ./bootstrap --dry-run "$target" --prefix "$prefix"
-   ```
-
-   Review the created, skipped, and conflict sections. If conflicts are reported, inspect them before running a real install.
-
-5. Install the scaffold:
-
-   ```bash
-   ./bootstrap "$target" --prefix "$prefix"
-   ```
-
-   Use `--force` only after reviewing a conflict report and only when you intend to overwrite managed scaffold files:
-
-   ```bash
-   ./bootstrap "$target" --prefix "$prefix" --force
-   ```
-
-6. Enter the target project and verify the installed surface:
-
-   ```bash
-   cd "$target"
-   git status --short --branch
-   bd ready
-   test -f AGENTS.md
-   test -f docs/CONTEXT.md
-   test -d .agents/skills
-   test -d .codex/agents
-   ```
-
-7. Start Codex from the target project directory so repo-scoped instructions, skills, custom agents, and docs are discoverable.
-
-## Expected Target Workflow
-
-After bootstrapping, the target project should use this planning-to-execution flow:
-
-1. **Orient:** Run `$session-start` or manually read `AGENTS.md`, `docs/CONTEXT.md`, `docs/handoff.yaml`, `docs/changelog.yaml`, and Beads state.
-2. **Shape the idea:** Use `$brainstormer` for an Opportunity Brief when the idea is still broad.
-3. **Resolve decisions:** Use `$grill-with-docs` to turn an opportunity or rough plan into a Decision Brief grounded in existing docs.
-4. **Write product truth:** Use `$product-architect` to create or update `docs/prd.md`.
-5. **Plan execution:** Use `$project-planner` to create or update `docs/project-plan.md` from an approved PRD.
-6. **Create Beads work:** Use `$plan-to-beads-unified` to turn the approved project plan into Beads issues.
-7. **Implement one Bead at a time:** Use `bd ready`, `bd show <id>`, and `bd update <id> --claim`; keep work inside the Bead collision domain and run the Bead verification command.
-8. **Use report-only fanout when useful:** Use `$minion` for parallel review, research, or planning reports. In v1 it is report-only and does not run write-heavy implementation fanout.
-9. **Close out:** Use `$session-wrapup` to verify work, close completed Beads, update `docs/handoff.yaml` and `docs/changelog.yaml`, and create a local handoff.
-10. **Sync through Git:** Commit code, docs, and tracked Beads exports, then use normal `git push`. This repo does not require `bd dolt push/pull`.
-
-Durable project knowledge should live in `docs/`; task state should live in Beads; transient Codex scratch output should stay under `.codex/state/tmp/`.
-
-## Dry Run
-
-Preview an install without writing scaffold files:
+## Verification and documentation
 
 ```bash
-./bootstrap --dry-run <target-project-path> --prefix <PREFIX>
+python3 -m venv /tmp/codex-bootstrap-tests
+/tmp/codex-bootstrap-tests/bin/pip install -r verification/pack-validator/requirements.txt
+PYTHON=/tmp/codex-bootstrap-tests/bin/python ./verification/run-all.sh
+# Optional authenticated, disposable real Codex/Beads smoke:
+python3 verification/authenticated-smoke.py
 ```
 
-Dry-run output should show planned created paths, skipped paths, and conflicts. It must not create scaffold files and must not require `bd`.
+The suite uses temporary homes/repos, mocked workflow CLIs, real Codex app-server discovery and expected validator rejection for web-design. The authenticated smoke uses existing login without copying credentials and makes a bounded model request; it is separate from offline tests.
 
-The dry-run summary uses the same managed-path names as a real install and ends with a note that no target files were written.
-
-## Managed Target Tree
-
-The manifest-driven install creates this Codex-native target surface:
-
-```text
-.
-|-- AGENTS.md
-|-- docs/
-|   |-- CONTEXT.md
-|   |-- opt-in-configs.md
-|   |-- adr/
-|   |-- prd.md
-|   |-- project-plan.md
-|   |-- architecture.md
-|   |-- backend.md
-|   |-- frontend.md
-|   |-- data-model.md
-|   |-- security.md
-|   |-- handoff.yaml
-|   |-- changelog.yaml
-|   |-- enhancements.md
-|   `-- standards-history.md
-|-- .agents/
-|   |-- skills/
-|   `-- templates/
-|-- .codex/
-|   |-- agents/
-|   |-- hooks/
-|   |-- rules/
-|   |-- state/tmp/
-|   `-- config.toml
-|-- .archive/
-|-- .beads/
-`-- .gitignore
-```
-
-## Force Behavior
-
-By default, `bootstrap` should stop before writes when a target already has managed scaffold-path conflicts. The conflict report should name the path, planned action, reason, and suggested resolution.
-
-Use `--force` only when you have reviewed the conflict report and intend to overwrite managed scaffold files:
-
-```bash
-./bootstrap <target-project-path> --prefix <PREFIX> --force
-```
-
-`--force` is limited to managed scaffold files. It must never overwrite `.git/`, `.beads/`, credentials, ignored transient state, or paths outside the managed scaffold contract.
-
-## Optional PATH Setup
-
-The supported default is to run `./bootstrap` from this checkout. If you want a shorter command, create your own symlink or PATH entry after reviewing the path you want to expose.
-
-Example symlink:
-
-```bash
-mkdir -p "$HOME/.local/bin"
-ln -s "$(pwd)/bootstrap" "$HOME/.local/bin/codex-bootstrap"
-codex-bootstrap --help
-```
-
-Example PATH entry for Bash:
-
-```bash
-printf '\nexport PATH="$HOME/.local/bin:$PATH"\n' >> "$HOME/.bashrc"
-```
-
-These commands are examples only. The scaffold does not run them, edit shell startup files, or install commands globally.
-
-## Opt-In Configuration
-
-Optional hooks, rules, custom subagents, `minion` settings, stricter approval/sandbox profiles, memory examples, and automation examples are documented in `docs/opt-in-configs.md`.
-
-Those controls are opt-in because they can change how Codex approves commands, delegates work, or enforces local project rules. Review the purpose, risk level, enable steps, disable steps, and verify command before enabling any optional config.
-
-## Verification
-
-Run the T010 static verification suite from the repo root:
-
-```bash
-./verification/run-static-checks.sh
-```
-
-For installer smoke checks, use clearly test-created `/tmp` targets:
-
-```bash
-./bootstrap --dry-run /tmp/codex-bootstrap-smoke --prefix CBS
-./bootstrap /tmp/codex-bootstrap-smoke-real --prefix CBS
-```
-
-The suite checks shell syntax, live `.claude/*` runtime references, hardcoded `/home/echo/ACC` runtime dependencies, and documented allowlists for migration/source references. See `verification/README.md` for additional install/readback, conflict, protected-path, and missing-`bd` behavior commands.
-
-## Relocation Safety
-
-The repo may be developed at an example path such as `/home/echo/ACC/codex-bootstrap-protocol`, but runtime logic and installed targets should not depend on `/home/echo/ACC`. Scripts should resolve paths relative to the script or repo root so the checkout can move later, for example to `/home/echo/dev/codex-bootstrap-protocol`.
-
-References to `/home/echo/ACC` in documentation are examples or migration notes, not runtime dependencies.
-
-## Expected Builder Layout
-
-```text
-.
-|-- AGENTS.md
-|-- README.md
-|-- bootstrap
-|-- docs/
-|-- .agents/
-|-- .codex/
-|-- .archive/
-|-- verification/
-`-- .beads/
-```
-
-## Development Flow
-
-1. Use `bd ready` to find unblocked work.
-2. Claim one bead with `bd update <id> --claim`.
-3. Keep each bead inside its documented collision domain.
-4. Run the bead-specific verification command before closeout.
-5. Close the bead with evidence in the close reason, then export/push Beads state.
-
-## Source Boundary
-
-T001 establishes the repo shell only. It does not copy active source-kit runtime machinery into the installed target surface. The source-copy decisions and exclusions are documented in `.archive/source-inventory.md`.
+See [migration guide](docs/migration-guide.md), [feature parity](docs/feature-parity.md), [configuration](docs/opt-in-configs.md), [troubleshooting and restore](docs/troubleshooting.md), [contract](docs/migration-contract.md), [asset inventory](docs/source-inventory.json) and [verification evidence](docs/verification.md). Marketplace publication is deferred.

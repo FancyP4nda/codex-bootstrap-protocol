@@ -5,1531 +5,1815 @@
       "source": "assets/global/.claude/agents/navigator/navigator-maintenance.md",
       "destination": "assets/global/.codex/agents/navigator-maintenance.toml",
       "source_sha256": "df0f546550ecff25d547817dfbf797fbb48f64550d283a6bdd47c0d9191c71e9",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "9c788707ed9aa046cb414300e59ebe08deb7e5640b6f092b342fc1e8574bc952"
     },
     {
       "source": "assets/global/.claude/agents/navigator/navigator-recon.md",
       "destination": "assets/global/.codex/agents/navigator-recon.toml",
       "source_sha256": "beabd02a413cfb2b42e265be271a1cd4aa442de3f2e228529202fb4d4ce75edd",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "54ee8889b5622c19035133701ef87e0ca5f6685886354c9c67074106798cf55c"
     },
     {
       "source": "assets/global/.claude/agents/navigator/navigator-survey.md",
       "destination": "assets/global/.codex/agents/navigator-survey.toml",
       "source_sha256": "6756d9a60c404affebac543fac3322aa50a189a1d249b8bca72b8cc8233b438d",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "bff065cfab0d12b7107c57dc472d3257d80b75783d7982f3271e69d04743e4ab"
     },
     {
       "source": "assets/global/.claude/rules/bootstrap-protocol.md",
       "destination": "assets/global/.agents/bootstrap/instructions/bootstrap-protocol.md",
       "source_sha256": "7752f67ccbd81b8adbb660a2beaf6dff1e13352e48da4c7d2e021bbc68f44b4f",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "d965ac2c604d64c8b456ce746d5482c004a35beb074ffa21d09a80dc70e351d6"
     },
     {
       "source": "assets/global/.claude/rules/workflow-agents.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-agents.md",
       "source_sha256": "f55322cabc62c8e5fc6d5bf799801d8cf7a94821e918c0f1c985f0386f1e422b",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "60dba38bd1d8a1b81ee69ea8371b80c7f360cb7c17c3dae173a2292c0ed3f63d"
     },
     {
       "source": "assets/global/.claude/rules/workflow-execution.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-execution.md",
       "source_sha256": "f9a228279be11857cfbc7e9b8acc17fffe44a5d185709a3d79fc2214e9846601",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6df79b9a864dc846c2a704a593d49de191d1867dac1f8570c7a6095a671b6bfc"
     },
     {
       "source": "assets/global/.claude/rules/workflow-planning.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-planning.md",
       "source_sha256": "f2c0cc683dd4bf73c65386e4c9b298959b300390e017d4e48d6ab1ed5ceeab78",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6f19a1321d5660ed36c1fd9ac59915d0c89a6be61cf45ccdc3bd7fbd08670a08"
     },
     {
       "source": "assets/global/.claude/rules/workflow-session.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-session.md",
       "source_sha256": "264c616d637ebd28cc19abacbc371f196d8872a6bd0479d2df2383ff3a9291d4",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "317bdb70d2d393166cdcea2648973f6699f9b6cda0e10fbd7c8905171569cf7a"
     },
     {
       "source": "assets/global/.claude/rules/workflow.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow.md",
       "source_sha256": "3cf282bfe4ead4ec000b020fc4739a9988c0895ea79ff1ee892a50287a24e46e",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "969bb16a7f1cdac35de78f7e54cb0c135575d44a1ffcc157a3fdb5153cf599f4"
     },
     {
       "source": "assets/global/.claude/skills/adversarial-review/SKILL.md",
       "destination": "assets/global/.agents/skills/adversarial-review/SKILL.md",
       "source_sha256": "ec76658dd8d40f8806454ccbd89cff4e0af160807076e94c5592a92ca5d887bb",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "92857001321c4a55b078466f25ceaabba3259ad6df136880470a16a44fb6a604"
     },
     {
       "source": "assets/global/.claude/skills/adversarial-review/runner.md",
       "destination": "assets/global/.agents/skills/adversarial-review/runner.md",
       "source_sha256": "7738285cec32dbbcfe81545f7128150a3277c1f9f987cfb347533bbba0acaa3f",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "87ab0a5841b6113525a7f8241ad132d2e7c4e4307b616455fdd8ed93c220f8ce"
     },
     {
       "source": "assets/global/.claude/skills/brainstormer/SKILL.md",
       "destination": "assets/global/.agents/skills/brainstormer/SKILL.md",
       "source_sha256": "fde4b825304f4cc31426467339a068a59983f2a2dbbff5d98bd35b617863c577",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "ab21b4dd8d4a2a08e3c9b84815129e5cbe2935be59c8081868d7502379f0676f"
     },
     {
       "source": "assets/global/.claude/skills/brainstormer/templates/opportunity-brief.md",
       "destination": "assets/global/.agents/skills/brainstormer/templates/opportunity-brief.md",
       "source_sha256": "5eff533bd922291eff9f8ce8696604c7153a9910e4cc65ae7fc409b339e4396c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5eff533bd922291eff9f8ce8696604c7153a9910e4cc65ae7fc409b339e4396c"
     },
     {
       "source": "assets/global/.claude/skills/github-readme-writer/SKILL.md",
       "destination": "assets/global/.agents/skills/github-readme-writer/SKILL.md",
       "source_sha256": "cf3486f4f46473a282a7e690505db8b7fc1c79dd365c612ea4847c551de038da",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "70eebed95f5570aeb3d364c025b6b68e27ac60eae217162e7fda8498afc58c99"
     },
     {
       "source": "assets/global/.claude/skills/github-readme-writer/evals/eval-1/eval_metadata.json",
       "destination": "assets/global/.agents/skills/github-readme-writer/evals/eval-1/eval_metadata.json",
       "source_sha256": "07867478a614ac7e9d0b597d8f515fa2c6e655b286c04ad7a0d7410bca43cac8",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "07867478a614ac7e9d0b597d8f515fa2c6e655b286c04ad7a0d7410bca43cac8"
     },
     {
       "source": "assets/global/.claude/skills/github-readme-writer/references/readme_template.md",
       "destination": "assets/global/.agents/skills/github-readme-writer/references/readme_template.md",
       "source_sha256": "7c1e5fc1d98ee29940efc5c307055c6a651945ad83886eaa4a513511e136566a",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "7c1e5fc1d98ee29940efc5c307055c6a651945ad83886eaa4a513511e136566a"
     },
     {
       "source": "assets/global/.claude/skills/github-readme-writer/scripts/repo_scanner.py",
       "destination": "assets/global/.agents/skills/github-readme-writer/scripts/repo_scanner.py",
       "source_sha256": "0778b226909c8da71de8ddbd3fa1ad89f6c797e096d0b389bc0be4b38428dbe1",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "0778b226909c8da71de8ddbd3fa1ad89f6c797e096d0b389bc0be4b38428dbe1"
     },
     {
       "source": "assets/global/.claude/skills/grill-with-docs/ADR-FORMAT.md",
       "destination": "assets/global/.agents/skills/grill-with-docs/ADR-FORMAT.md",
       "source_sha256": "82d224ce5e7e0740465b322dc73c15f423f06e770756b2a03b9c53bf2a386b71",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "d47aa38888df0697eb6c8ae5045b6030e419cf3f7df4f6bd71164427ae4430b4"
     },
     {
       "source": "assets/global/.claude/skills/grill-with-docs/CONTEXT-FORMAT.md",
       "destination": "assets/global/.agents/skills/grill-with-docs/CONTEXT-FORMAT.md",
       "source_sha256": "68cddb5e0c74980d12f66a7f670fdd792a39223e8166e83da12b311543dec3d8",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "89296ac5f48243a33829726a4a49d2c1617abb453bb91eefd1a221a1ca76f2e6"
     },
     {
       "source": "assets/global/.claude/skills/grill-with-docs/SKILL.md",
       "destination": "assets/global/.agents/skills/grill-with-docs/SKILL.md",
       "source_sha256": "5cdf748ee927012fe0026e124c7497336bdd3f906b97ba183db9af662e79756e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4b571a8f9981e5614288f886e2ac3e60585e8cc4cdb1421b9b90f84d153e11e8"
     },
     {
       "source": "assets/global/.claude/skills/grill-with-docs/templates/adr.md",
       "destination": "assets/global/.agents/skills/grill-with-docs/templates/adr.md",
       "source_sha256": "b8637134131ae956af5695b79442ec8e6d14cad0bdbc576bb58a66a3dc53badb",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b8637134131ae956af5695b79442ec8e6d14cad0bdbc576bb58a66a3dc53badb"
     },
     {
       "source": "assets/global/.claude/skills/grill-with-docs/templates/decision-brief.md",
       "destination": "assets/global/.agents/skills/grill-with-docs/templates/decision-brief.md",
       "source_sha256": "06fa7488187b268104bde4d7c3710efddab8b1ffeb4c440944f9b496e9491974",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "06fa7488187b268104bde4d7c3710efddab8b1ffeb4c440944f9b496e9491974"
     },
     {
       "source": "assets/global/.claude/skills/plan-to-beads-unified/SKILL.md",
       "destination": "assets/global/.agents/skills/plan-to-beads-unified/SKILL.md",
       "source_sha256": "c4fc1381e1bbd86431c4044dbf734e46a3cb2c4de6fd2238b4633fcda361fd57",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "243b2fb495d845e0fe574a0a64c901235f608cab9800a758d4f60606e666db2f"
     },
     {
       "source": "assets/global/.claude/skills/product-architect/SKILL.md",
       "destination": "assets/global/.agents/skills/product-architect/SKILL.md",
       "source_sha256": "a2c689ace1da4d30a26a1ffb780639ad2ae026d9f18d5738d8aa11eda93febb7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "9c070427a061f0d22f13e91035c53b6bfa43feb11268e4c927eb80a16703bd0f"
     },
     {
       "source": "assets/global/.claude/skills/product-architect/examples/output_golden_prd.md",
       "destination": "assets/global/.agents/skills/product-architect/examples/output_golden_prd.md",
       "source_sha256": "c0c82d49c0a2b8839f0036ad999d69cb3a076407f0ce9c82fec4f4c318862fad",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "77688255325dedbc8df4cf0fd6fa8e5e7ed71507cd5315598ee4f27389b1f795"
     },
     {
       "source": "assets/global/.claude/skills/product-architect/references/agile_user_story_guidelines.md",
       "destination": "assets/global/.agents/skills/product-architect/references/agile_user_story_guidelines.md",
       "source_sha256": "32ba09e0b9e879beb7db905907a5d69497c7eb821a4285f2f95da7d153cd2737",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "32ba09e0b9e879beb7db905907a5d69497c7eb821a4285f2f95da7d153cd2737"
     },
     {
       "source": "assets/global/.claude/skills/product-architect/templates/prd.md",
       "destination": "assets/global/.agents/skills/product-architect/templates/prd.md",
       "source_sha256": "9c61374ffa2ee1753e6b4de7e5c8fa50071c14cf4a4a65c12b74c4a0f89e52b3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "274c0013e0cdf163944bf9317cfc25aa177814053cc650cdfd7931c7d300f027"
     },
     {
       "source": "assets/global/.claude/skills/project-planner/SKILL.md",
       "destination": "assets/global/.agents/skills/project-planner/SKILL.md",
       "source_sha256": "4f0f0aff09f3f9c271dc3077edc65c1d0e67b585b1ed289812f3be1402e4d01d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b78c5c0fd5f6b313630c07dbd422c9e043e7d750b22982c9b0f2260f95bd0d3a"
     },
     {
       "source": "assets/global/.claude/skills/project-planner/evals/evals.json",
       "destination": "assets/global/.agents/skills/project-planner/evals/evals.json",
       "source_sha256": "30edfe4abf597dd5300d322ec81f39cd85f9997024c858663153ccbf1ff4c238",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6584a3a56bb1ac9f6bd2a3e10bd0bcff068721ed4931267d4e4320f28a5d0cc8"
     },
     {
       "source": "assets/global/.claude/skills/project-planner/templates/project-plan.md",
       "destination": "assets/global/.agents/skills/project-planner/templates/project-plan.md",
       "source_sha256": "701ff99c88004a8d34ae2dd3105d4d12bf84a19eaa4b17e1998c7cabcd965247",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5a55fc980bb328706a6fccec5008c99ac7c33b77af803678cbfefb11356da8f8"
     },
     {
       "source": "assets/global/.claude/skills/refine-beads/SKILL.md",
       "destination": "assets/global/.agents/skills/refine-beads/SKILL.md",
       "source_sha256": "35894cbf5809bbb1859e8f7a0180e3825edaf2d0f390c697428e2988c2070148",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "de733f54f386ea9f18c5c0dc3dcc6a5d8f13ebc981a50c30b5744e46645ae6db"
     },
     {
       "source": "assets/global/.claude/skills/refine-beads/work-item-templates.md",
       "destination": "assets/global/.agents/skills/refine-beads/work-item-templates.md",
       "source_sha256": "3cf7d4372b1997addfaf5532a33d63e473d405926e088cf86888b1df2e809c60",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "3cf7d4372b1997addfaf5532a33d63e473d405926e088cf86888b1df2e809c60"
     },
     {
       "source": "assets/global/.claude/skills/session-checkpoint/SKILL.md",
       "destination": "assets/global/.agents/skills/session-checkpoint/SKILL.md",
       "source_sha256": "39505d993d4accbed6be66b7fc857220abcb43ea7e0f0fe644e67b8087fb311d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b7c03500e38ac7416e60245b4385a082600f121ca0af60b9c4a583b9cbd2ec18"
     },
     {
       "source": "assets/global/.claude/skills/session-start/SKILL.md",
       "destination": "assets/global/.agents/skills/session-start/SKILL.md",
       "source_sha256": "2407dd28d7b080ea7a34bf87b82ff51ebe0120f1ff1302fd624ed8bbf54e9509",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4320dddde3e512038d15d01bb53af1d13c41131f1841672447b2e5dab71a883f"
     },
     {
       "source": "assets/global/.claude/skills/session-wrapup/SKILL.md",
       "destination": "assets/global/.agents/skills/session-wrapup/SKILL.md",
       "source_sha256": "9577d6ded5abd62ea0e7a538be724f7cfbb2fce00b6867622ed10bd1b6e9b1e6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "0838249722539084fa20a67b041a1153f77e498b4735b934f7af902b606ef37b"
     },
     {
       "source": "assets/global/.claude/skills/session-wrapup/changelog-schema.md",
       "destination": "assets/global/.agents/skills/session-wrapup/changelog-schema.md",
       "source_sha256": "45e32dc767d9aaa800a659d5385c28296186d8d1e158dfc11c6197dcca9a0bb7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2b5aa3611d828b901a728b26d29789823bc0f39dfd58b79a58c4a66312da647d"
     },
     {
       "source": "assets/global/.claude/skills/session-wrapup/handoff-schema.md",
       "destination": "assets/global/.agents/skills/session-wrapup/handoff-schema.md",
       "source_sha256": "8c21c490795ec5a732019ec3f6cba0a8fba20dc9672e7ebd5594654df89b8a01",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "37cc0159a47f51805369e4f20318624a8bac54878fcb1176df700eb3f6917edd"
     },
     {
       "source": "assets/global/.claude/skills/ste-writing/SKILL.md",
       "destination": "assets/global/.agents/skills/ste-writing/SKILL.md",
       "source_sha256": "43eb5b8078f7b357e8e95241b6e6e2b2b0a05d3ea5ccbe2d3a453d370df5b784",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "43eb5b8078f7b357e8e95241b6e6e2b2b0a05d3ea5ccbe2d3a453d370df5b784"
     },
     {
       "source": "assets/global/.claude/skills/ste-writing/references/STE-RULES.md",
       "destination": "assets/global/.agents/skills/ste-writing/references/STE-RULES.md",
       "source_sha256": "1e2f663e7cd0d00958bc0bbd25a3d6c6b01349a16c5e37632b22fd8ac8f2d4db",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1e2f663e7cd0d00958bc0bbd25a3d6c6b01349a16c5e37632b22fd8ac8f2d4db"
     },
     {
       "source": "assets/global/.claude/skills/tdd/SKILL.md",
       "destination": "assets/global/.agents/skills/tdd/SKILL.md",
       "source_sha256": "0b22917effc98730c105eb4bfa69963e9cc413a22c78afe21e7c9ab026ff11df",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c672f147a6264bcb013676f5f75f44025fb1edcedc010aaf62e8e2848a64039d"
     },
     {
       "source": "assets/global/.claude/skills/technical-writer/SKILL.md",
       "destination": "assets/global/.agents/skills/technical-writer/SKILL.md",
       "source_sha256": "c0e8d5805138834f078c0a2d4f377e49dd9c3d58a36e84056b5d40f886af417c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "067d86b775eb1e517f764c68fb421dcd2d3012e4b271fa2e8d257cfe0012ded7"
     },
     {
       "source": "assets/global/.claude/skills/technical-writer/evals/evals.json",
       "destination": "assets/global/.agents/skills/technical-writer/evals/evals.json",
       "source_sha256": "8137464fa0f865554f7e0dfeaff386ce0115e5579a5950cc2470d900898ff9f3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8137464fa0f865554f7e0dfeaff386ce0115e5579a5950cc2470d900898ff9f3"
     },
     {
       "source": "assets/global/.claude/skills/technical-writer/references/doc-templates.md",
       "destination": "assets/global/.agents/skills/technical-writer/references/doc-templates.md",
       "source_sha256": "5e0317c0741f67eb8f71992863e6016dd21dcd1755f6f22bd79253de41f5d77c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "288e844ce966990e4907f09f059afa5dfcee1122b3be1cbe4e9603eec6e770ac"
     },
     {
       "source": "assets/global/.claude/skills/to-questionnaire/SKILL.md",
       "destination": "assets/global/.agents/skills/to-questionnaire/SKILL.md",
       "source_sha256": "b289b88f7e970334c9e6cfb4a1d6d483e15899be26cf23059de326dec044fdd7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "97cb726b05579eda24db077553e0bd324c5558d81d3679676e1bb54ed386282f"
     },
     {
       "source": "assets/global/.claude/skills/to-questionnaire/agents/openai.yaml",
       "destination": "assets/global/.agents/skills/to-questionnaire/agents/openai.yaml",
       "source_sha256": "9e8a06c38c8842eea8d4922cb9d1ead8e3ace647bab259b943c994a1b4742bc2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "9e8a06c38c8842eea8d4922cb9d1ead8e3ace647bab259b943c994a1b4742bc2"
     },
     {
       "source": "assets/global/.claude/skills/wait-what/SKILL.md",
       "destination": "assets/global/.agents/skills/wait-what/SKILL.md",
       "source_sha256": "85bb5e2d954ec7721952d72a0b778ef486b910ac834c2eae05030fabb431f55c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "e58add97e3389655a79d35c54a2c603be04141d1f94a5889605d03330237f1e8"
     },
     {
       "source": "assets/global/.claude/skills/wait-what/agents/openai.yaml",
       "destination": "assets/global/.agents/skills/wait-what/agents/openai.yaml",
       "source_sha256": "b41faadf741d51e4ea184148b2d1854d93f947aaf754c7844f70a00f04194999",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b41faadf741d51e4ea184148b2d1854d93f947aaf754c7844f70a00f04194999"
     },
     {
       "source": "assets/global/.claude/skills/wizard/SKILL.md",
       "destination": "assets/global/.agents/skills/wizard/SKILL.md",
       "source_sha256": "0911d67812730dcb13e02d34404b3ee0126290e4c8bef81c9c3298e0a8118e39",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "0911d67812730dcb13e02d34404b3ee0126290e4c8bef81c9c3298e0a8118e39"
     },
     {
       "source": "assets/global/.claude/skills/wizard/agents/openai.yaml",
       "destination": "assets/global/.agents/skills/wizard/agents/openai.yaml",
       "source_sha256": "98f44d682d58e262f160dc59a8befc365e0aa65820dd0261864af26aa8e59d83",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "98f44d682d58e262f160dc59a8befc365e0aa65820dd0261864af26aa8e59d83"
     },
     {
       "source": "assets/global/.claude/skills/wizard/template.sh",
       "destination": "assets/global/.agents/skills/wizard/template.sh",
       "source_sha256": "200de18e598840476a241f2113e00b42458ee85eb4560c6f76dd625d2a7d36ab",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "351fe78fa306e8c7646d39b3f25d530910453f3b6e5ddb327ab295ee533a9803"
     },
     {
       "source": "assets/scaffold/.claude/CLAUDE.md",
       "destination": "assets/scaffold/AGENTS.md",
       "source_sha256": "0dcdef7760a806d9cfbb5804d626342c15f5d49880e205ce55aaeb0ea589b971",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "41a8976054c272f0a56144a712e97af4e9a757a58064233d90bf53e84bcef06e"
     },
     {
       "source": "assets/scaffold/.claude/docs/CONTEXT.md",
       "destination": "assets/scaffold/docs/CONTEXT.md",
       "source_sha256": "cb644c7a4f91de128c772ce585b10319d1ed204898ff9d9c86a3dbc8c556e086",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "c862a636ad437d492b53ec6d29b2b0c521bcb69552131f87cfa94067cbc0877b"
     },
     {
       "source": "assets/scaffold/.claude/docs/PULL_REQUEST_TEMPLATE.md",
       "destination": "assets/scaffold/docs/PULL_REQUEST_TEMPLATE.md",
       "source_sha256": "73f8cafde016fce126097383ed2e461d5f2ed0ec65a80e18d4a92768e76ce9b9",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "7cb635ecca3e7b8f0b948374892ee2e453f8a645bcd81d3f418009ad1ff7a52e"
     },
     {
       "source": "assets/scaffold/.claude/docs/adr/README.md",
       "destination": "assets/scaffold/docs/adr/README.md",
       "source_sha256": "5f73ed92c0cabb81d184796529464d2f91874c973c4daf789d90bd181b01a9ee",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6f2f367d52f61ed12f39fe5ebb14c4097fe0d4c359f487eae6e210d1250f221e"
     },
     {
       "source": "assets/scaffold/.claude/docs/adversarial-review-log.md",
       "destination": "assets/scaffold/docs/adversarial-review-log.md",
       "source_sha256": "045e741bb56f42557121f883efb4d8302361ea21f3d5a013f00bfc57f8a9f417",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "16a652aa19187f14d019d889b329186c36038e364b5b721237553622a8276a28"
     },
     {
       "source": "assets/scaffold/.claude/docs/architecture.md",
       "destination": "assets/scaffold/docs/architecture.md",
       "source_sha256": "92c4ec616e28321a64663098b2f753ec2a8999713383603649a8acd08dbe169f",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "42f568747bfc066ea92257942d9e0410771106418738c330f5086fcc38b45a6d"
     },
     {
       "source": "assets/scaffold/.claude/docs/backend.md",
       "destination": "assets/scaffold/docs/backend.md",
       "source_sha256": "c251e99481eb1dadc2f52f62a4ce6ccdf4f147c9d4bf85546da52ce2385670c2",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "c251e99481eb1dadc2f52f62a4ce6ccdf4f147c9d4bf85546da52ce2385670c2"
     },
     {
       "source": "assets/scaffold/.claude/docs/changelog.yaml",
       "destination": "assets/scaffold/docs/changelog.yaml",
       "source_sha256": "b254aab73b11aea8f6b578cb4a40f5618489a3edd216f64badf0749e0eb73a9c",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "f1c772bdc11328d0db108023d2818edb271d154fda11dfd6e37f452b033b57cb"
     },
     {
       "source": "assets/scaffold/.claude/docs/data-model.md",
       "destination": "assets/scaffold/docs/data-model.md",
       "source_sha256": "17e8429b46897eabbc41d07cf62e898d793bcff433da33c4224ee97f03f84596",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "17e8429b46897eabbc41d07cf62e898d793bcff433da33c4224ee97f03f84596"
     },
     {
       "source": "assets/scaffold/.claude/docs/decision-brief.md",
       "destination": "assets/scaffold/docs/decision-brief.md",
       "source_sha256": "dfb160a9e105dc99fbd62ca791363d541d05ddede2abe8a3bbd72df5b1cef4ca",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "5c64e62cc1d3645aee320c0525adc9a32c8a599fadc31562fac915450c212845"
     },
     {
       "source": "assets/scaffold/.claude/docs/enhancements.md",
       "destination": "assets/scaffold/docs/enhancements.md",
       "source_sha256": "8c0f47dad6e186eb29be9ab63b8dc3703231ceba524f5b8c3cf397b29171c7d1",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "8c0f47dad6e186eb29be9ab63b8dc3703231ceba524f5b8c3cf397b29171c7d1"
     },
     {
       "source": "assets/scaffold/.claude/docs/frontend.md",
       "destination": "assets/scaffold/docs/frontend.md",
       "source_sha256": "cc1e108d4ed98896341589d8335058bd522d73c05cbb499aa682ea2fe66a4e49",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "cc1e108d4ed98896341589d8335058bd522d73c05cbb499aa682ea2fe66a4e49"
     },
     {
       "source": "assets/scaffold/.claude/docs/handoff.yaml",
       "destination": "assets/scaffold/docs/handoff.yaml",
       "source_sha256": "cd40857fefaae82150d309628172dae8594adc389d372c6110660675895b304e",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "ce1f8b94907a31b435842239e9f46959191616c888f9623d042e430e06e9e8fd"
     },
     {
       "source": "assets/scaffold/.claude/docs/prd.md",
       "destination": "assets/scaffold/docs/prd.md",
       "source_sha256": "a46ed7ec6232a0d038cb7cf57a92fc201e9dc48c5823d305f1f42e01880ef923",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "fac2b6de01df6e71e46ef97fad189177fcb5fc08e6ae86b321685b7b1131fd7f"
     },
     {
       "source": "assets/scaffold/.claude/docs/project-plan.md",
       "destination": "assets/scaffold/docs/project-plan.md",
       "source_sha256": "c8c0a9ab37de7c1f2feeeef351711ec46204520b46a33b6cea50be62a2944d64",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6eaadbd3ed9583e8f1aa5fd6d01b21b10d5131daefb49a11e80d22e34e874d92"
     },
     {
       "source": "assets/scaffold/.claude/docs/security.md",
       "destination": "assets/scaffold/docs/security.md",
       "source_sha256": "3fcb12a448317ad502ef1b0542b24131cb044b0055c0ddbf21ef764bf3eedaf2",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "3fcb12a448317ad502ef1b0542b24131cb044b0055c0ddbf21ef764bf3eedaf2"
     },
     {
       "source": "assets/scaffold/.claude/docs/standards-history.md",
       "destination": "assets/scaffold/docs/standards-history.md",
       "source_sha256": "8fe7dbbcd6d29ecc54ad612759d57cf5c59622959fa9e5a35a0cec719b2e5a23",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "8c51a9574fde40174294080638fe419fe28d272df96bfdc0a5e3133f6d45569a"
     },
     {
       "source": "assets/scaffold/.claude/docs/tests.md",
       "destination": "assets/scaffold/docs/tests.md",
       "source_sha256": "b4609692538070a68e4730ba59ecd536c276e6c2c3a6dc591ce07a71df824763",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "b4609692538070a68e4730ba59ecd536c276e6c2c3a6dc591ce07a71df824763"
     },
     {
       "source": "assets/scaffold/.claude/rules/development-standards.md",
       "destination": "assets/scaffold/.agents/bootstrap/instructions/development-standards.md",
       "source_sha256": "9e4aec51556c554b4b9dccbd9676d64b7a00e41675ee7c88198765cb27785d13",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "9e4aec51556c554b4b9dccbd9676d64b7a00e41675ee7c88198765cb27785d13"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/README.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/README.md",
       "source_sha256": "2b329286e3df80fa4c52b0b36da47ac05807416027e56b2b7360c924e1c359dc",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "5cfe8202470f1be0bc8c20203ef538a5bb944279071267d99f24d89174427e3f"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/adr.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/adr.md",
       "source_sha256": "b8637134131ae956af5695b79442ec8e6d14cad0bdbc576bb58a66a3dc53badb",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "b8637134131ae956af5695b79442ec8e6d14cad0bdbc576bb58a66a3dc53badb"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/decision-brief.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/decision-brief.md",
       "source_sha256": "06fa7488187b268104bde4d7c3710efddab8b1ffeb4c440944f9b496e9491974",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "06fa7488187b268104bde4d7c3710efddab8b1ffeb4c440944f9b496e9491974"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/opportunity-brief.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/opportunity-brief.md",
       "source_sha256": "5eff533bd922291eff9f8ce8696604c7153a9910e4cc65ae7fc409b339e4396c",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "5eff533bd922291eff9f8ce8696604c7153a9910e4cc65ae7fc409b339e4396c"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/prd.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/prd.md",
       "source_sha256": "9c61374ffa2ee1753e6b4de7e5c8fa50071c14cf4a4a65c12b74c4a0f89e52b3",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "274c0013e0cdf163944bf9317cfc25aa177814053cc650cdfd7931c7d300f027"
     },
     {
       "source": "assets/scaffold/.claude/templates/artifacts/project-plan.md",
       "destination": "assets/scaffold/.agents/templates/artifacts/project-plan.md",
       "source_sha256": "701ff99c88004a8d34ae2dd3105d4d12bf84a19eaa4b17e1998c7cabcd965247",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "5a55fc980bb328706a6fccec5008c99ac7c33b77af803678cbfefb11356da8f8"
     },
     {
       "source": "assets/scaffold/.claude/tmp/.gitignore",
       "destination": "assets/scaffold/.codex/state/tmp/.gitignore",
       "source_sha256": "82501ca8d2f8724c47070713513dc85a893cc26cc48d30cf03f39685e0882d54",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "82501ca8d2f8724c47070713513dc85a893cc26cc48d30cf03f39685e0882d54"
     },
     {
       "source": "assets/scaffold/.gitignore",
       "destination": "assets/scaffold/.gitignore",
       "source_sha256": "499d289a5356dccf1d85d5cb30d019b3559b96647a2d221447ae47e2705122c8",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "82a772f0874429de7a56329758816ad9762030c991f8a8aafa551c863929b9f2"
     },
     {
       "source": "assets/packs/falcon/manifest.txt",
       "destination": "assets/packs/falcon/manifest.txt",
       "source_sha256": "7b5b7465df5a53ba7fa8ebd0b53ad5c741c4f2cace75aa2e0ecaefe533834d19",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "c13608e1aa0effb98ff53c39fc3c3db081b7b4711c6d2d002da6c0ca4454969b"
     },
     {
       "source": "assets/packs/falcon/pack.yaml",
       "destination": "assets/packs/falcon/pack.yaml",
       "source_sha256": "254f9d01ca0883a0d354bc2228cb0e4ff44b00d01327f3d472bdf04dabe35c84",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6aee082c4af9f2cf624bf3360d12d9949786668ce08b11c48a5520b1f1327fab"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/AUTOPILOT-RULES.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/AUTOPILOT-RULES.md",
       "source_sha256": "e1faa0887cc991840446844ae799669d1750e3d36a8d4e79b442c4417a7372e3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a6c3f2dbc88c67f57b8186ca991b318679f8cadd0b943f8507453505f4649504"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/COMMANDS.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/COMMANDS.md",
       "source_sha256": "7b9180084f860e4c7ab5027e3b1fd39e02fb84a1280502571ffe1abec20e5575",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "7c6243c8c8d978fc1b66ddbc340a98a863b5ece68719f82104db59ec9c50d3e3"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/CRONS.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/CRONS.md",
       "source_sha256": "05732041b09006240f847151c0f63125c77b6fa05e16435b429655124ef5cc4a",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1f3cd67d3abba8650b60dde26076cdbfd78f505649cae80c9dc34039dfc7d0b6"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/PROTOCOL.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/PROTOCOL.md",
       "source_sha256": "c9e81e5feede79667bc47cf59f9f870dcbb38644708cc9f134b1a19c396206bb",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b78eb7bbe8395b3101d6b0f3a872ead65e28c65be09adf82f176cb5bb6b3cab0"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/REFERENCE.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/REFERENCE.md",
       "source_sha256": "cd0c5d9dc68e8b9a4800aab9f66d917dab7230eb56d7339e36869533524dc3c4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2104fbc9834695a844f1dff957d0b395fe7e291092966ce16f395dc88690a44d"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/SKILL.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/SKILL.md",
       "source_sha256": "a1a8019a4dcbee23598da7b190a5010d7c72b9de2fd0544caf1789187b018716",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a64b0865574991800a546b88c8248070daedc0e2a7c44cce9a380b4e36690a85"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/SYNTHESIS.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/SYNTHESIS.md",
       "source_sha256": "c3d00b7a93e0b90d2677425c5f612c0ad1bbf781ad1b116b15f82bd4c7c729fa",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b859c4a05937e48866e74bebed2e0a7076ba3dc626597067e4dde6d9d4dd57c9"
     },
     {
       "source": "assets/packs/herald/manifest.txt",
       "destination": "assets/packs/herald/manifest.txt",
       "source_sha256": "31745b900da85b88c1ad79a07dd199aeea9edc4817926fc80cb13e462c97dbf6",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "1daa5b9ac6dbca866b61fb9f8ab567f083d5e0dec53ad64580aff366f1b2700e"
     },
     {
       "source": "assets/packs/herald/pack.yaml",
       "destination": "assets/packs/herald/pack.yaml",
       "source_sha256": "633bb4a42e2f84ee40f3c35c54b9bc5b2ae6774d3a95543d6d743b4840ee9ff9",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "47023bbb84cf20968f653a712941dd9128b3e6b51d4d549ef760d90f9a5c0f5d"
     },
     {
       "source": "assets/packs/herald/scaffold/.claude/agents/herald/herald-a11y.md",
       "destination": "assets/packs/herald/scaffold/.codex/agents/herald-a11y.toml",
       "source_sha256": "e1ad33156a7de6e20ba566aef7db0937d15e605315453fb38526d660cd6751e7",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "82c994ef9e673a2678f61736010b6d250c9f068fc70dc835f79696c7acae216e"
     },
     {
       "source": "assets/packs/herald/scaffold/.claude/agents/herald/herald-prototype.md",
       "destination": "assets/packs/herald/scaffold/.codex/agents/herald-prototype.toml",
       "source_sha256": "57034a9ef4fba085b49252a582511291b9bc5f9b7ad6b669f78f11c5dfcc6094",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "5778191030a7489258a4dce20306f49cd7eaed6875fad1fd282a12d9c3d9e203"
     },
     {
       "source": "assets/packs/herald/scaffold/.claude/agents/herald/herald-review.md",
       "destination": "assets/packs/herald/scaffold/.codex/agents/herald-review.toml",
       "source_sha256": "f85a35140eb7d45a8123be268863883aa0844d0ca345647ad75a7a27f5b8f4f0",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "332f3e37ea995059649f0e3bcb95126b11774e5e62304d6cc23e47d6e18eaef1"
     },
     {
       "source": "assets/packs/herald/scaffold/.claude/agents/herald/herald-system.md",
       "destination": "assets/packs/herald/scaffold/.codex/agents/herald-system.toml",
       "source_sha256": "c59ad3db1915be861533399d41b8adcdc4a29f487802706d595235a328937d57",
-      "acceptance": "native-agent-schema"
+      "acceptance": "native-agent-schema",
+      "native_sha256": "90d7a79f321fba5c39cca4ee18d2ccf0a52e3f852965801f5d3baa17e8acf635"
     },
     {
       "source": "assets/packs/herald/scaffold/.claude/skills/herald/SKILL.md",
       "destination": "assets/packs/herald/scaffold/.agents/skills/herald/SKILL.md",
       "source_sha256": "48f451dd10f37b74c15dd02f0932750d57f7898309564d9509661ab70bcf9b4b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4a02a8cb4620f590ca4e56da645759fc13acb4f91b06dc50fd571161f639b6a8"
     },
     {
       "source": "assets/packs/web-design/manifest.txt",
       "destination": "assets/packs/web-design/manifest.txt",
       "source_sha256": "d58d56e8cba45dc30e9872d11a10b7862ef745aee1171bfc6d8b639499fa8297",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "259f50299dd498adda134e9204a99027b7f1abd706f3537b0df56434afab7b31"
     },
     {
       "source": "assets/packs/web-design/pack.yaml",
       "destination": "assets/packs/web-design/pack.yaml",
       "source_sha256": "4bc4b6e5901796c9086b9488b4a00940e2c59f285a883ad23f269a07eae37bc0",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "24b29f573f3532c9e5a572f01f629c75f44c1e27f68b47e3e746dfb8340a9fc0"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/docs/web-design-mission.md",
       "destination": "assets/packs/web-design/scaffold/docs/web-design-mission.md",
       "source_sha256": "a5883bd7b5cc8adcfd3bb68e1e6e0337e38d55e12b967f1d47e49e9b362776e0",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "96904fc7893ed9b46124a11815a7861d47c59f4dbd3a197750e52ee7d314eeb1"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/docs/web-design-notes.md",
       "destination": "assets/packs/web-design/scaffold/docs/web-design-notes.md",
       "source_sha256": "e256c849f144a9f4d69675e9c1900464fc7137bd7d4c8c468a10763edbd939d4",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "6142a9cdf453368e1b450e96d5f56468b0c840566ba25ac5677aff9aa04e7f60"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/rules/web-design-pack.md",
       "destination": "assets/packs/web-design/scaffold/.agents/bootstrap/instructions/web-design-pack.md",
       "source_sha256": "2e9ea8847e02ab117ed520b7af5fbd9867a461f75feb513dc84f9da4b9dfa358",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "087a8ee0aef15a0540c0bd9873852aeeade6df0e92abd2198830b084ebd995fe"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/SKILL.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/SKILL.md",
       "source_sha256": "73c764804fcbd076e82bfdeffd275213b1178a28d97e0dffdaed96708eee68b4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "d07f69244cb35f69504a6edd168dd655565249208f79e6727e6546e3e290755f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/adapt.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/adapt.md",
       "source_sha256": "ec58806f16fc7ba29bccef08f2e158cd00be077ce05d45e943a59bd26dc6dc55",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bead87679caad7c537dd7c04c3bb78be56ac7eec279ad6aad7322f48ff2df2d9"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/adapt.native.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/adapt.native.md",
       "source_sha256": "17c583cf8ad41266ea1e787b666b9d91fe13469d3d0f6af57c08e0146f9b17ac",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6acc0bf221a4ddc6e5c6438348920b2ca2393b29c4314dbde2cdc23f2b1a9639"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/android.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/android.md",
       "source_sha256": "dacaaf57fe334fb1a02ddb4da5217c78f4e154ac9e6b760d2cc69cceaed0eac4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "dacaaf57fe334fb1a02ddb4da5217c78f4e154ac9e6b760d2cc69cceaed0eac4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/animate.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/animate.md",
       "source_sha256": "e86a01920e31b1f7d3d2d1961c2470bbe8db9f3ebfe5f0985fe004ca64f3a3cc",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b6a1ddbe1030d738bb73c0d2e9654f671c8a82871b4d6752ed501e377e7649ac"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/audit.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/audit.md",
       "source_sha256": "57402ef6fd9d0745f8c60d778f77da83a8b16edf751fa1013598a0f6e5f0f541",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6add78548cbaf3de6afe83888260f4d8d628a58bc8d657c313ef3f42639f670d"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/audit.native.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/audit.native.md",
       "source_sha256": "010ecb4ef79d6e063280791cd2d5e6a689f4f7a3d66c60d7d43f04e7b2067966",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c73e95260e382434d61e480e7b5c23e986d353f078cd1db6113dcba1333abfb2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/bolder.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/bolder.md",
       "source_sha256": "f2b356a513984559324e5909589cfbe02b5ea6053bd043c0e7354627bc33a113",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6c8d720dcaa412923b03e1ed3c2b9d8ace9e9a3fe49bb1bed292b8023f439a6e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/clarify.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/clarify.md",
       "source_sha256": "6c382f8283756e8a693d832b750f7e4cbff1ca5bdcc3825b2b4ef4da9f21876a",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "173dd66abe65633910dcb04a51f40d6ff2a793f87088f022a02fc4cad24dd133"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/colorize.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/colorize.md",
       "source_sha256": "d1fbd55074abb2251bdaa03749d34acc42c38e46e47549f18f5848df57d43c42",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bc5f71f1129d0f2c310d913d07c8dc609a1d25644121bd78c308f42d52a0b9e9"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/craft-floor.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/craft-floor.md",
       "source_sha256": "e419d816711a6e979b38d7f04abe79ca6079d76447eef04428b9fab3a155210f",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "e419d816711a6e979b38d7f04abe79ca6079d76447eef04428b9fab3a155210f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/craft.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/craft.md",
       "source_sha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "9205e222bc6565b37fb504ceec93233c2d2a456802b69d16e6b1c44723907c4c"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/critique.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/critique.md",
       "source_sha256": "71934e9c38d85d7d2992d457a12dd870d6ad60de7a5e054c9c479d12e4fc0ee6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2284463ececb1d44471e4f487bc3ded03dac6b0898dedb7b51d1fb496b3efa25"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/degraded/asset-producer.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/degraded/asset-producer.md",
       "source_sha256": "f5ce3f823f4d9ce08c50ebfb8afa3c60b06a3110817c6f46294808975b7e1861",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f5ce3f823f4d9ce08c50ebfb8afa3c60b06a3110817c6f46294808975b7e1861"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/degraded/documenter.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/degraded/documenter.md",
       "source_sha256": "b775f5f044badc6b15212e7f8b6868ee6ef6041d0dfa09a7b7aa7680e5b0e91d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b775f5f044badc6b15212e7f8b6868ee6ef6041d0dfa09a7b7aa7680e5b0e91d"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/degraded/finish-reviewer.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/degraded/finish-reviewer.md",
       "source_sha256": "c7b7240ceea83d2bff83e06cd15994ae17d978da8a36df5aea264aec83c09502",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c7b7240ceea83d2bff83e06cd15994ae17d978da8a36df5aea264aec83c09502"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/degraded/manual-edit-applier.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/degraded/manual-edit-applier.md",
       "source_sha256": "49d9d5751f9f93820f8c761b16db47c6328cc58001e463e5b647af5b4e20e55f",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "49d9d5751f9f93820f8c761b16db47c6328cc58001e463e5b647af5b4e20e55f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/delight.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/delight.md",
       "source_sha256": "56500b1f9d2fcec8324d7f448d813048b5831a46d3feeb1055bd3eb17ec3660f",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "098a891028ce59c212b747d3c70468dd750aff7053a703d1336045ed31e0da7c"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/distill.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/distill.md",
       "source_sha256": "88c4930f49cb41a9fe463bd40989b4ab85694dfda85867d00a94cb7a4c5e7a20",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "677c4d0ac33e8e0fb43e892f5246da7ba218d37657524b31214892b9453a1c01"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/doctor.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/doctor.md",
       "source_sha256": "0b80beb34837ff67312744d007cefda83c2d6ae4c0b6960d226bec12f689c491",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8111dfc587ef59354a354d8ddde9d07ad1caa3ee59ebe5e480154c258198271f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/document.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/document.md",
       "source_sha256": "968b492f1879cc5db34f768a90bb5b4eb763261a171dd4fd758b3a4a10c5a8ac",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "ebf12a669f12e80258e5ae3e51c1686cd6862c6e99d5463efd83f79c9b3f7fae"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/extract.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/extract.md",
       "source_sha256": "32f33c58b7b213ecf88e05b6dcfac6c7f96956b84db5694ddb6e1e0f1b307072",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "591cdc1d873e2decf375ec1a5faeb33c375296f671f3690137a9c3b3ff0abfc4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/harden.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/harden.md",
       "source_sha256": "8a1c872773996dfa1c1eb765ac7ed8e8d41f99d4f12f090b4725b694e85eaa62",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b31ff29c7a1ea979c6d039f7e8d17007410697ab49536690dca109f0af3f20f8"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/hooks.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/hooks.md",
       "source_sha256": "d24ff44255fd29738ef05b78afa2e519dbf12cb7bbdaa4c9696b3a656e41d9a7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "fedd7a9d5cf7fd3505a2c826fa0257c7cae2875f801a3fe4fbc685fcadbe9f73"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/init.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/init.md",
       "source_sha256": "f6bba0557444f8d1bfd71ac839014361ab7125fa203a203144df5a50969c011c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c10b9420cbb3a805b7b2e566da614fe55b1f393be6d80445dfdc89f34c4682df"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/ios.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/ios.md",
       "source_sha256": "07131918b18ce50dbd62fa20bb519d7a0b4a36c798f0e5332522b75cbc7d0574",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "07131918b18ce50dbd62fa20bb519d7a0b4a36c798f0e5332522b75cbc7d0574"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/layout.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/layout.md",
       "source_sha256": "54e66bfb19d5d7b8d9feb7e05384ae2aa2432b9788355501f288d2575646fe98",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2d5eba1b9493f85c149a197fe6c4e9d015f5e68c49f24f5210a237cee4e44348"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/live.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/live.md",
       "source_sha256": "ace4771625eca82d34f54cf27124613b7e7c5c35d1799f6661f8ba9380b8c00e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "35da53358a44b7821b50e42708882399cfaca5aea71eeeef8d8d5a606627f8c5"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/new-work.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/new-work.md",
       "source_sha256": "caead915931ce883b5f2d000d1c41d49f4491dac90c89c69d088af4a76067792",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2325b4ab16c6dc12cdb17616e3c7af4c1441f222b79bc5c71ea37b180e866ea6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/onboard.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/onboard.md",
       "source_sha256": "9a2c08ee2516d2ee87129e7ebe6a0895f9990c9852d1f6fa7e70be9a6a88a659",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "ef2dde00030580ed2765cbf7be9b2ea4a6f64cb915b804fd6f6abcf38051c7b9"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/operate.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/operate.md",
       "source_sha256": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a9d2203acd45ca33a13d5c68b02b23ed512425ac15f0e8438318ed124b43729d"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/optimize.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/optimize.md",
       "source_sha256": "6d368b679a0ed1815812815de65863b5840d419589dfbda06224c01149240287",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f672ef8251a3ed4051a053d30819664951b17540b2899acd27d20e500c234abc"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/overdrive.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/overdrive.md",
       "source_sha256": "7fac8b8e09673209107ca9fd46ca525e5fd84da79dcae64a455c21c9a9b4d02d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "893b4bb9312e48a81315b8f53867dd77d5fae3f53caf37c26eba84c65c3a11a1"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/polish.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/polish.md",
       "source_sha256": "8897a5f97150747bbe0df3cd2bb1c61ab89a3f29c1777a5c506c412c59e1d6b2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bcd4514f498fb056878c618b17271bcf3f10c1f66cb131f4b4f03145bb763ae1"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/quieter.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/quieter.md",
       "source_sha256": "7d8470f34c6e31e6539b8bde5945d0b6aab0c42b65683689f95fa9a6e0102fd1",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "fa7a122b8cc5f894827803d45df731c318441eff549dea6264458d2219dd8148"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/routing.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/routing.md",
       "source_sha256": "534a8653a4bd9f0d437eca1b4bf807f9adca1a7d584d38cf8bb161d3ef7fdffc",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b2fda1126e4a05d127f656d878d9baa593860bd8bc7f70186f8e13c5474c14cc"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/shape.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/shape.md",
       "source_sha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a55f016c046cb6a27c55bd7f346375aeb506a755c4fbca19a5f92dbd42309c23"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/typeset.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/typeset.md",
       "source_sha256": "2031c995a3d4b4f1c74535c055ca21ac133034ced477905da543b714802adc10",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6d803447fb419ee718012f6263d2685ad462a14dc08c338392e28b79823a0553"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/visualize.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/visualize.md",
       "source_sha256": "2be9e14a29fb1a76e4ef662d6ebc651d88d7476cde32a2ceff8fb2fcdd8c3e4e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2be9e14a29fb1a76e4ef662d6ebc651d88d7476cde32a2ceff8fb2fcdd8c3e4e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/command-metadata.json",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/command-metadata.json",
       "source_sha256": "6bdbc3f745ceee15e10b050f109ce42bbeb53ab3c3b5239257de1d596654dee7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6bdbc3f745ceee15e10b050f109ce42bbeb53ab3c3b5239257de1d596654dee7"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/concept-seed.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/concept-seed.mjs",
       "source_sha256": "6cbc8ff960c5273675b04ff2a6a8f4bb22726dca871605845bb5cbe9f2e9077e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "63fe51809833391aea3262df20b3eecca2e3502ec3fb1217fc2999ebb74fd27b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/context-signals.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/context-signals.mjs",
       "source_sha256": "ae2bb3091ca3a0966245db159617023a6074f691f3d49f24efa374412183110c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5566ea25b3e819754ba8cfc2c9964a81f7291975489d8f0f67eb3cb0bdc2d98f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/context.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/context.mjs",
       "source_sha256": "9624eec1da4235b4f9d45d5cdb29ecb812ae01cb7e8a3953fcbfdc55f011d03e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "274d7bf856caaa2a14ae062efd9cac0506ef8d0afadd82a1dfcb6543600dfd51"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/critique-storage.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/critique-storage.mjs",
       "source_sha256": "ecafe838f5596a8da37d8b995d51d0954e26f98dec3608afd6cc20dcea1603f6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "ecafe838f5596a8da37d8b995d51d0954e26f98dec3608afd6cc20dcea1603f6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detect-csp.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detect-csp.mjs",
       "source_sha256": "2d80520bef13cb93107699714bc0d2be5a2787a9aa079ecec91b94508a8125a4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2d80520bef13cb93107699714bc0d2be5a2787a9aa079ecec91b94508a8125a4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detect.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detect.mjs",
       "source_sha256": "f5dfd05ca1e314acd8ed79c6301a20a1b844f2eb6691bd63e04116a8e7efb187",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f5dfd05ca1e314acd8ed79c6301a20a1b844f2eb6691bd63e04116a8e7efb187"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/browser/injected/index.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/browser/injected/index.mjs",
       "source_sha256": "1bf2d87655d59eb154c75502a11b2e24bffeb01112a4e9f118ff2bc7f1f3034a",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1bf2d87655d59eb154c75502a11b2e24bffeb01112a4e9f118ff2bc7f1f3034a"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/cli/main.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/cli/main.mjs",
       "source_sha256": "7d922711abb67ea3c626f1a2fcbe4464e72230bfdd61644217c4ac351065edd5",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "7d922711abb67ea3c626f1a2fcbe4464e72230bfdd61644217c4ac351065edd5"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/design-system.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/design-system.mjs",
       "source_sha256": "a3f995a4223e8eb8295bca41ba08ea6d4be3409597fdb163a0775ee61c5ffd35",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a3f995a4223e8eb8295bca41ba08ea6d4be3409597fdb163a0775ee61c5ffd35"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/detect-antipatterns-browser.js",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/detect-antipatterns-browser.js",
       "source_sha256": "7a60f0b8e8709281841014d948125e3254a02594cb964e30f68076b8002324fe",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "7a60f0b8e8709281841014d948125e3254a02594cb964e30f68076b8002324fe"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/detect-antipatterns.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/detect-antipatterns.mjs",
       "source_sha256": "f5240e4162b270efafd099b81d315309a6f25a83a887aedf02bf9bcf3ed5c724",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f5240e4162b270efafd099b81d315309a6f25a83a887aedf02bf9bcf3ed5c724"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/engines/browser/detect-url.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/engines/browser/detect-url.mjs",
       "source_sha256": "5a2240c5a56ea6d302bd008a03b1319facc3289056d44beb45d38c3ace8252f6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5a2240c5a56ea6d302bd008a03b1319facc3289056d44beb45d38c3ace8252f6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/engines/regex/detect-text.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/engines/regex/detect-text.mjs",
       "source_sha256": "99a481d0d2212afac0c7ddd06306dfad38ff7823cd033d3bea8a4796f49565a5",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "99a481d0d2212afac0c7ddd06306dfad38ff7823cd033d3bea8a4796f49565a5"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/engines/static-html/css-cascade.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/engines/static-html/css-cascade.mjs",
       "source_sha256": "916d75ce68eb83280f3d02542a8ae34981462c3628e940a3695542879507ecc6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "916d75ce68eb83280f3d02542a8ae34981462c3628e940a3695542879507ecc6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/engines/static-html/detect-html.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/engines/static-html/detect-html.mjs",
       "source_sha256": "b1f8f39f7c1b8653e1685892224751f8552977ce42cbdb16a10181f2c72c7940",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b1f8f39f7c1b8653e1685892224751f8552977ce42cbdb16a10181f2c72c7940"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/engines/visual/screenshot-contrast.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/engines/visual/screenshot-contrast.mjs",
       "source_sha256": "b4520b3f001079bd175bf20d46c5197b1b8ec5fb98fdf72c50a24c0b6598ee99",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b4520b3f001079bd175bf20d46c5197b1b8ec5fb98fdf72c50a24c0b6598ee99"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/findings.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/findings.mjs",
       "source_sha256": "8b8af7212c8515d6791a8af1375d0619a9f9a707a881e6fbd850e4216b3f8eca",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8b8af7212c8515d6791a8af1375d0619a9f9a707a881e6fbd850e4216b3f8eca"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/node/file-system.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/node/file-system.mjs",
       "source_sha256": "219e74a5a8dfd8594c1b9c8a4488bc7e5c403cf8d4f8f9628cc0a1fb8fd0f4e1",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "219e74a5a8dfd8594c1b9c8a4488bc7e5c403cf8d4f8f9628cc0a1fb8fd0f4e1"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/profile/profiler.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/profile/profiler.mjs",
       "source_sha256": "5e201f3557360bd368a3977fecf925f376fd95f8a4dd6c4cc63fbd62848cda43",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5e201f3557360bd368a3977fecf925f376fd95f8a4dd6c4cc63fbd62848cda43"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/registry/antipatterns.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/registry/antipatterns.mjs",
       "source_sha256": "80fc603f1b91fd18dcacb61b3e6b3fda00ed6a95188d171ae8b4c949596e19bf",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "80fc603f1b91fd18dcacb61b3e6b3fda00ed6a95188d171ae8b4c949596e19bf"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/rules/checks.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/rules/checks.mjs",
       "source_sha256": "53b6d25fd426dc645c1a0dbefdd9e5254e5822993559f33a97338bdc87069fa7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "53b6d25fd426dc645c1a0dbefdd9e5254e5822993559f33a97338bdc87069fa7"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/shared/color.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/shared/color.mjs",
       "source_sha256": "01a68231413473f2c1183e12663ccf8aca26a87d067de75fbf3c21e73b751a83",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "01a68231413473f2c1183e12663ccf8aca26a87d067de75fbf3c21e73b751a83"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/shared/constants.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/shared/constants.mjs",
       "source_sha256": "606f50159d56b5e972724c13933e63220696636215292e5316846426f3e12896",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "606f50159d56b5e972724c13933e63220696636215292e5316846426f3e12896"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/shared/fonts.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/shared/fonts.mjs",
       "source_sha256": "869c297295a10082d87988f31c136c5df9ddad84da0c2bbba2e85e1261e320a6",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "869c297295a10082d87988f31c136c5df9ddad84da0c2bbba2e85e1261e320a6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/shared/inline-ignores.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/shared/inline-ignores.mjs",
       "source_sha256": "74c80303e25f017b4671ae299b9fca424a5f7714203d19207a8d8896dfd2eecc",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "74c80303e25f017b4671ae299b9fca424a5f7714203d19207a8d8896dfd2eecc"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/detector/shared/page.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/detector/shared/page.mjs",
       "source_sha256": "b4cef5548d84fa90d15e6b42b20be9ef74ed05e4e6e46076ec5acc61b343315c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "b4cef5548d84fa90d15e6b42b20be9ef74ed05e4e6e46076ec5acc61b343315c"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/doctor.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/doctor.mjs",
       "source_sha256": "5a3968ce3fc961c158e649cc34cd846d8ebac5895a488b5d412804efe1616ca7",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5a3968ce3fc961c158e649cc34cd846d8ebac5895a488b5d412804efe1616ca7"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/generate-image.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/generate-image.mjs",
       "source_sha256": "8fdcd629a4c974d01791e91c7116d78f2e7e4fd884584be7048ec5fc85363dea",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8fdcd629a4c974d01791e91c7116d78f2e7e4fd884584be7048ec5fc85363dea"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook-admin.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook-admin.mjs",
       "source_sha256": "d767c332a64f09cdeecb53bb103725cdcacde4a6b5b4468fedd1cc0ce1e0947d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "57c2934ae4451048b210c6f22a4ca12e9f121905f4c39a0d763ea33050d1bbcb"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook-before-edit.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook-before-edit.mjs",
       "source_sha256": "4c399b8287a2a5b46b392c98926ea269558daaa16a052fb9a0c645c5e3b9c28b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4c399b8287a2a5b46b392c98926ea269558daaa16a052fb9a0c645c5e3b9c28b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook-lib.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook-lib.mjs",
       "source_sha256": "79e42b74d827adcc6d75db607bdc3ca2d08bbfcaf3ffbdf6e38eeeba74939595",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8ac0a5eea4c82ebe8fb38892cd4b154ed662c8d33ef9d02a4507bd9783cc8a58"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook.mjs",
       "source_sha256": "4e3629e60d2672258ab98ae382325096a237f100cb0f430d9f692b6d5b93cc7e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4e3629e60d2672258ab98ae382325096a237f100cb0f430d9f692b6d5b93cc7e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/artifact-schema.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/artifact-schema.mjs",
       "source_sha256": "ad0a72e96c74be09490b1aea095478e307f45d707b15021c922cbd4466619359",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "ad0a72e96c74be09490b1aea095478e307f45d707b15021c922cbd4466619359"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/composition-catalog.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/composition-catalog.mjs",
       "source_sha256": "f6af36dd67438793aa098e9afe41c2fad6e183279512c4d073e2053db24481a5",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f6af36dd67438793aa098e9afe41c2fad6e183279512c4d073e2053db24481a5"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/concept-catalog.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/concept-catalog.mjs",
       "source_sha256": "4eac82911c8ad49b7d4ce1565c24213aa8a048528045502972de2428e32dca4b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "4eac82911c8ad49b7d4ce1565c24213aa8a048528045502972de2428e32dca4b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/design-parser.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/design-parser.mjs",
       "source_sha256": "096747b1225f0b78f6fe155477324c592f4fc38021b7007177e70b2dc55df588",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "096747b1225f0b78f6fe155477324c592f4fc38021b7007177e70b2dc55df588"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/impeccable-config.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/impeccable-config.mjs",
       "source_sha256": "132d158e5a14c70ca4dd338eff110c671ba55fef8e7f7729677c7afd627cebe3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "132d158e5a14c70ca4dd338eff110c671ba55fef8e7f7729677c7afd627cebe3"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/impeccable-paths.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/impeccable-paths.mjs",
       "source_sha256": "276ec7ac47e3c250e76616755d83cca4846f0f951b51c29f985ec84b51282aa2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "276ec7ac47e3c250e76616755d83cca4846f0f951b51c29f985ec84b51282aa2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/is-generated.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/is-generated.mjs",
       "source_sha256": "ed5b0b00e99ed385db541c7a068cb85f72456a4b6aa7a5460037d24b58bd90cd",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "97d05a52d0e8238d1585767bbf3738a3cc0dee602a542fae6f002cb7d0103b92"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/provider.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/provider.mjs",
       "source_sha256": "8fcca2f80fdcf762c390e22fffb659ed809bafbb3a6d4f87a401fe4a8c56fcee",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f2c2b1f03c9fc191cb97e4cabd721f6be1c743cf6b3153dcffceaa1f0b88553f"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/staleness-deep.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/staleness-deep.mjs",
       "source_sha256": "52f28d2834b00b82ab58fed7aa9bba19d1a9813fa86c39933a23b2f102c7668c",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1ea42ff65197b9e469cf46dfc663950bd1142ceb5aefe0152c9f6c90e42ce8f0"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/staleness-notice.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/staleness-notice.mjs",
       "source_sha256": "2770f3360119836822a5823d08248976e327d49adbb06caee1492493e257c8c4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2770f3360119836822a5823d08248976e327d49adbb06caee1492493e257c8c4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/staleness.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/staleness.mjs",
       "source_sha256": "f4c95606f5dc69e2d430e41f986468a8f526114d4f27b6a4ba1493ad3408b3ba",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f4c95606f5dc69e2d430e41f986468a8f526114d4f27b6a4ba1493ad3408b3ba"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/surface-briefs.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/surface-briefs.mjs",
       "source_sha256": "abcc992d8d05475f8761b4d9147ffdf0258e17facb9abedcc0c77c7a56600e0d",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "abcc992d8d05475f8761b4d9147ffdf0258e17facb9abedcc0c77c7a56600e0d"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/target-args.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/target-args.mjs",
       "source_sha256": "8f8b902d9ec7dbad0431226bb8aea935cd67d68878d19d95a605be0585056f31",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8f8b902d9ec7dbad0431226bb8aea935cd67d68878d19d95a605be0585056f31"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/target-slug.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/target-slug.mjs",
       "source_sha256": "dbc2670ad1461658d1b43fe15778ac220bc0db57af1f3fd8ccb6251b5ca5a2a4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "dbc2670ad1461658d1b43fe15778ac220bc0db57af1f3fd8ccb6251b5ca5a2a4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/template-extensions.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/template-extensions.mjs",
       "source_sha256": "1a3808237835998f3fea600424c64ab1775beac7e0c344d6b23f472ffc2a3e64",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1a3808237835998f3fea600424c64ab1775beac7e0c344d6b23f472ffc2a3e64"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/browser-script-parts.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/browser-script-parts.mjs",
       "source_sha256": "6edf11e7fa195d847476fe059a0a24895d62d8f0e6c255955db94f1200028ea2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6edf11e7fa195d847476fe059a0a24895d62d8f0e6c255955db94f1200028ea2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/completion.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/completion.mjs",
       "source_sha256": "d7821979aec5fbc2028a6d98aa3d0abe34b88b0e2527f6df4e4f71e5782430bd",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "d7821979aec5fbc2028a6d98aa3d0abe34b88b0e2527f6df4e4f71e5782430bd"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/event-validation.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/event-validation.mjs",
       "source_sha256": "d987ec7b071190b39a838f2f7ee58afeb530f19171b14d24ee06e4cea1ff9a94",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "d987ec7b071190b39a838f2f7ee58afeb530f19171b14d24ee06e4cea1ff9a94"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/generation-preflight.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/generation-preflight.mjs",
       "source_sha256": "d98806a798bc0425c204e3dcbbf40071fe9ab46a95bcfb3624f36740b6a0f1da",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "d98806a798bc0425c204e3dcbbf40071fe9ab46a95bcfb3624f36740b6a0f1da"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/insert-ui.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/insert-ui.mjs",
       "source_sha256": "c86839fc9be98eadc0ff6afaa6ab010a7539e9af77e8deeba898cb93f7f311f4",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c86839fc9be98eadc0ff6afaa6ab010a7539e9af77e8deeba898cb93f7f311f4"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/manual-apply.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/manual-apply.mjs",
       "source_sha256": "c0e7fc5c3d4a7d6e1d6a8e6f85cbe005e5dc01d77b16fd0735605f287c4c8b66",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c0e7fc5c3d4a7d6e1d6a8e6f85cbe005e5dc01d77b16fd0735605f287c4c8b66"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/manual-edit-routes.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/manual-edit-routes.mjs",
       "source_sha256": "5517c40db7c91a5b24b134f79cb0f87c90e307b2f7831b1de670d60e529557c0",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f82b6357d1ea5f748510fcadd4839f20bfacec0e4669a6fc140b84c09415ebd2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/manual-edits-buffer.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/manual-edits-buffer.mjs",
       "source_sha256": "bbd1aba1b9bc891cba771ee8b891d344542119967ae4666e7147da59de5485fd",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bbd1aba1b9bc891cba771ee8b891d344542119967ae4666e7147da59de5485fd"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/poll-lanes.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/poll-lanes.mjs",
       "source_sha256": "a516bc942c55b66be915619794f4ec79aadf94d6966c6fc7aee24f1fbaa60ab3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a516bc942c55b66be915619794f4ec79aadf94d6966c6fc7aee24f1fbaa60ab3"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/session-store.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/session-store.mjs",
       "source_sha256": "1e3095a99016b00adc3d0d00d7afd0d1668270b2caa9c4c81a225991262a9202",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1e3095a99016b00adc3d0d00d7afd0d1668270b2caa9c4c81a225991262a9202"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/source-lock.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/source-lock.mjs",
       "source_sha256": "2919dd7641a5ff2320a01a1bf9f9adcff6e7e2f2b3ccb1b48cdf0b5c091b3803",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2919dd7641a5ff2320a01a1bf9f9adcff6e7e2f2b3ccb1b48cdf0b5c091b3803"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/source-search.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/source-search.mjs",
       "source_sha256": "429dcbcf21785df225fa97a24906dec11b5170e76df6ed0a2b098fa2c2057de2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "429dcbcf21785df225fa97a24906dec11b5170e76df6ed0a2b098fa2c2057de2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/svelte-component.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/svelte-component.mjs",
       "source_sha256": "f3bbda2a05790c82e511e9c316b758b5449dba1e7d34d6a6b29707c7c9da1de2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "f3bbda2a05790c82e511e9c316b758b5449dba1e7d34d6a6b29707c7c9da1de2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/sveltekit-adapter.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/sveltekit-adapter.mjs",
       "source_sha256": "8dcf719001da27f11fd5359696dc9f3e69a4731752597eafdda864045dff17ba",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8dcf719001da27f11fd5359696dc9f3e69a4731752597eafdda864045dff17ba"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/tanstack-adapter.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/tanstack-adapter.mjs",
       "source_sha256": "25b62214e8a8f4a4cecdc7cb8badcca3289b45384052afa49f8274efb24a83de",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "25b62214e8a8f4a4cecdc7cb8badcca3289b45384052afa49f8274efb24a83de"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/ui-core.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/ui-core.mjs",
       "source_sha256": "e8e56f72c17556ee5e20d89818563a868b54bb933341bb0d4ff56db2aadef28b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "e8e56f72c17556ee5e20d89818563a868b54bb933341bb0d4ff56db2aadef28b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/vocabulary.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/vocabulary.mjs",
       "source_sha256": "0a2c5278382906b3b459f268ed40f7b04bc607f88df9133f6d681e94929d2858",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "0a2c5278382906b3b459f268ed40f7b04bc607f88df9133f6d681e94929d2858"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-accept.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-accept.mjs",
       "source_sha256": "bd95e4668f7ce37f550af913f8187eb5d1c005b0246af74db445bd9d6eaef7a3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bd95e4668f7ce37f550af913f8187eb5d1c005b0246af74db445bd9d6eaef7a3"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-browser-dom.js",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-browser-dom.js",
       "source_sha256": "bcfa4022e741f8034b841aed76b9ea3f6a64a8e08e4dfa43ba99f8be65a73393",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bcfa4022e741f8034b841aed76b9ea3f6a64a8e08e4dfa43ba99f8be65a73393"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-browser-session.js",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-browser-session.js",
       "source_sha256": "dddcb8b941f7460aa6a134f7d456b1820747172c12e01de36dab3265b1065cff",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "dddcb8b941f7460aa6a134f7d456b1820747172c12e01de36dab3265b1065cff"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-browser.js",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-browser.js",
       "source_sha256": "85ff265c11789433511ca46b816047f49ca41d9be8edf7897fa2c82a0537d407",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "85ff265c11789433511ca46b816047f49ca41d9be8edf7897fa2c82a0537d407"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-commit-manual-edits.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-commit-manual-edits.mjs",
       "source_sha256": "f179372ebcd34723cfca72bf718853beb5cfa05ea3a02e9137508d585eb94aa9",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "752f6f908a23cd455bfd2f6b7652c7cd03809d5e3001628648d62a94b6f38d02"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-complete.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-complete.mjs",
       "source_sha256": "76e5053c7d912d9368b858a9132e6796546871ec8a25bc3dcce5718018026877",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "76e5053c7d912d9368b858a9132e6796546871ec8a25bc3dcce5718018026877"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-copy-edit-agent.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-copy-edit-agent.mjs",
       "source_sha256": "d8ec18a339675d252edf878cdfdb96cffb35ece471ec9008a792a302eb529db3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "2cfe36f367f811929c36bbeb9896101b12946ab1dcd998b6c3a19fe2dc9e0be8"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-discard-manual-edits.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-discard-manual-edits.mjs",
       "source_sha256": "fa967fe27e442dd6c9b467713dd4a05c5d2189af03ad76b98bae9f6642cda545",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "fa967fe27e442dd6c9b467713dd4a05c5d2189af03ad76b98bae9f6642cda545"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-inject.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-inject.mjs",
       "source_sha256": "a271c566293c63546936d91a129fc9ac712f2e804438a311a1fbcabd702871db",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "a271c566293c63546936d91a129fc9ac712f2e804438a311a1fbcabd702871db"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-insert.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-insert.mjs",
       "source_sha256": "79f43958c8107178e0dce51c07c0de51dd23aa530fd3001a785344ffb1915447",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "79f43958c8107178e0dce51c07c0de51dd23aa530fd3001a785344ffb1915447"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-manual-edit-evidence.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-manual-edit-evidence.mjs",
       "source_sha256": "c5a36c361c435fc023e17be16a78aaf672adb48a6a74e8177cfa775592502638",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c5a36c361c435fc023e17be16a78aaf672adb48a6a74e8177cfa775592502638"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-poll.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-poll.mjs",
       "source_sha256": "36d41970e412da21fb8f354d4b43ddcc396a37c049616e02cdaab3a016a8dd18",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "36d41970e412da21fb8f354d4b43ddcc396a37c049616e02cdaab3a016a8dd18"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-resume.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-resume.mjs",
       "source_sha256": "5f7f88fb6cbcdd5dcf210ace22225dbbe43afee4cf9c7c0e1d8b5b3a1f4b79a2",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "5f7f88fb6cbcdd5dcf210ace22225dbbe43afee4cf9c7c0e1d8b5b3a1f4b79a2"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-server.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-server.mjs",
       "source_sha256": "86f215fdd8b237dc94e8747a2d039cb2168c50d3a7b1a685d864256fa9fd969e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "86f215fdd8b237dc94e8747a2d039cb2168c50d3a7b1a685d864256fa9fd969e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-status.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-status.mjs",
       "source_sha256": "fa8dd753c51d8659003b8250e62a3832bac86ab4e20f7f21afc3166f4fd6ee1b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "fa8dd753c51d8659003b8250e62a3832bac86ab4e20f7f21afc3166f4fd6ee1b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-target.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-target.mjs",
       "source_sha256": "7f18323b89167804c2d9005d4766b159c81268c9f21daab9fdec24f513f25eb0",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "7f18323b89167804c2d9005d4766b159c81268c9f21daab9fdec24f513f25eb0"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-wrap.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-wrap.mjs",
       "source_sha256": "c6cf666fd18e17b92d02aa2fd7e3ff948cfdee0177cccb58631b13329d2c3e6e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "c6cf666fd18e17b92d02aa2fd7e3ff948cfdee0177cccb58631b13329d2c3e6e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live.mjs",
       "source_sha256": "db1ec81e40c288982d6465cf0f6d7f2774b115c31afe399fa7bc268ab5f99427",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "db1ec81e40c288982d6465cf0f6d7f2774b115c31afe399fa7bc268ab5f99427"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/modern-screenshot.umd.js",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/modern-screenshot.umd.js",
       "source_sha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "bb36665889124a0b6e15f16045265737449c3bdcf2712cdb08af3cfa01563e2b"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/palette.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/palette.mjs",
       "source_sha256": "6e09e15188033bfb8fe1f8de66f667c2b8b13d48cb55b1f50808330856e5fe16",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "6e09e15188033bfb8fe1f8de66f667c2b8b13d48cb55b1f50808330856e5fe16"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/pin.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/pin.mjs",
       "source_sha256": "43cf60991a233a84646eb73883461cb4184f680d903d26610f82db6e3e905fa5",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "1d58ca40652df03e49bb44a3f04b064edc6ee369e066604a7b32c3d610d0051a"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/serve-question.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/serve-question.mjs",
       "source_sha256": "fc97f36bce2dbe7420f5330fee0fe94484e4b35e3337c96389adee074b9ab33e",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "fc97f36bce2dbe7420f5330fee0fe94484e4b35e3337c96389adee074b9ab33e"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/surface-brief.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/surface-brief.mjs",
       "source_sha256": "acd03bf38f6aef2b5d5287cefccacac018063b5b5356c99d191b3bd012f28ed3",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "acd03bf38f6aef2b5d5287cefccacac018063b5b5356c99d191b3bd012f28ed3"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/taste-skill/SKILL.md",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/taste-skill/SKILL.md",
       "source_sha256": "aa194351b246b8b4799099d4ed7b033d29eab6e6e3d58d8d2172978be7b3ec89",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "48d6b8f9544da900ae5c57975dd0aa9145918a9a89d815d6c69de86391e4b48a"
     },
     {
       "source": "verification/pack-validator/license-allowlist.txt",
       "destination": "verification/pack-validator/license-allowlist.txt",
       "source_sha256": "c0353c343f698b22dd2754e697cc8be11c75ad12232f21b439853e96386d90fb",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "c0353c343f698b22dd2754e697cc8be11c75ad12232f21b439853e96386d90fb"
     },
     {
       "source": "verification/pack-validator/pack.schema.json",
       "destination": "verification/pack-validator/pack.schema.json",
       "source_sha256": "fb48d932b21c8f8f38e23926a9cd82352f1fc04c7fae01bef7b12129cef773ea",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "7866cb3175a1799443a6af324e4db5b4f1e2cb81965427c13be899bbc5c8d20a"
     },
     {
       "source": "verification/pack-validator/pack_update.py",
       "destination": "verification/pack-validator/pack_update.py",
       "source_sha256": "f62b8a87e82b08d8023e4361d5b582ec8195cfbf6c3f03b717437eb34308576b",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "f62b8a87e82b08d8023e4361d5b582ec8195cfbf6c3f03b717437eb34308576b"
     },
     {
       "source": "verification/pack-validator/pack_validate.py",
       "destination": "verification/pack-validator/pack_validate.py",
       "source_sha256": "ba09d63f4d30cdf0d23f43a7a1ee4fb01cf15d9a5b879f4c84b3624c4a729195",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "ba09d63f4d30cdf0d23f43a7a1ee4fb01cf15d9a5b879f4c84b3624c4a729195"
     },
     {
       "source": "verification/pack-validator/requirements.txt",
       "destination": "verification/pack-validator/requirements.txt",
       "source_sha256": "52bd710bdb4af5b9e780c9f166c335090289976ee925aa67823319b380146238",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "52bd710bdb4af5b9e780c9f166c335090289976ee925aa67823319b380146238"
     },
     {
       "source": "verification/pack-validator/test_pack_update.py",
       "destination": "verification/pack-validator/test_pack_update.py",
       "source_sha256": "6b3a977c92559348dfad900f9dca5a8fa6d214563dfdcc2310fc94a97a1e6007",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "623a2bd3b28b05306c498b25a73192ec146d67b1df71bc07844caedf9dcb5cc3"
     },
     {
       "source": "verification/pack-validator/test_pack_validate.py",
       "destination": "verification/pack-validator/test_pack_validate.py",
       "source_sha256": "28dc1479137f5551b126a0c85ff435d364957365f5156ce9f3498abcd8aca030",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "327fd7871777112ebead19f1cdb6da8a7ff2d3aa57c8824e69408a1c7d52a55d"
     },
     {
       "source": "verification/fixtures/evidence/web-design-skill.yaml",
       "destination": "verification/fixtures/evidence/web-design-skill.yaml",
       "source_sha256": "a8ff93de1f59017a67bb243cf444666d8ada3ecdba2451b071c59abb72c0c7bf",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "a8ff93de1f59017a67bb243cf444666d8ada3ecdba2451b071c59abb72c0c7bf"
     },
     {
       "source": "verification/fixtures/packs/README.md",
       "destination": "verification/fixtures/packs/README.md",
       "source_sha256": "3c491932f64457b53114cd4e6468a459f65975e660e075e7760b157eae389dbc",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "f904596a1a71a8bd78fc067fc4654cd1060a9f6f59d22e57e8202bf1b928b4d4"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/manifest.txt",
       "destination": "verification/fixtures/packs/web-design-fixture/manifest.txt",
       "source_sha256": "cf956469c98be2bc120b0cc30d74711f35104afc3b59939a13586e6de9d62d8a",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "37c5f43181b25e0881a45df5aad1d9a63ed9366dafeebac7eb51af4a29aae451"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/pack.yaml",
       "destination": "verification/fixtures/packs/web-design-fixture/pack.yaml",
       "source_sha256": "398f3a2edfee71e24b416be49a68c541765ea03af36f1d7ba057268e868f2228",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "7476c89113bf5d28891cbd922da03959f614d508442439f30e5b5b3aee181bb6"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/index.js",
-      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/index.js",
+      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.codex/mcp/web-design-fixture-mcp/index.js",
       "source_sha256": "f88b4037fa1074b58a3fabd342254ebfba67351f8c02b0143c9f84df494d82a3",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "f88b4037fa1074b58a3fabd342254ebfba67351f8c02b0143c9f84df494d82a3"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/package-lock.json",
-      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/package-lock.json",
+      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.codex/mcp/web-design-fixture-mcp/package-lock.json",
       "source_sha256": "d89014ffe7c6154df3371bc5b9ba417a97851703ca3c74e313ecd2fce6525a03",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "d89014ffe7c6154df3371bc5b9ba417a97851703ca3c74e313ecd2fce6525a03"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/package.json",
-      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/package.json",
+      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.codex/mcp/web-design-fixture-mcp/package.json",
       "source_sha256": "3095a9f53fdd538d72aad8ca667bfc21b8558b04025a9ec6e088e1e58d6491c6",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "3095a9f53fdd538d72aad8ca667bfc21b8558b04025a9ec6e088e1e58d6491c6"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/skills/web-design-fixture/SKILL.md",
       "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.agents/skills/web-design-fixture/SKILL.md",
       "source_sha256": "8e49defe81c7f9a05d09dde64a7cc27381000804c2981935c73e2764342faa23",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "8e49defe81c7f9a05d09dde64a7cc27381000804c2981935c73e2764342faa23"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.mcp.json",
       "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.mcp.json",
       "source_sha256": "c2edf1167c63846e79ed25a8e9141ba0e43b5bd3c23e5bf13ca12787df8110d7",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "c2edf1167c63846e79ed25a8e9141ba0e43b5bd3c23e5bf13ca12787df8110d7"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/manifest.txt",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/manifest.txt",
       "source_sha256": "316adab5717eebcdeca1129ff230369a2d750b1122ebb2fe35fde2c10e7c3ddc",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "b100eced731dc759809aaa8e74fd545a9c9ff5cf82396d1101138bc0ba98b548"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/pack.yaml",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/pack.yaml",
       "source_sha256": "f8a477866083477441437593e009d69c41f8bf352c1e9f2e4041481d45925460",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "02e38efee9264d008cae2c95510ea74e2bd350c4a0e632089859b2cf9a6523e9"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/docs/web-design-mission.md",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/docs/web-design-mission.md",
       "source_sha256": "e40f1ab2be2cb11b34717a7ad1136c5c8634a7c9669b5191f814cdb80708d636",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "e40f1ab2be2cb11b34717a7ad1136c5c8634a7c9669b5191f814cdb80708d636"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/docs/web-design-notes.md",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/docs/web-design-notes.md",
       "source_sha256": "d42e74ac85b3693088f26c1863b02d76513951b3fa304d9d806597a31413085a",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "d42e74ac85b3693088f26c1863b02d76513951b3fa304d9d806597a31413085a"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/index.js",
-      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/index.js",
+      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.codex/mcp/web-design-mcp/index.js",
       "source_sha256": "41182f2daf2c21f4ab239d072473958d9f11c23f3520cf88ee08dc352f626aa0",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "41182f2daf2c21f4ab239d072473958d9f11c23f3520cf88ee08dc352f626aa0"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/package-lock.json",
-      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/package-lock.json",
+      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.codex/mcp/web-design-mcp/package-lock.json",
       "source_sha256": "2703cbe52437a25d5018657d5b39a272bb989397b8dc2782f238c5bb00d8515c",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "2703cbe52437a25d5018657d5b39a272bb989397b8dc2782f238c5bb00d8515c"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/package.json",
-      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/mcp/web-design-mcp/package.json",
+      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.codex/mcp/web-design-mcp/package.json",
       "source_sha256": "4740310defd81118a0dfb20ece6dce0d570ef45c57ec8f19229b321917f89756",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "4740310defd81118a0dfb20ece6dce0d570ef45c57ec8f19229b321917f89756"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/rules/web-design-pack.md",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.agents/bootstrap/instructions/web-design-pack.md",
       "source_sha256": "4233aa4b6694e026e20ac33467ead70d157487bbd5d531e7bfaab3dfe9d741ac",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "9d5c54d1dcfb960a887d32ce383f4cc9729aee70669292afd6b63c93cf3ce3b0"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/skills/web-design/SKILL.md",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.agents/skills/web-design/SKILL.md",
       "source_sha256": "00242be7924ae3b59b8e19bc6f30b0dd5e9dce2c8c76d4b302a8d1ba97b3fa51",
-      "acceptance": "skill-discovery-and-supporting-assets"
+      "acceptance": "skill-discovery-and-supporting-assets",
+      "native_sha256": "00242be7924ae3b59b8e19bc6f30b0dd5e9dce2c8c76d4b302a8d1ba97b3fa51"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.mcp.json",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.mcp.json",
       "source_sha256": "ee01742b883e4ea7d85301d23912be406e7cae2f9a267d7320d0887142e7e0d2",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "ee01742b883e4ea7d85301d23912be406e7cae2f9a267d7320d0887142e7e0d2"
     },
     {
       "source": "verification/fixtures/regenerate-valid-digests.py",
       "destination": "verification/fixtures/regenerate-valid-digests.py",
       "source_sha256": "dd89184cf4c0f667a3b9a6f63587c7bee3fd72699272486b315c1a09bd80b35f",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "22d9e6d2e98768c510077fb1113313da59ae02e64a7413237cf0b2d33ba0516b"
     },
     {
       "source": "lib/plan-engine.sh",
       "destination": "lib/plan-engine.sh",
       "source_sha256": "2bf148e5f4589ea9fdf4f6bc0f5b68c3918fe1f75f48996947d4e239ec601ab0",
-      "acceptance": "manifest-and-runtime-scan"
+      "acceptance": "manifest-and-runtime-scan",
+      "native_sha256": "0c1894b07eb028cb539eab92a1478bea3661a97bf3227a190588adb96dbc34ee"
     },
     {
       "source": "bootstrap",
       "destination": "bootstrap",
       "acceptance": "installer-regression-suite",
-      "conversion": "selective engine reuse; native global config and wizard replace source runtime"
+      "conversion": "selective engine reuse; native global config and wizard replace source runtime",
+      "native_sha256": "e6b185006df84cca2a40edeaa342defdbaefe9ae506f9c6be145f66f2828a597"
+    },
+    {
+      "source": "Starting-workflow.md",
+      "destination": "Starting-workflow.md",
+      "source_sha256": "bc11cd3c2795257fde384807ff01fae9d1bca583c1eebc9c1713140909b38c73",
+      "native_sha256": "8d44120120e86f92a041f0085f1f5de052563353d2fa5553515d3551e68d49dc",
+      "acceptance": "workflow-parity-and-native-runtime-scan"
+    },
+    {
+      "source": "prompts/grill-mission-packs.md",
+      "destination": "prompts/grill-mission-packs.md",
+      "source_sha256": "4f5d19b382c3365d3fc211497659fd98988c7c71807479a30c200855054c703c",
+      "native_sha256": "e57dc7c1427e841994aef6bd8008c266cf9bfc7b50baf58f63e61db981279504",
+      "acceptance": "workflow-parity-and-native-runtime-scan"
     }
+  ],
+  "native_additions": [
+    "minion",
+    "navigator",
+    "reviewer",
+    "worker",
+    "guided wizard",
+    "command setup/removal",
+    "hash-tracked updates"
+  ],
+  "exclusions": [
+    "source Git and Beads history",
+    "credentials and caches",
+    "source-specific planning history",
+    "upstream README and generated manifests replaced by native documentation/manifests"
   ]
 }

@@ -2,6 +2,16 @@
 
 This project uses **bd** (beads) for issue tracking. Run `bd prime` for full workflow context.
 
+Canonical payloads are in `assets/global`, `assets/scaffold`, and `assets/packs`.
+Run `node tools/sync-assets.mjs` after core edits and
+`python3 tools/refresh-pack-digests.py` after pack edits. Kit-local core is a
+checked mirror, not a second source. Never rerun the source importer over native
+adaptations. Read `docs/migration-contract.md` and `docs/verification.md`.
+
+Quality gate: `PYTHON=<validator-venv>/bin/python ./verification/run-all.sh`.
+The authenticated smoke is separately opt-in. Never fabricate hook trust or
+web-design review evidence; the unverified pack must remain release-invalid.
+
 > **Repo sync rule:** This repo uses normal Git only. Beads may use its
 > supported local storage backend internally, but agents must not require or run
 > `bd dolt push/pull` here. Keep `.beads/issues.jsonl` and other tracked Beads

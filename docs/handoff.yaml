@@ -3,11 +3,27 @@ project:
   name: Codex Bootstrap Protocol
   status: active
   summary: >-
-    Codex-native Bootstrap Protocol scaffold for initializing or retrofitting
-    projects with AGENTS.md, repo-scoped skills, Codex config surfaces, durable
-    docs, and Beads task tracking.
+    Complete global-first native Codex bootstrap migration with optional
+    local-core, full wizard/command setup, protected retrofit, native config,
+    three optional packs and expanded real CLI verification.
 active_work: []
 decisions:
+  - date: 2026-09-30
+    summary: >-
+      Execute approved migration from sibling claude-bootstrap-protocol at
+      f89f7f3dffb1150fa7df30b180b397dd25a711f9; preserve destination history and
+      Beads. Global-first is default, local-core is self-contained, personal
+      config/packs are opt-in and hook trust remains user-owned.
+  - date: 2026-09-30
+    summary: >-
+      Keep web-design release-invalid with explicit unverified acknowledgment;
+      digests/licenses do not substitute for absent adjudicated evidence.
+      Falcon uses isolated local Codex workers and a stoppable monitor, no service.
+  - date: 2026-09-30
+    summary: >-
+      CLI 0.159.2 generic spawning lacks a native role selector. Keep documented
+      standalone TOML roles and provide a tested native exec-config compatibility
+      loader; do not claim generic spawn applies TOML sandbox settings.
   - date: 2026-06-07
     summary: >-
       Minion is now dual-mode: report-only for analysis and guarded execution
@@ -47,6 +63,20 @@ decisions:
       Use normal Git for repository sync; do not require or run bd dolt
       push/pull in this repository.
 verification:
+  - date: 2026-09-30
+    command: PYTHON=<validator-venv>/bin/python ./verification/run-all.sh
+    result: passed
+    notes: >-
+      Expanded installer/workflow/native-role/web-helper tests, 28 validator
+      and 8 updater checks, static integrity, real CLI discovery and explicit
+      full-body loading of all 22 skills. See docs/verification.md for exact scope.
+  - date: 2026-09-30
+    command: python3 verification/authenticated-smoke.py
+    result: passed
+    notes: >-
+      Real Beads initialization and authenticated session-start/read-only stats;
+      native exec-config reviewer, unchanged tracked project content and real
+      PTY footer rendering. Native named-role spawning remains client-dependent.
   - date: 2026-06-07
     command: ./verification/run-static-checks.sh
     result: passed
@@ -108,6 +138,14 @@ verification:
     command: bd ready
     result: passed
 next_steps:
+  - bead_id: codex-bootstrap-protocol-ung
+    title: September migration supersedes the historical June next steps below
+    action: >-
+      Migration implementation is delivered. Use current README, contract and
+      verification evidence rather than the older no-write wizard assumptions.
+      Historical next-step entries are retained below as prior-session context,
+      not a new task queue. Optional external web-design vetting/marketplace
+      publication are outside this migration's release contract.
   - bead_id: codex-bootstrap-protocol-pm5.6
     title: Work T014 recommended global skill preflight
     context:
