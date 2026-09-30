@@ -1,0 +1,8 @@
+{
+  "name": "web-design-fixture-mcp",
+  "version": "0.0.0-fixture",
+  "private": true,
+  "description": "TEST FIXTURE — minimal runnable MCP server stub for the bootstrap kit's pack-install verification suite. Zero dependencies; never released.",
+  "license": "MIT",
+  "main": "index.js"
+}

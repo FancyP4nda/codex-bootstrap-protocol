@@ -1,0 +1,326 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex-bootstrap-protocol/verification/pack-validator/pack.schema.json",
+  "title": "pack.yaml — mission-pack metadata contract (PRD FR-004)",
+  "description": "Machine schema for pack.yaml. Human companion doc: docs/pack-yaml-schema.md (T005). SCHEMA validity is not RELEASE validity: evidence-bearing fields accept null so fixtures conform; the T006 validator fails nulls at release time. Airlock is the sole system of record — this file stores pointers and derived summaries, never findings. pack.yaml is never parsed by the bash installer (FR-004, C-002).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pack", "components"],
+  "properties": {
+    "pack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "description", "mission_guide", "component_notes", "rules_file", "pack_paths"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Pack name; matches the assets/packs/<name>/ directory (FR-001)."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Human-readable pack purpose."
+        },
+        "mission_guide": {
+          "type": ["string", "null"],
+          "description": "FR-007(a): scaffold-relative path of the human-facing mission guide. null is schema-valid (fixtures) and a T006 release failure."
+        },
+        "component_notes": {
+          "description": "FR-007(b): per-component usage/key-setup notes. Either one scaffold-relative path, or a map of component id -> scaffold-relative path. null is schema-valid (fixtures) and a T006 release failure.",
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "minLength": 1 },
+            {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": { "type": "string", "minLength": 1 }
+            }
+          ]
+        },
+        "rules_file": {
+          "type": ["string", "null"],
+          "description": "FR-007(c): scaffold-relative path of the Codex-facing pack rules file. null is schema-valid (fixtures) and a T006 release failure."
+        },
+        "pack_paths": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Pack-authored assets (mission guide, notes, rules file, .mcp.json) as scaffold-relative paths. Must be disjoint from every component's vendored_paths; the union of all component vendored_paths plus pack_paths must equal the scaffold/ tree exactly. That partition is T006 validator-checked semantics, not schema-expressible."
+        }
+      }
+    },
+    "components": {
+      "type": "array",
+      "minItems": 0,
+      "description": "Vendored third-party components. May be empty for a kit-authored pack whose whole scaffold is covered by pack.pack_paths.",
+      "items": { "$ref": "#/$defs/component" }
+    }
+  },
+  "$defs": {
+    "nullableString": {
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "nullableDigest": {
+      "description": "Evidence-bearing digest/pointer: null is schema-valid (fixtures; T006 release failure), otherwise a non-empty digest string in the same encoding airlock records for content_hash so values are directly comparable.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 }
+      ]
+    },
+    "nullableRecord": {
+      "description": "Evidence-bearing provenance record: null is schema-valid (fixtures; T006 release failure), otherwise a non-empty string pointer or a structured object.",
+      "oneOf": [
+        { "type": "null" },
+        { "type": "string", "minLength": 1 },
+        { "type": "object", "minProperties": 1 }
+      ]
+    },
+    "component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "upstream_url",
+        "staging_fork",
+        "scan_target",
+        "selected_paths",
+        "vendored_paths",
+        "license",
+        "airlock_evidence_id",
+        "engine_pin",
+        "scan_date",
+        "verdict",
+        "content_hash",
+        "vendored_tree_digest"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "Stable component identifier, unique within the pack."
+        },
+        "kind": {
+          "enum": ["skill", "mcp"],
+          "description": "Component kind. kind: mcp additionally requires dependency_audit, required_env, and setup_steps."
+        },
+        "upstream_url": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9+.-]*://",
+          "description": "Canonical upstream URL of the component."
+        },
+        "staging_fork": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Staging-fork reference. Opaque identifier by default; a URL only when the fork is public and safe to distribute (NFR-002: no private-infra URLs)."
+        },
+        "pinned_commit": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{40}([0-9a-f]{24})?$",
+          "description": "Exact commit pin (full 40-hex SHA-1, or 64-hex SHA-256). Required when scan_target is source-tree."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact published package version. Required when scan_target is npm-artifact."
+        },
+        "scan_target": {
+          "enum": ["source-tree", "npm-artifact"],
+          "description": "Brief decision 11 discriminator. source-tree requires pinned_commit; npm-artifact requires version and the two-layer provenance block."
+        },
+        "selected_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Upstream paths selected for (partial) vendoring."
+        },
+        "vendored_paths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "The component's vendored root(s) within scaffold/. Ownership partition: every vendored third-party byte belongs to exactly one component's set (T006 validator-checked)."
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "SPDX license identifier. Redistribution policy is NOT decided here: the T006 validator checks this value against verification/pack-validator/license-allowlist.txt (T020); expressions and LicenseRef-* fail closed there."
+        },
+        "airlock_evidence_id": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Airlock evidence-bundle ID (airlock-authoritative pointer). null: fixture-only; T006 release failure."
+        },
+        "engine_pin": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Scanner engine pin at scan time (airlock-authoritative). null: fixture-only; T006 release failure."
+        },
+        "scan_date": {
+          "description": "Scan date, ISO 8601 (YYYY-MM-DD), airlock-authoritative. null: fixture-only; T006 release failure.",
+          "oneOf": [
+            { "type": "null" },
+            { "type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$" }
+          ]
+        },
+        "verdict": {
+          "enum": ["pass", "pass-with-accepted-risk", "quarantined"],
+          "description": "Derived summary of airlock's tier/verdict fields per brief decision 2's disjoint mapping (documented verbatim in docs/pack-yaml-schema.md). Airlock stays authoritative; the manifest never invents a verdict airlock did not record. verdict: pass-with-accepted-risk requires the accepted_risk block."
+        },
+        "content_hash": {
+          "$ref": "#/$defs/nullableDigest",
+          "description": "Airlock evidence content_hash (airlock-authoritative). null: fixture-only; T006 release failure."
+        },
+        "vendored_tree_digest": {
+          "$ref": "#/$defs/nullableDigest",
+          "description": "Digest of the component's vendored-path set, computed with the FR-005 tree-hash recipe (same algorithm airlock uses for content_hash) so the two are directly comparable. null: fixture-only; T006 release failure."
+        },
+        "provenance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tarball_digest",
+            "attestation_record",
+            "transformation_record",
+            "generated_lockfile_digest",
+            "scanned_tree_digest"
+          ],
+          "description": "npm-artifact two-layer provenance (FR-004): the SLSA attestation binds the published tarball; the scan binds the vendored tree. Required when scan_target is npm-artifact.",
+          "properties": {
+            "tarball_digest": {
+              "$ref": "#/$defs/nullableDigest",
+              "description": "Digest of the original published tarball."
+            },
+            "attestation_record": {
+              "$ref": "#/$defs/nullableRecord",
+              "description": "SLSA provenance attestation record, verified at staging via `npm audit signatures` (brief decision 11)."
+            },
+            "transformation_record": {
+              "$ref": "#/$defs/nullableRecord",
+              "description": "Transformation record: the lockfile-generation command and its inputs."
+            },
+            "generated_lockfile_digest": {
+              "$ref": "#/$defs/nullableDigest",
+              "description": "Digest of the generated lockfile."
+            },
+            "scanned_tree_digest": {
+              "$ref": "#/$defs/nullableDigest",
+              "description": "Final scanned-tree digest (the airlock content_hash for this component)."
+            }
+          }
+        },
+        "dependency_audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["summary", "lockfile_digest", "report_digest", "report_location", "adjudication"],
+          "description": "Transitive-dep audit summary + pointer (brief decision 6). Raw results live in the airlock evidence bundle; the pack carries only this derived summary and pointer. Required when kind is mcp.",
+          "properties": {
+            "summary": {
+              "type": "string",
+              "minLength": 1,
+              "description": "One-line derived summary of the audit outcome."
+            },
+            "lockfile_digest": {
+              "$ref": "#/$defs/nullableDigest",
+              "description": "Digest of the exact lockfile audited."
+            },
+            "report_digest": {
+              "$ref": "#/$defs/nullableDigest",
+              "description": "Digest of the raw audit report stored in the airlock evidence bundle."
+            },
+            "report_location": {
+              "$ref": "#/$defs/nullableString",
+              "description": "Evidence-bundle-local location of the raw audit report (gate-host-local pointer; unresolvable target-side)."
+            },
+            "adjudication": {
+              "enum": ["accepted", "pending", "rejected"],
+              "description": "Adjudication state. T006 fails release on anything other than accepted (FR-005)."
+            }
+          }
+        },
+        "accepted_risk": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["reason", "deployment_conditions"],
+          "description": "Required when verdict is pass-with-accepted-risk. Carries airlock's residual_risk_accepted_reason and deployment conditions VERBATIM (evidence pointers are gate-host-local and unresolvable target-side), each mapped to its enforcement point. Airlock stays authoritative; on conflict, airlock wins (T006 compares these verbatim against the evidence bundle in release mode).",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Verbatim residual_risk_accepted_reason from the airlock evidence bundle."
+            },
+            "deployment_conditions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["condition", "enforced_by", "enforcement_ref"],
+                "properties": {
+                  "condition": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Verbatim deployment condition from the airlock evidence bundle."
+                  },
+                  "enforced_by": {
+                    "enum": ["mission-guide", "setup-command", "rules-file"],
+                    "description": "Enforcement point class (FR-004)."
+                  },
+                  "enforcement_ref": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Pointer to the concrete enforcement location: mission-guide step, setup command, or rules-file section."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "required_env": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Env var names the component's server requires. Values are never stored; .mcp.json carries only ${VAR} placeholders (FR-006). Required when kind is mcp."
+        },
+        "setup_steps": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Copy-pasteable, user-run setup commands (outside ./bootstrap). Required when kind is mcp. The .mcp.json/setup-flow contract itself is T012; this field records declarations only."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "scan_target": { "const": "source-tree" } },
+            "required": ["scan_target"]
+          },
+          "then": { "required": ["pinned_commit"] }
+        },
+        {
+          "if": {
+            "properties": { "scan_target": { "const": "npm-artifact" } },
+            "required": ["scan_target"]
+          },
+          "then": { "required": ["version", "provenance"] }
+        },
+        {
+          "if": {
+            "properties": { "verdict": { "const": "pass-with-accepted-risk" } },
+            "required": ["verdict"]
+          },
+          "then": { "required": ["accepted_risk"] }
+        },
+        {
+          "if": {
+            "properties": { "kind": { "const": "mcp" } },
+            "required": ["kind"]
+          },
+          "then": { "required": ["dependency_audit", "required_env", "setup_steps"] }
+        }
+      ]
+    }
+  }
+}

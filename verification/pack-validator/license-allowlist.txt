@@ -1,0 +1,28 @@
+# SPDX license-redistribution allowlist (T020, PRD C-007 / FR-005 license class)
+#
+# Inclusion criterion: licenses that permit redistribution of vendored copies
+# of third-party components inside this kit (and onward into bootstrapped
+# targets) without imposing source-disclosure or share-alike obligations on
+# the kit or its consumers. Permissive licenses only; copyleft (GPL/LGPL/MPL
+# families) is deliberately excluded and requires an operator decision plus an
+# edit to this file before any such component can be vendored.
+#
+# Matching rules (enforced by the T006 validator; this file never decides
+# per-component outcomes):
+#   - One SPDX license identifier per line (https://spdx.org/licenses/).
+#   - Comparison is exact and case-sensitive against the identifier.
+#   - SPDX expressions (AND/OR/WITH) fail closed unless EVERY operand,
+#     including any WITH exception, is individually listed here.
+#   - LicenseRef-* custom identifiers fail closed unconditionally.
+#   - A component with no license entry fails closed (no license = no
+#     redistribution right; see FR-005).
+#
+# Lines beginning with '#' and blank lines are ignored.
+#
+# Approved by: FancyP4nda (operator)   Date: 2026-07-22
+
+MIT
+ISC
+Apache-2.0
+BSD-2-Clause
+BSD-3-Clause

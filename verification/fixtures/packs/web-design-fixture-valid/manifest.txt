@@ -1,0 +1,22 @@
+# web-design-fixture-valid pack manifest fragment (TEST FIXTURE — NEVER RELEASE).
+#
+# Same TSV grammar as the kit root manifest.txt (kind<TAB>path<TAB>action<TAB>
+# description). Unlike web-design-fixture (T004, deliberately release-INVALID),
+# this variant is shaped to PASS release-mode validation against its own
+# fixture evidence tree (verification/fixtures/evidence/). It carries genuinely
+# computed vendored_tree_digests and opaque-but-non-null evidence pointers so
+# the T006 stamp/tamper and evidence-root cases can run end-to-end. It still
+# never ships: it is test infrastructure, and it FAILS against any real
+# evidence root (that inequality is itself a T006 test case).
+#
+dir	.agents/skills/web-design/	ensure_dir	Fixture skill directory (vendored).
+file	.agents/skills/web-design/SKILL.md	copy	Fixture skill file (fake; authored in-repo).
+dir	.codex/mcp/web-design-mcp/	ensure_dir	Fixture MCP server stub directory (vendored).
+file	.codex/mcp/web-design-mcp/package.json	copy	Fixture MCP package metadata (zero dependencies).
+file	.codex/mcp/web-design-mcp/package-lock.json	copy	Fixture MCP lockfile (zero dependencies).
+file	.codex/mcp/web-design-mcp/index.js	copy	Fixture MCP server entry (minimal stdio stub).
+dir	docs/	ensure_dir	Pack-authored docs directory.
+file	docs/web-design-mission.md	copy	FR-007(a) mission guide (pack-authored).
+file	docs/web-design-notes.md	copy	FR-007(b) component notes (pack-authored).
+file	.agents/bootstrap/instructions/web-design-pack.md	copy	FR-007(c) Codex-facing rules file (pack-authored).
+file	.mcp.json	copy	Pack-authored target-root MCP config (FR-006).

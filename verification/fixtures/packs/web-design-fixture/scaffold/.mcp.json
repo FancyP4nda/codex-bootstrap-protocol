@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "web-design-fixture-mcp": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/.claude/mcp/web-design-fixture-mcp/index.js"
+      ],
+      "env": {
+        "WEB_DESIGN_FIXTURE_TOKEN": "${WEB_DESIGN_FIXTURE_TOKEN}"
+      }
+    }
+  }
+}

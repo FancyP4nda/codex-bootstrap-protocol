@@ -1,0 +1,89 @@
+# =========================================================================
+# TEST FIXTURE — NEVER RELEASE. Release-VALID variant (T006).
+#
+# Unlike web-design-fixture (T004, deliberately release-invalid), this pack is
+# shaped to PASS release-mode validation against its OWN fixture evidence tree
+# (verification/fixtures/evidence/). It carries genuinely computed
+# vendored_tree_digests + content_hashes (see the __DIGEST_*__ tokens, filled
+# by verification/fixtures/regenerate-valid-digests.py) and opaque-but-non-null
+# evidence pointers. It exists so the stamp / tamper / evidence-root cases run
+# end-to-end. It still never ships, and it FAILS against any real evidence root
+# (that inequality is itself a T006 test case).
+#
+# Regenerate digests after editing any scaffold byte:
+#   python3 verification/fixtures/regenerate-valid-digests.py
+# =========================================================================
+pack:
+  name: web-design-fixture-valid
+  description: >-
+    Release-valid variant of the web-design fixture pack. One vendored skill
+    (pass-with-accepted-risk) and one vendored MCP server (pass). Test-only.
+  mission_guide: "docs/web-design-mission.md"
+  component_notes: "docs/web-design-notes.md"
+  rules_file: ".agents/bootstrap/instructions/web-design-pack.md"
+  pack_paths:
+    - ".mcp.json"
+    - "docs/web-design-mission.md"
+    - "docs/web-design-notes.md"
+    - ".agents/bootstrap/instructions/web-design-pack.md"
+
+components:
+  - id: web-design-skill
+    kind: skill
+    upstream_url: "https://example.invalid/web-design-skill"
+    staging_fork: "fixture-staging-ref-100"
+    pinned_commit: "1111111111111111111111111111111111111111"
+    scan_target: source-tree
+    selected_paths:
+      - "SKILL.md"
+    vendored_paths:
+      - ".agents/skills/web-design/"
+    license: MIT
+    airlock_evidence_id: "fixture-evidence-web-design-skill"
+    engine_pin: "fixture-scanner@1.0.0"
+    scan_date: "2026-07-22"
+    verdict: pass-with-accepted-risk
+    content_hash: "724a1304da470fcd1b55ac19690f513ed3dba683f2f77dd3fa32a10f30b30f26"
+    vendored_tree_digest: "724a1304da470fcd1b55ac19690f513ed3dba683f2f77dd3fa32a10f30b30f26"
+    accepted_risk:
+      reason: "Fixture skill is sandbox-only; residual risk of unreviewed prompt text accepted for test purposes."
+      deployment_conditions:
+        - condition: "The fixture skill is sandbox-only and must not be granted network access."
+          enforced_by: mission-guide
+          enforcement_ref: "docs/web-design-mission.md#deployment-conditions"
+
+  - id: web-design-mcp
+    kind: mcp
+    upstream_url: "https://example.invalid/web-design-mcp"
+    staging_fork: "fixture-staging-ref-101"
+    version: "0.0.0-fixture"
+    scan_target: npm-artifact
+    selected_paths:
+      - "package.json"
+      - "package-lock.json"
+      - "index.js"
+    vendored_paths:
+      - ".codex/mcp/web-design-mcp/"
+    license: MIT
+    airlock_evidence_id: "fixture-evidence-web-design-mcp"
+    engine_pin: "fixture-scanner@1.0.0"
+    scan_date: "2026-07-22"
+    verdict: pass
+    content_hash: "5ecd1d7ccc4e8f332f89e6a67d8bc95d3aede8d2ee5a1f5fa771fc959ba6daa6"
+    vendored_tree_digest: "5ecd1d7ccc4e8f332f89e6a67d8bc95d3aede8d2ee5a1f5fa771fc959ba6daa6"
+    provenance:
+      tarball_digest: "sha256:fixturetarball0000000000000000000000000000000000000000000000000000"
+      attestation_record: "fixture-slsa-attestation-ref"
+      transformation_record: "npm ci --ignore-scripts (fixture)"
+      generated_lockfile_digest: "sha256:fixturelockfile000000000000000000000000000000000000000000000000000"
+      scanned_tree_digest: "5ecd1d7ccc4e8f332f89e6a67d8bc95d3aede8d2ee5a1f5fa771fc959ba6daa6"
+    dependency_audit:
+      summary: "fixture lockfile has zero dependencies"
+      lockfile_digest: "sha256:fixturelockdigest0000000000000000000000000000000000000000000000000"
+      report_digest: "sha256:fixturereport00000000000000000000000000000000000000000000000000000"
+      report_location: "evidence://web-design-mcp/dep-audit.json"
+      adjudication: accepted
+    required_env:
+      - "WEB_DESIGN_FIXTURE_TOKEN"
+    setup_steps:
+      - "(cd .codex/mcp/web-design-mcp && npm ci --ignore-scripts)"

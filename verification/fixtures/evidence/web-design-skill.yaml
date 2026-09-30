@@ -1,0 +1,10 @@
+# Fixture evidence bundle for component web-design-skill (T006 evidence-root mode).
+#
+# Stands in for the gate-side airlock evidence bundle. The T006 validator, in
+# release mode (--evidence-root verification/fixtures/evidence), compares the
+# pack's accepted_risk.reason and deployment conditions VERBATIM against these
+# fields and fails on any inequality. web-design-fixture-valid is authored to
+# match this bundle exactly, and therefore to MISMATCH any real evidence root.
+residual_risk_accepted_reason: "Fixture skill is sandbox-only; residual risk of unreviewed prompt text accepted for test purposes."
+deployment_conditions:
+  - "The fixture skill is sandbox-only and must not be granted network access."

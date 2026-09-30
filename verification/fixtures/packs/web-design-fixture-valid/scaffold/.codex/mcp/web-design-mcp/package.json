@@ -1,0 +1,8 @@
+{
+  "name": "web-design-fixture-mcp",
+  "version": "0.0.0-fixture",
+  "private": true,
+  "description": "Fixture MCP stub for the T006 pack validator. Zero dependencies.",
+  "bin": { "web-design-fixture-mcp": "index.js" },
+  "license": "MIT"
+}

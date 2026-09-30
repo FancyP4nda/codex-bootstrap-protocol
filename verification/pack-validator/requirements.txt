@@ -1,0 +1,5 @@
+# Pinned toolchain for the T006 pre-release pack validator (pack_validate.py).
+# Tooling-side only — the bash installer never imports these (FR-004, C-002).
+# Install: python3 -m pip install -r verification/pack-validator/requirements.txt
+jsonschema==4.26.0
+pyyaml==6.0.3

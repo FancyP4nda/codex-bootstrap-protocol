@@ -1,0 +1,96 @@
+# =========================================================================
+# TEST FIXTURE — NEVER RELEASE.
+#
+# This pack.yaml is minimal-but-shaped against the PRD FR-004 field list so
+# the pack loader and verification suite have something concrete to exercise
+# (T004). It conforms to the formal pack.yaml schema (T005:
+# docs/pack-yaml-schema.md + verification/pack-validator/
+# pack.schema.json) and is the schema's conformance fixture, but it must
+# never be treated as schema documentation.
+#
+# Deliberate release-blocking properties (expected T006 validator failures):
+#   - no airlock evidence bundle (airlock_evidence_id: null)
+#   - null content hashes / digests
+#   - no validator stamp file
+# Those failures are T006 test cases, not defects in this fixture.
+#
+# This file is never parsed by the bash installer (PRD FR-004).
+# =========================================================================
+pack:
+  name: web-design-fixture
+  description: >-
+    Stub fixture pack for the pack-install verification suite. Contains one
+    fake skill and one fake MCP server stub. No third-party code; nothing to
+    vet; never shipped.
+  # FR-007 pack-level declarations — placeholders; a release pack must
+  # declare real artifacts here.
+  mission_guide: null
+  component_notes: null
+  rules_file: null
+  # Ownership partition (FR-004): union of all component vendored_paths plus
+  # pack_paths must equal the scaffold/ tree exactly. This fixture ships one
+  # pack-authored asset: the target-root .mcp.json (FR-006 delivery surface,
+  # T012) — authored by the pack, not vendored from any component.
+  pack_paths:
+    - ".mcp.json"
+
+components:
+  - id: fixture-skill
+    kind: skill
+    upstream_url: "https://example.invalid/web-design-fixture-skill"   # placeholder; nothing was vendored from anywhere
+    staging_fork: "fixture-staging-ref-000"
+    pinned_commit: "0000000000000000000000000000000000000000"
+    scan_target: source-tree
+    selected_paths:
+      - "SKILL.md"
+    vendored_paths:
+      - ".agents/skills/web-design-fixture/"
+    license: MIT
+    airlock_evidence_id: null      # FIXTURE: no evidence bundle exists
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: null
+
+  - id: fixture-mcp
+    kind: mcp
+    upstream_url: "https://example.invalid/web-design-fixture-mcp"     # placeholder
+    staging_fork: "fixture-staging-ref-001"
+    version: "0.0.0-fixture"
+    scan_target: npm-artifact
+    selected_paths:
+      - "package.json"
+      - "package-lock.json"
+      - "index.js"
+    vendored_paths:
+      - ".codex/mcp/web-design-fixture-mcp/"
+    license: MIT
+    airlock_evidence_id: null      # FIXTURE: no evidence bundle exists
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: null
+    # npm-artifact two-layer provenance (FR-004) — placeholders:
+    provenance:
+      tarball_digest: null
+      attestation_record: null
+      transformation_record: null
+      generated_lockfile_digest: null
+      scanned_tree_digest: null
+    dependency_audit:
+      summary: "fixture lockfile has zero dependencies"
+      lockfile_digest: null
+      report_digest: null      # FIXTURE: no raw audit report exists
+      report_location: null    # FIXTURE: no evidence bundle to point into
+      adjudication: accepted
+    # FR-006: value never stored — .mcp.json carries only the ${VAR}
+    # placeholder; the fixture server reports set/unset, never the value.
+    required_env:
+      - "WEB_DESIGN_FIXTURE_TOKEN"
+    # C-003: user-run, outside ./bootstrap; materializes deps against the
+    # scanned lockfile. --ignore-scripts is the default; this fixture has no
+    # documented exceptions (FR-006).
+    setup_steps:
+      - "(cd .codex/mcp/web-design-fixture-mcp && npm ci --ignore-scripts)"
