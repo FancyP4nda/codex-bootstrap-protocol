@@ -1,0 +1,54 @@
+[
+    {
+        "query": "Write docs for this repo",
+        "should_trigger": false
+    },
+    {
+        "query": "Generate a GitHub README based on the code in here.",
+        "should_trigger": true
+    },
+    {
+        "query": "Please initialize my documentation.",
+        "should_trigger": false
+    },
+    {
+        "query": "Can you build a README for this project using the standard template?",
+        "should_trigger": true
+    },
+    {
+        "query": "Look at my package.json and make a README.md file.",
+        "should_trigger": true
+    },
+    {
+        "query": "Read the README.md and tell me how to install this project.",
+        "should_trigger": false
+    },
+    {
+        "query": "Can you review my python code for bugs?",
+        "should_trigger": false
+    },
+    {
+        "query": "Convert this typescript file to javascript.",
+        "should_trigger": false
+    },
+    {
+        "query": "Fix the failing tests in the CI pipeline.",
+        "should_trigger": false
+    },
+    {
+        "query": "What dependencies are listed in my pyproject.toml?",
+        "should_trigger": false
+    },
+    {
+        "query": "Update the README install section.",
+        "should_trigger": true
+    },
+    {
+        "query": "Write an onboarding guide for new engineers on this repo.",
+        "should_trigger": false
+    },
+    {
+        "query": "Rewrite this runbook in STE.",
+        "should_trigger": false
+    }
+]

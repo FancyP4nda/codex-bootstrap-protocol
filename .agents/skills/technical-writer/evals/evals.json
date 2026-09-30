@@ -1,0 +1,57 @@
+[
+    {
+        "id": "tw-1",
+        "query": "Can you create a wiki for my repository? I need documentation covering the architecture, main modules, and how to contribute.",
+        "should_trigger": true
+    },
+    {
+        "id": "tw-2",
+        "query": "Generate an onboarding guide for a new developer joining our project. Include environment setup and their first PR.",
+        "should_trigger": true
+    },
+    {
+        "id": "tw-3",
+        "query": "Generate a changelog from our git history for the last 30 days, categorized by feature, bug fix, and breaking changes.",
+        "should_trigger": true
+    },
+    {
+        "id": "tw-4",
+        "query": "Write a step-by-step tutorial on how to add a new API endpoint to our FastAPI service.",
+        "should_trigger": true
+    },
+    {
+        "id": "tw-5",
+        "query": "How does the authentication middleware work in this codebase? Trace it through the source code.",
+        "should_trigger": false
+    },
+    {
+        "id": "tw-6",
+        "query": "Create a Mermaid sequence diagram showing the login flow from frontend to database.",
+        "should_trigger": true
+    },
+    {
+        "id": "tw-7",
+        "query": "Write a LinkedIn post announcing our new product feature.",
+        "should_trigger": false
+    },
+    {
+        "id": "tw-8",
+        "query": "Generate a README.md for my open source project.",
+        "should_trigger": false
+    },
+    {
+        "id": "tw-9",
+        "query": "How does the auth middleware work?",
+        "should_trigger": false
+    },
+    {
+        "id": "tw-10",
+        "query": "Write the README.",
+        "should_trigger": false
+    },
+    {
+        "id": "tw-11",
+        "query": "Write an architecture doc for the auth module.",
+        "should_trigger": true
+    }
+]

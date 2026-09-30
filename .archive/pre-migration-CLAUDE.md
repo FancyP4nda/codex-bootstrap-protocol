@@ -1,4 +1,4 @@
-# Project Instructions for AI Agents
+# Archived pre-migration project instructions
 
 This file provides instructions and context for AI coding agents working on this project.
 

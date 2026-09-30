@@ -1,0 +1,46 @@
+{
+  "skill_name": "project-planner",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Create a project plan from `docs/prd.md`. The PRD describes a customer-facing saved-search feature with user stories for creating saved searches, receiving email alerts, editing alert frequency, and deleting saved searches. Produce the default single plan artifact and prepare it for a later `plan-to-beads-unified` pass.",
+      "expected_output": "A single `docs/project-plan.md` artifact with outcome-oriented epics, vertical-slice tasks, task IDs, dependencies, acceptance criteria, PRD traceability, Agent Handoff Packets, parallel-safety metadata, and explicit handoff notes for `plan-to-beads-unified`.",
+      "files": [],
+      "expectations": [
+        "The output is a single project-plan artifact rather than local issue files.",
+        "The plan groups work into epics with stable IDs such as E01 and E02.",
+        "Tasks use stable IDs such as T001 and are shaped as vertical slices with observable acceptance criteria.",
+        "Execution-ready tasks include Agent Handoff Packets with context to read, expected public interface, constraints, verification command, and closeout criteria.",
+        "Tasks include Parallel-safe, Collision domain, Can run with, and Must not run with fields.",
+        "The plan includes a handoff section instructing `plan-to-beads-unified` to convert only execution-ready tasks and preserve Agent Handoff Packets."
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Read `docs/prd.md` and create a project plan. The PRD includes unclear requirements around admin approval, audit logging, and retention policy. Mark anything that needs a human decision before implementation, but still sequence the AFK tasks that can start immediately.",
+      "expected_output": "A single project plan that marks ambiguous or decision-dependent work as HITL or not execution-ready, while preserving a useful sequence of AFK vertical-slice tasks with Agent Handoff Packets and conservative parallel-safety metadata.",
+      "files": [],
+      "expectations": [
+        "The plan explicitly separates AFK tasks from HITL tasks.",
+        "Ambiguous admin approval, audit logging, or retention policy work is marked as HITL or Execution-ready: No.",
+        "AFK tasks are still sequenced so implementation can begin without blocked decision work.",
+        "Execution-ready AFK tasks include complete Agent Handoff Packets.",
+        "Collision domains are called out for tasks that should not run in parallel.",
+        "Risks and open questions are tied to affected epics or tasks."
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "I have a PRD at `docs/billing-prd.md`. Build the upstream project plan only; do not create Beads items yet. I want to review epics and tasks first, then use the plan-to-beads-unified workflow after approval.",
+      "expected_output": "A single `docs/project-plan.md` written as `status: draft` for review and set to `status: approved` only after the user approves, preserving task IDs, dependencies, execution-readiness, PRD traceability, Agent Handoff Packets, and parallel-safety metadata for downstream Beads generation.",
+      "files": [],
+      "expectations": [
+        "The workflow asks for user approval before writing or finalizing the plan.",
+        "The skill does not create local issue files or Beads items.",
+        "The plan references `docs/billing-prd.md` as the parent PRD.",
+        "The handoff notes explain that `plan-to-beads-unified` should run after approval using the plan and parent PRD.",
+        "The handoff notes require `plan-to-beads-unified` to preserve Agent Handoff Packets and parallel-safety metadata."
+      ]
+    }
+  ]
+}
