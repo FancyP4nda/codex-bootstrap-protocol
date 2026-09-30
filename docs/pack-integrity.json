@@ -1,0 +1,14 @@
+{
+  "falcon": {
+    "sha256": "2d0094cd1307e60af91de042f04c69fe199502255c42841b2a2eb0d67b382650",
+    "validation": "first-party native adaptation"
+  },
+  "herald": {
+    "sha256": "748948e81a619c2621aa813be5487df9c1a64e3de6c430ead8bfdecc97140c54",
+    "validation": "first-party native adaptation"
+  },
+  "web-design": {
+    "sha256": "8d19968decccf1922e67d5712e22b1b3139933f2a9acd3c7e7f7251c208887b8",
+    "validation": "unverified: evidence fields remain null"
+  }
+}

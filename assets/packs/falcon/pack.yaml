@@ -1,0 +1,25 @@
+# =========================================================================
+# Falcon pack — remote/background bead dispatch (kit-authored).
+#
+# Falcon ships to separate worker sessions the beads that the steering
+# session would otherwise work directly. It was moved out of the base
+# scaffold by ADR 0005: most projects don't need it on day one.
+#
+# Kit-authored: there are no vendored third-party components, so
+# `components` is empty and `pack_paths` owns the whole scaffold. The kit's
+# own .agents/skills/falcon/ is the source of truth; the static drift check
+# keeps this copy byte-identical.
+# =========================================================================
+pack:
+  name: falcon
+  description: >-
+    Remote/background dispatch of beads to separate Codex worker sessions,
+    with a cross-session lock registry, autopilot rules, crons, and a
+    synthesis step that feeds worker reports into $session-wrapup.
+  mission_guide: ".agents/skills/falcon/SKILL.md"
+  component_notes: ".agents/skills/falcon/REFERENCE.md"
+  rules_file: ".agents/skills/falcon/AUTOPILOT-RULES.md"
+  pack_paths:
+    - ".agents/skills/falcon/"
+
+components: []

@@ -1,0 +1,76 @@
+# =========================================================================
+# Web-Design mission pack v1.
+#
+# Roster derived from the Chase AI "Turn Claude Into A Design GENIUS In 3
+# Simple Steps" workflow (2026-07-23). See docs/decision-brief-
+# mission-packs.md decision 9 (revised) for the roster rationale.
+#
+# PRE-AIRLOCK STATE. Both components are vendored at exact upstream commits
+# but have NOT completed airlock scan + operator adjudication. Every
+# evidence-bearing field below is null, so pack_validate.py fails this pack
+# with `evidence-null` violations and writes no pack.stamp. That is the
+# intended, fail-closed result: this is a working development pack, not a
+# released one. Installation requires --allow-unverified-pack or an explicit
+# acknowledgment in the wizard. Native paths and integrity digests reflect the
+# migration; pinned commits and absent evidence remain visible.
+#
+# The `verdict` values below are PLACEHOLDERS, following the convention the
+# T004 fixture already uses. The schema requires a verdict enum and offers no
+# null option, so there is no way to express "vendored, not yet adjudicated".
+# No verdict here reflects any airlock adjudication. Airlock stays the sole
+# system of record; when it runs, these values are replaced by derived ones.
+# =========================================================================
+pack:
+  name: web-design
+  description: >-
+    Curated web-design mission pack. Vendors the Impeccable design skill and
+    the Taste Skill v2, plus the pack-authored mission guide, component notes,
+    and rules file that carry the taste-library, five-then-three-then-one build
+    sequence, and four-part prompt contract. Asset generation is a documented
+    open slot, not a vendored component.
+  mission_guide: "docs/web-design-mission.md"
+  component_notes: "docs/web-design-notes.md"
+  rules_file: ".agents/bootstrap/instructions/web-design-pack.md"
+  pack_paths:
+    - "docs/web-design-mission.md"
+    - "docs/web-design-notes.md"
+    - ".agents/bootstrap/instructions/web-design-pack.md"
+
+components:
+  - id: impeccable
+    kind: skill
+    upstream_url: "https://github.com/pbakaus/impeccable"
+    staging_fork: "not-yet-forked:impeccable"
+    pinned_commit: "d272b9bd5dcfcb52d32482d192d06045ca31c503"
+    scan_target: source-tree
+    selected_paths:
+      - ".agents/skills/impeccable/SKILL.md"
+      - ".agents/skills/impeccable/reference"
+      - ".agents/skills/impeccable/scripts"
+    vendored_paths:
+      - ".agents/skills/impeccable/"
+    license: Apache-2.0
+    airlock_evidence_id: null
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: "b5bf98bdd6cba621e4609d5491adec224d7e2dbb03eb009abe73238db32813df"
+
+  - id: taste-skill
+    kind: skill
+    upstream_url: "https://github.com/Leonxlnx/taste-skill"
+    staging_fork: "not-yet-forked:taste-skill"
+    pinned_commit: "e988add20dab0fa97d7a76781c48961c8184288e"
+    scan_target: source-tree
+    selected_paths:
+      - "skills/taste-skill/SKILL.md"
+    vendored_paths:
+      - ".agents/skills/taste-skill/"
+    license: MIT
+    airlock_evidence_id: null
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: "ecaed945eecc226e4cf466d334c828928b82a92891371cb7926260cc41fb1a18"

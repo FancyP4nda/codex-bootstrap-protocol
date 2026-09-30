@@ -1,0 +1,30 @@
+# =========================================================================
+# Herald pack — UI/UX design review, design systems, prototypes and
+# accessibility audits (kit-authored).
+#
+# Opt-in because it only helps projects with a user interface; installing it
+# everywhere put its skill description into every session. See ADR 0006.
+#
+# Kit-authored: no vendored third-party components, so `components` is
+# empty and `pack_paths` owns the whole scaffold. The herald skill doubles
+# as the Codex-facing rules file. This pack copy is the source of truth
+# (the kit itself has no UI and does not dogfood herald).
+# =========================================================================
+pack:
+  name: herald
+  description: >-
+    UI/UX review, design-system maintenance, wireframes and prototypes, and
+    WCAG 2.2 accessibility audits, routed by the herald skill to four
+    specialist agents.
+  mission_guide: ".agents/skills/herald/SKILL.md"
+  component_notes:
+    herald-review: ".codex/agents/herald-review.toml"
+    herald-system: ".codex/agents/herald-system.toml"
+    herald-prototype: ".codex/agents/herald-prototype.toml"
+    herald-a11y: ".codex/agents/herald-a11y.toml"
+  rules_file: ".agents/skills/herald/SKILL.md"
+  pack_paths:
+    - ".agents/skills/herald/"
+    - ".codex/agents/"
+
+components: []
