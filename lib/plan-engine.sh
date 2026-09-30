@@ -135,5 +135,6 @@ apply_plan() {
         if [[ "$state" == overwrite ]]; then backup_file "$tgt" "$dest" "$rel" || return; fi
         mkdir -p -- "$(dirname -- "$tgt")" || return
         cp -p -- "$src" "$tgt" || return
+        cmp -s -- "$src" "$tgt" || return
     done
 }

@@ -56,6 +56,7 @@ ALLOW_UNVERIFIED=0 COMMAND_MODE="" UPDATE_PATH=0 DOCTOR=0
 PACKS=()
 ENTRY_KIND=() ENTRY_PATH=() ENTRY_SRCROOT=() ENTRY_DESTROOT=() ENTRY_POLICY=()
 PLAN_STATE=() PLAN_FATAL=() OBSOLETE_ROOT=() OBSOLETE_REL=() OBSOLETE_STATE=()
+OBSOLETE_HASH=()
 STAGE="" RUN_ID="$(date -u +%Y%m%dT%H%M%S)-$$" NEW_PROJECT=0
 SOURCE_COMMIT=f89f7f3dffb1150fa7df30b180b397dd25a711f9
 source "$KIT_DIR/lib/plan-engine.sh"
@@ -260,24 +261,26 @@ validate_beads() {
     fi
 }
 global_obsolete() {
-    local root="$1" stamp="$2" prefix="$3" i state rel
+    local root="$1" stamp="$2" prefix="$3" i state rel expected
     check_ancestors "$root" "$stamp"; helper check "$root/$stamp"
     [[ ! -f "$root/$stamp" ]] || check_ancestors "$root" "bootstrap-backups/$RUN_ID/$stamp"
     for i in "${!ENTRY_PATH[@]}"; do
         [[ "${ENTRY_DESTROOT[i]}" != "$root" || "${ENTRY_KIND[i]}" != file ]] || printf '%s\n' "${ENTRY_PATH[i]}"
     done | helper obsolete "$root/$stamp" "$root" > "$STAGE/obsolete-$prefix"
-    while IFS=$'\t' read -r state rel; do
+    while IFS=$'\t' read -r state rel expected; do
         [[ -n "$rel" ]] || continue
         validate_entry_path stamp "$rel"; check_ancestors "$root" "$rel"
         info "Global obsolete $state: $root/$rel"
         if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 ]]; then
             check_ancestors "$root" "bootstrap-backups/$RUN_ID/$rel"
             OBSOLETE_ROOT+=("$root"); OBSOLETE_REL+=("$rel"); OBSOLETE_STATE+=("$state")
+            OBSOLETE_HASH+=("$expected")
         fi
     done < "$STAGE/obsolete-$prefix"
 }
 record_layer() {
     local root="$1" stamp="$2" i rel
+    check_ancestors "$root" "$stamp"
     for i in "${!ENTRY_PATH[@]}"; do
         [[ "${ENTRY_KIND[i]}" == file ]] || continue
         if [[ "${ENTRY_DESTROOT[i]}" == "$root" ]]; then rel="${ENTRY_PATH[i]}"
@@ -286,11 +289,12 @@ record_layer() {
         printf '%s\t%s\t%s\n' "$rel" "${PLAN_STATE[i]}" "$root/$rel"
     done > "$STAGE/record-rows"
     for i in "${!OBSOLETE_REL[@]}"; do
-        [[ "${OBSOLETE_ROOT[i]}" != "$root" ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
+        [[ "${OBSOLETE_ROOT[i]}" != "$root" || "${OBSOLETE_STATE[i]}" != remove ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
     done
     helper record "$root/$stamp" "$SOURCE_COMMIT" "${PACKS[@]}" < "$STAGE/record-rows" > "$STAGE/stamp"
     mkdir -p -- "$(dirname -- "$root/$stamp")"
     [[ ! -f "$root/$stamp" ]] || backup_file "$root/$stamp" "$root" "$stamp"
+    check_ancestors "$root" "$stamp"
     cp -p -- "$STAGE/stamp" "$root/$stamp"
 }
 main() {
@@ -398,6 +402,12 @@ main() {
         die "partial file apply failed. Backups are under bootstrap-backups/$RUN_ID in affected layers. Correct permissions and rerun the same command."
     fi
     for i in "${!OBSOLETE_REL[@]}"; do
+        check_ancestors "${OBSOLETE_ROOT[i]}" "${OBSOLETE_REL[i]}"
+        if ! python3 -c 'import hashlib,pathlib,sys; p=pathlib.Path(sys.argv[1]); sys.exit(0 if p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest()==sys.argv[2] else 1)' "${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}" "${OBSOLETE_HASH[i]}"; then
+            info "Preserving obsolete file changed since preview: ${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}"
+            OBSOLETE_STATE[i]=keep_modified
+            continue
+        fi
         backup_file "${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}" "${OBSOLETE_ROOT[i]}" "${OBSOLETE_REL[i]}"
         rm -f -- "${OBSOLETE_ROOT[i]}/${OBSOLETE_REL[i]}"
     done

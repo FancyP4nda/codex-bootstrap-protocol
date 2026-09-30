@@ -192,7 +192,7 @@ def main():
             if rel not in current:
                 p = Path(args.extra[0]) / rel
                 if p.is_file() and not p.is_symlink():
-                    print(("remove" if hash_file(p) == digest else "keep_modified")+"\t"+rel)
+                    print(("remove" if hash_file(p) == digest else "keep_modified")+"\t"+rel+"\t"+digest)
         return
     else:
         stamp = load_stamp(args.path)
