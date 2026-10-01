@@ -13,6 +13,11 @@ function files(dir) {
 }
 const scaffold=path.join(root,'assets/scaffold');
 const global=path.join(root,'assets/global');
+// One reviewed descendant-ownership implementation supplies both optional packs.
+for(const [pack,skill] of [['falcon','falcon'],['web-design','impeccable']]) {
+  const dest=path.join(root,'assets/packs',pack,'scaffold/.agents/skills',skill,'scripts/process-supervisor.py');
+  fs.copyFileSync(path.join(root,'assets/native/process-supervisor.py'),dest);
+}
 // Move the destination's useful Codex additions into the canonical global core.
 for(const rel of ['.agents/skills/minion','.codex/agents']) {
   const source=path.join(scaffold,rel);

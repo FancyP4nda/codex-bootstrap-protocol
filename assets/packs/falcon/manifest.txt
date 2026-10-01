@@ -7,4 +7,5 @@ file	.agents/skills/falcon/REFERENCE.md	copy	Managed Codex asset.
 file	.agents/skills/falcon/SKILL.md	copy	Managed Codex asset.
 file	.agents/skills/falcon/SYNTHESIS.md	copy	Managed Codex asset.
 file	.agents/skills/falcon/scripts/falcon.py	copy	Managed Codex asset.
+file	.agents/skills/falcon/scripts/process-supervisor.py	copy	Managed Codex asset.
 file	.agents/skills/falcon/scripts/report.schema.json	copy	Managed Codex asset.

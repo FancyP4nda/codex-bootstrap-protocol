@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { getLiveDir } from '../lib/impeccable-paths.mjs';
-import { readBuffer as readManualEditsBuffer } from './manual-edits-buffer.mjs';
+import { readBuffer as readManualEditsBuffer, getBufferPath } from './manual-edits-buffer.mjs';
+import { withSynchronousManualEditOwnership, currentManualEditOwnership, assertManualEditTransactionOwner,
+  manualEditOwnershipPath } from './manual-edit-ownership.mjs';
 
 const APPLY_EVENT_HARD_TIMEOUT_MS = Number(process.env.IMPECCABLE_LIVE_APPLY_EVENT_HARD_TIMEOUT_MS || 150_000);
 const APPLY_EVENT_SOFT_DEADLINE_MS = Number(process.env.IMPECCABLE_LIVE_APPLY_EVENT_SOFT_DEADLINE_MS || 120_000);
@@ -717,17 +719,43 @@ export function readManualApplyTransaction(cwd = process.cwd()) {
   const file = manualApplyTransactionPath(cwd);
   if (!fs.existsSync(file)) return null;
   try {
-    return JSON.parse(fs.readFileSync(file, 'utf-8'));
-  } catch {
-    return null;
+    const transaction = JSON.parse(fs.readFileSync(file, 'utf-8'));
+    if (!transaction || typeof transaction !== 'object' || Array.isArray(transaction)) throw new Error('invalid transaction container');
+    if (transaction.version !== 1 && transaction.version !== 2) throw new Error('invalid transaction version');
+    // Legacy v1 is diagnosed separately as unowned, never automatically used.
+    if (transaction.version === 2 && (
+      typeof transaction.id !== 'string' || !transaction.id ||
+      typeof transaction.ownershipId !== 'string' || !transaction.ownershipId ||
+      transaction.pageUrl !== undefined && transaction.pageUrl !== null && typeof transaction.pageUrl !== 'string' ||
+      !Array.isArray(transaction.entryIds) || transaction.entryIds.some(id => typeof id !== 'string' || !id) ||
+      !Array.isArray(transaction.files) || transaction.files.some(item => !item || typeof item !== 'object' ||
+        typeof item.file !== 'string' || !normalizeProjectFile(item.file, cwd) ||
+        typeof item.exists !== 'boolean' || typeof item.content !== 'string') ||
+      transaction.recoveryFailed !== undefined && typeof transaction.recoveryFailed !== 'boolean'
+    )) throw new Error('invalid transaction snapshot schema');
+    return transaction;
+  } catch (cause) {
+    const error = new Error('Manual-edit transaction is unreadable; preserve it and inspect recovery state: ' + cause.message);
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
   }
 }
 
 export function writeManualApplyTransaction({ cwd = process.cwd(), pageUrl = null, batch }) {
+  return withSynchronousManualEditOwnership(cwd, () => writeManualApplyTransactionInner({ cwd, pageUrl, batch }));
+}
+
+function writeManualApplyTransactionInner({ cwd, pageUrl, batch }) {
   const file = manualApplyTransactionPath(cwd);
+  if (fs.existsSync(file)) {
+    const error = new Error('Existing manual-edit transaction must be accounted for before replacement');
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
+  }
   const files = collectManualApplyFiles(batch, [], cwd);
   const transaction = {
-    version: 1,
+    version: 2,
+    ownershipId: currentManualEditOwnership(cwd).id,
     id: randomUUID().replace(/-/g, '').slice(0, 8),
     createdAt: new Date().toISOString(),
     pageUrl,
@@ -749,10 +777,25 @@ export function writeManualApplyTransaction({ cwd = process.cwd(), pageUrl = nul
 }
 
 export function clearManualApplyTransaction(cwd = process.cwd(), transactionId = null) {
+  return withSynchronousManualEditOwnership(cwd, () => clearManualApplyTransactionInner(cwd, transactionId));
+}
+
+function clearManualApplyTransactionInner(cwd, transactionId) {
   const file = manualApplyTransactionPath(cwd);
   if (!fs.existsSync(file)) return false;
+  const existing = readManualApplyTransaction(cwd);
+  if (existing?.version !== 2 || !existing.ownershipId) {
+    const error = new Error('Unowned or unreadable transaction cannot be automatically cleared; preserve recovery evidence');
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
+  }
+  assertManualEditTransactionOwner(cwd, existing);
+  if (existing.recoveryFailed) {
+    const error = new Error('Transaction restore failed; preserve its snapshot and retry safe recovery before clearing');
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
+  }
   if (transactionId) {
-    const existing = readManualApplyTransaction(cwd);
     if (existing?.id && existing.id !== transactionId) return false;
   }
   try {
@@ -769,16 +812,32 @@ export function rollbackManualApplyTransaction({
   reason = 'manual_edit_transaction_rollback',
   recordManualEditActivity = null,
 } = {}) {
+  if (!fs.existsSync(manualApplyTransactionPath(cwd)) && !fs.existsSync(manualEditOwnershipPath(cwd))) return null;
+  return withSynchronousManualEditOwnership(cwd, () => rollbackManualApplyTransactionInner({ cwd, pageUrl, reason, recordManualEditActivity }));
+}
+
+function rollbackManualApplyTransactionInner({ cwd, pageUrl, reason, recordManualEditActivity }) {
   const transaction = readManualApplyTransaction(cwd);
   if (!transaction) return null;
+  if (transaction.version !== 2 || !transaction.ownershipId) {
+    const error = new Error('Legacy transaction has no worker ownership evidence; preserve it and inspect old workers before recovery');
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
+  }
+  assertManualEditTransactionOwner(cwd, transaction);
   if (pageUrl && transaction.pageUrl && transaction.pageUrl !== pageUrl) return null;
 
   let pendingIds = new Set();
   try {
-    const buffer = readManualEditsBuffer(cwd);
+    const buffer = JSON.parse(fs.readFileSync(getBufferPath(cwd), 'utf8'));
+    if (!buffer || typeof buffer !== 'object' || Array.isArray(buffer) || buffer.version !== 1 ||
+        !Array.isArray(buffer.entries) || buffer.entries.some(entry => !entry || typeof entry !== 'object' ||
+          Array.isArray(entry) || typeof entry.id !== 'string' || !entry.id)) throw new Error('invalid pending-buffer recovery schema');
     pendingIds = new Set((buffer.entries || []).map((entry) => entry.id).filter(Boolean));
-  } catch {
-    pendingIds = new Set(transaction.entryIds || []);
+  } catch (cause) {
+    const error = new Error('Pending manual-edit buffer is unreadable; preserve transaction and inspect recovery state: ' + cause.message);
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    throw error;
   }
   const shouldRollback = (transaction.entryIds || []).some((id) => pendingIds.has(id));
   if (!shouldRollback) {
@@ -804,7 +863,20 @@ export function rollbackManualApplyTransaction({
       rollbackFailures.push({ file: relativeFile, reason: 'restore_failed', message: err.message || String(err) });
     }
   }
-  clearManualApplyTransaction(cwd, transaction.id);
+  if (rollbackFailures.length > 0) {
+    transaction.recoveryFailed = true;
+    const file = manualApplyTransactionPath(cwd);
+    fs.writeFileSync(`${file}.tmp`, JSON.stringify(transaction, null, 2) + '\n');
+    fs.renameSync(`${file}.tmp`, file);
+  } else {
+    if (transaction.recoveryFailed) {
+      transaction.recoveryFailed = false;
+      const file = manualApplyTransactionPath(cwd);
+      fs.writeFileSync(`${file}.tmp`, JSON.stringify(transaction, null, 2) + '\n');
+      fs.renameSync(`${file}.tmp`, file);
+    }
+    clearManualApplyTransaction(cwd, transaction.id);
+  }
   recordManualEditActivity?.('manual_edit_transaction_rolled_back', {
     id: transaction.id,
     pageUrl: transaction.pageUrl || null,
@@ -813,7 +885,14 @@ export function rollbackManualApplyTransaction({
     rolledBackFiles: rolledBackFiles.map((file) => summarizeManualLogFile(file, cwd)).filter(Boolean),
     rollbackFailures: summarizeManualDiagnostics(rollbackFailures, cwd),
   });
-  return { id: transaction.id, reason, rolledBackFiles, rollbackFailures };
+  if (rollbackFailures.length > 0) {
+    const error = new Error('Manual-edit restore failed; snapshot and pending edits were preserved. Repair the recovery obstacle before retrying');
+    error.code = 'MANUAL_EDIT_OPERATION_OWNED';
+    error.rollbackFailures = rollbackFailures;
+    throw error;
+  }
+  return { id: transaction.id, reason, rolledBackFiles, rollbackFailures,
+    transactionRetained: rollbackFailures.length > 0, needsManualDecision: rollbackFailures.length > 0 };
 }
 
 export function collectManualApplyFiles(batch, extraFiles = [], cwd = process.cwd()) {
@@ -849,6 +928,15 @@ export function rollbackApplySnapshot(
   _reason = 'manual_edit_apply_snapshot_rollback',
   cwd = process.cwd(),
 ) {
+  try {
+    return withSynchronousManualEditOwnership(cwd, () => rollbackApplySnapshotInner(batch, rollbackSnapshot, extraFiles, cwd));
+  } catch (error) {
+    if (error.code !== 'MANUAL_EDIT_OPERATION_OWNED') throw error;
+    return { rolledBackFiles: [], rollbackFailures: [{ reason: 'ownership_unconfirmed', message: error.message }], rollbackDeferred: true };
+  }
+}
+
+function rollbackApplySnapshotInner(batch, rollbackSnapshot, extraFiles, cwd) {
   const scope = collectManualApplyFiles(batch, extraFiles, cwd);
   const rolledBackFiles = [];
   const rollbackFailures = [];

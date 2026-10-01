@@ -33,6 +33,7 @@ import { runGenerationPreflight } from './live/generation-preflight.mjs';
 import { validateEvent } from './live/event-validation.mjs';
 import { selectAvailablePendingEvent } from './live/poll-lanes.mjs';
 import { createManualEditRoutes } from './live/manual-edit-routes.mjs';
+import { shutdownManualEditCommits } from './live-commit-manual-edits.mjs';
 import { LIVE_COMMANDS } from './live/vocabulary.mjs';
 import {
   getDesignSidecarPath,
@@ -1310,8 +1311,23 @@ function handlePollPost(req, res) {
 // ---------------------------------------------------------------------------
 
 let httpServer = null;
+let serverShutdownStarted = false;
 
-function shutdown() {
+async function shutdown() {
+  if (serverShutdownStarted) return;
+  serverShutdownStarted = true;
+  // Stop accepting new Apply requests while the current attempt shuts down.
+  if (httpServer) httpServer.close();
+  try {
+    // Settle chat-route deferred waits too; external chat agents are not
+    // subprocesses owned by this server and retain their existing fencing.
+    manualApply.cancelPendingEvents(null, 'live_server_shutdown');
+    await shutdownManualEditCommits('live server shutdown');
+  } catch (err) {
+    console.error('[impeccable] Shutdown could not verify worker termination; transaction preserved:', err.message);
+    process.exitCode = 1;
+    return;
+  }
   cleanupSvelteComponentSessionsBeforeExit();
   removeLiveServerInfo(process.cwd());
   if (state.leaseTimer) clearTimeout(state.leaseTimer);
@@ -1470,9 +1486,13 @@ if (existingRecord?.info) {
 
 state.token = randomUUID();
 state.sessionStore = createLiveSessionStore({ cwd: process.cwd() });
-manualApply.rollbackTransaction({
-  reason: 'manual_edit_server_start_recovered_abandoned_transaction',
-});
+try {
+  manualApply.rollbackTransaction({ reason: 'manual_edit_server_start_recovered_abandoned_transaction' });
+} catch (error) {
+  console.error('[impeccable] Recovery blocked before restoring files:', error.message);
+  console.error('Preserve the transaction. Retry after owned-descendant shutdown is confirmed; legacy ownership needs manual inspection.');
+  process.exit(1);
+}
 applyLegacyDeferredAcceptsOnStartup();
 restorePendingEventsFromStore();
 manualApply.pruneStaleEvidence();

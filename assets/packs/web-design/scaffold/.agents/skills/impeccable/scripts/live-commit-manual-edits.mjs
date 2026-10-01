@@ -21,9 +21,11 @@ import { isGeneratedFile } from './lib/is-generated.mjs';
 import {
   runCopyEditBatchAgent,
   runCopyEditPostApplyChecks,
+  shutdownCopyEditWorkers,
 } from './live-copy-edit-agent.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
+import { withManualEditOwnership, withSynchronousManualEditOwnership } from './live/manual-edit-ownership.mjs';
 
 const ROLLBACK_EXTENSIONS = new Set([
   '.astro',
@@ -64,6 +66,28 @@ const ROLLBACK_SKIP_DIRS = new Set([
   'out',
 ]);
 const DEFAULT_REPAIR_ATTEMPTS = 3;
+const activeManualEditCommits = new Set();
+let manualEditShutdownRequested = false;
+
+// Supervised subprocess stop plus the caller's rollback/transaction result.
+// A server must await BOTH before process.exit, not just the worker barrier.
+export async function shutdownManualEditCommits(reason = 'parent shutdown') {
+  manualEditShutdownRequested = true;
+  await shutdownCopyEditWorkers(reason);
+  await Promise.allSettled([...activeManualEditCommits]);
+}
+
+export function commitManualEdits(options = {}) {
+  if (manualEditShutdownRequested) {
+    const error = new Error('Manual Apply is unavailable while the parent is shutting down');
+    error.code = 'COPY_EDIT_INTERRUPTED';
+    return Promise.reject(error);
+  }
+  const task = withManualEditOwnership(options.cwd || process.cwd(), () => commitManualEditsInner(options));
+  activeManualEditCommits.add(task);
+  task.then(() => activeManualEditCommits.delete(task), () => activeManualEditCommits.delete(task));
+  return task;
+}
 
 function argVal(args, name) {
   const prefix = name + '=';
@@ -663,6 +687,10 @@ function changedFilesSinceSnapshot(cwd, snapshot, scopeFiles = null) {
 }
 
 function rollbackChangedFiles(cwd, snapshot, extraFiles = [], scopeFiles = []) {
+  return withSynchronousManualEditOwnership(cwd, () => rollbackChangedFilesInner(cwd, snapshot, extraFiles, scopeFiles));
+}
+
+function rollbackChangedFilesInner(cwd, snapshot, extraFiles, scopeFiles) {
   const scope = new Set(
     [...(scopeFiles || []), ...(extraFiles || [])]
       .map((file) => normalizeRollbackPath(cwd, file))
@@ -717,6 +745,35 @@ function collectApplyOwnedFiles(batch, cwd, extraFiles = []) {
   return uniqueStrings(files)
     .map((file) => normalizeRollbackPath(cwd, file))
     .filter(Boolean);
+}
+
+function stoppedWorkerFailure(err, { batch, cwd, rollbackSnapshot, baseRollbackScope, count, pageUrl }) {
+  if (err.workerShutdownConfirmed === false) {
+    return {
+      applied: [],
+      failed: batch.entries.map((entry) => ({ id: entry.id, reason: err.message || String(err) })),
+      files: baseRollbackScope,
+      cleared: 0, count, pageUrl,
+      reason: 'manual_edit_worker_shutdown_unconfirmed',
+      needsManualDecision: true,
+      rollbackDeferred: true,
+      ...countByPage(cwd),
+    };
+  }
+  // The process supervisor rejects only after the owned group is quiescent.
+  const rollback = rollbackChangedFiles(cwd, rollbackSnapshot, [], baseRollbackScope);
+  return {
+    applied: [],
+    failed: batch.entries.map((entry) => ({
+      id: entry.id,
+      reason: err.message || String(err),
+      candidates: candidatesForEntry(batch, entry.id),
+    })),
+    files: [], cleared: 0, count, pageUrl,
+    rolledBackFiles: rollback.rolledBackFiles,
+    rollbackFailures: rollback.rollbackFailures,
+    ...countByPage(cwd),
+  };
 }
 
 function unreportedChangedFiles(cwd, snapshot, reportedFiles, scopeFiles = []) {
@@ -790,8 +847,10 @@ async function repairPostApplyValidation({
   let currentNotes = Array.isArray(notes) ? notes : [];
   let currentWarnings = Array.isArray(warnings) ? warnings : [];
   let currentFailures = Array.isArray(repairFailures) ? repairFailures : (postChecks?.failures || []);
+  let attemptsPerformed = 0;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    attemptsPerformed = attempt;
     const repair = {
       attempt,
       maxAttempts,
@@ -816,6 +875,9 @@ async function repairPostApplyValidation({
         reason: 'repair_agent_failed',
         message: err.message || String(err),
       }];
+      // A cancellation is not an invitation to spawn another worker, and an
+      // unconfirmed stop must retain the transaction for explicit recovery.
+      if (err.code === 'COPY_EDIT_INTERRUPTED' || err.workerShutdownConfirmed === false) break;
       continue;
     }
 
@@ -839,7 +901,14 @@ async function repairPostApplyValidation({
       continue;
     }
 
-    const repairedChecks = runCopyEditPostApplyChecks({ cwd, files: currentFiles });
+    let repairedChecks;
+    try {
+      repairedChecks = await runCopyEditPostApplyChecks({ cwd, files: currentFiles, env });
+    } catch (err) {
+      currentFailures = [{ reason: 'repair_validation_failed', message: err.message || String(err) }];
+      if (err.code === 'COPY_EDIT_INTERRUPTED' || err.workerShutdownConfirmed === false) break;
+      continue;
+    }
     currentWarnings = [...currentWarnings, ...(repairedChecks.warnings || [])];
     if (!repairedChecks.ok) {
       currentFailures = repairedChecks.failures || [];
@@ -891,7 +960,7 @@ async function repairPostApplyValidation({
     needsManualDecision: true,
     repair: {
       status: 'needs_decision',
-      attempts: maxAttempts,
+      attempts: attemptsPerformed,
       maxAttempts,
       transactionId: transactionId || null,
       failures: summarizeRepairFailures(currentFailures),
@@ -901,7 +970,7 @@ async function repairPostApplyValidation({
   };
 }
 
-export async function commitManualEdits({
+async function commitManualEditsInner({
   cwd = process.cwd(),
   pageUrl = null,
   provider = undefined,
@@ -965,22 +1034,7 @@ export async function commitManualEdits({
           chatAvailable,
         });
   } catch (err) {
-    const rollback = rollbackChangedFiles(cwd, rollbackSnapshot, [], baseRollbackScope);
-    return {
-      applied: [],
-      failed: batch.entries.map((entry) => ({
-        id: entry.id,
-        reason: err.message || String(err),
-        candidates: candidatesForEntry(batch, entry.id),
-      })),
-      files: [],
-      cleared: 0,
-      count,
-      pageUrl,
-      rolledBackFiles: rollback.rolledBackFiles,
-      rollbackFailures: rollback.rollbackFailures,
-      ...countByPage(cwd),
-    };
+    return stoppedWorkerFailure(err, { batch, cwd, rollbackSnapshot, baseRollbackScope, count, pageUrl });
   }
 
   if (result.status === 'error') {
@@ -1174,7 +1228,12 @@ export async function commitManualEdits({
     });
   }
 
-  const postChecks = runCopyEditPostApplyChecks({ cwd, files: result.files || [] });
+  let postChecks;
+  try {
+    postChecks = await runCopyEditPostApplyChecks({ cwd, files: result.files || [], env });
+  } catch (err) {
+    return stoppedWorkerFailure(err, { batch, cwd, rollbackSnapshot, baseRollbackScope, count, pageUrl });
+  }
   if (!postChecks.ok) {
     const postCheckEntries = verifiedAppliedIds.length > 0
       ? reportedAppliedEntries.filter((entry) => verifiedAppliedIds.includes(entry.id))

@@ -4,7 +4,7 @@
  *
  * The browser Save path stages edits. Apply copy edits calls
  * live-commit-manual-edits.mjs, which builds a page-scoped batch and uses this
- * helper to ask Codex/Claude to edit true source files.
+ * helper to ask Codex to edit true source files.
  */
 
 import { spawn, spawnSync } from 'node:child_process';
@@ -12,9 +12,23 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
+import { randomUUID } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { withManualEditOwnership, prepareManualEditWorker, markExternalManualEditWriter } from './live/manual-edit-ownership.mjs';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
+const SHUTDOWN_GRACE_MS = 250;
+const SHUTDOWN_KILL_MS = 1000;
+const activeCopyEditWorkers = new Set();
 const require = createRequire(import.meta.url);
+
+// A shutdown barrier, not permission to roll back while a worker is alive.
+// The live server awaits this before exiting; callers may also cancel explicitly.
+export async function shutdownCopyEditWorkers(reason = 'parent shutdown') {
+  const results = await Promise.all([...activeCopyEditWorkers].map((worker) => worker.stop(reason)));
+  const unsafe = results.find((error) => error?.workerShutdownConfirmed === false);
+  if (unsafe) throw unsafe;
+}
 
 export function buildCopyEditBatchPrompt(batch, { cwd = process.cwd() } = {}) {
   const repairLines = batch?.repair ? [
@@ -93,8 +107,20 @@ export function parseCopyEditBatchResult(text) {
 }
 
 export async function runCopyEditBatchAgent(batch, opts = {}) {
+  return withManualEditOwnership(opts.cwd || process.cwd(), () => runCopyEditBatchAgentInner(batch, opts));
+}
+
+async function runCopyEditBatchAgentInner(batch, opts = {}) {
   const cwd = opts.cwd || process.cwd();
   const env = opts.env || process.env;
+  // Failed shutdown retains ownership and blocks a subsequent Apply in this
+  // process. Do not let a retry race the old attempt's surviving writers.
+  if ([...activeCopyEditWorkers].some((worker) => worker.cwd === path.resolve(cwd))) {
+    const error = new Error('Copy-edit worker still owns this project; shutdown must complete before retry');
+    error.workerShutdownConfirmed = false;
+    error.code = 'COPY_EDIT_SHUTDOWN_UNCONFIRMED';
+    throw error;
+  }
   const provider = opts.provider || chooseCopyEditAgent({ env, chatAvailable: opts.chatAvailable });
   if (provider === 'mock') {
     const delayMs = Number(env.IMPECCABLE_LIVE_COPY_AGENT_MOCK_DELAY_MS || 0);
@@ -105,7 +131,15 @@ export async function runCopyEditBatchAgent(batch, opts = {}) {
     if (typeof opts.applyBatchToSource !== 'function') {
       throw new Error('chat provider requires applyBatchToSource callback');
     }
-    const raw = await opts.applyBatchToSource(batch, { repair: batch?.repair || null });
+    markExternalManualEditWriter(cwd, true);
+    let raw;
+    try { raw = await opts.applyBatchToSource(batch, { repair: batch?.repair || null }); }
+    catch (error) {
+      // A rejected/timed-out external reply does not prove its actor stopped.
+      error.workerShutdownConfirmed = false;
+      throw error;
+    }
+    markExternalManualEditWriter(cwd, false);
     return normalizeBatchResult(raw || {});
   }
   if (!provider) {
@@ -132,7 +166,11 @@ export async function runCopyEditBatchAgent(batch, opts = {}) {
   throw new Error('AI copy-edit batch did not return a valid completion payload. ' + tail.trim());
 }
 
-export function runCopyEditPostApplyChecks({ cwd = process.cwd(), files = [] } = {}) {
+export async function runCopyEditPostApplyChecks({ cwd = process.cwd(), files = [], env = process.env } = {}) {
+  return withManualEditOwnership(cwd, () => runCopyEditPostApplyChecksInner({ cwd, files, env }));
+}
+
+async function runCopyEditPostApplyChecksInner({ cwd, files, env }) {
   const failures = [];
   const warnings = [];
   const uniqueFiles = [...new Set((files || []).filter((file) => typeof file === 'string' && file.trim()))];
@@ -174,7 +212,7 @@ export function runCopyEditPostApplyChecks({ cwd = process.cwd(), files = [] } =
       }
     }
   }
-  const validation = runManualEditValidationScript(cwd);
+  const validation = await runManualEditValidationScript(cwd, env);
   if (validation?.failure) failures.push(validation.failure);
   if (validation?.warning) warnings.push(validation.warning);
   return { ok: failures.length === 0, failures, warnings };
@@ -245,32 +283,30 @@ function isInsideQuotedLiteral(line, index) {
   return quote !== null;
 }
 
-function runManualEditValidationScript(cwd) {
+async function runManualEditValidationScript(cwd, env) {
   const script = readManualEditValidationScript(cwd);
   if (!script) return null;
-  const validation = spawnSync(script, {
-    cwd,
-    encoding: 'utf-8',
-    shell: true,
-    timeout: 30_000,
-  });
-  if (validation.error) {
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'impeccable-copy-validation-'));
+  const logPath = path.join(outDir, 'validation.log');
+  try {
+    // User-authored validation may spawn subprocesses too. A shell-only
+    // spawnSync timeout has exactly the same late-writer failure as the CLI.
+    await runAgentProcess('/bin/sh', ['-c', script], '', {
+      cwd, env, logPath,
+      timeoutMs: Number(env.IMPECCABLE_LIVE_MANUAL_EDIT_VALIDATE_TIMEOUT_MS || 30_000),
+    });
+  } catch (error) {
+    if (error.workerShutdownConfirmed === false || error.code === 'COPY_EDIT_INTERRUPTED') throw error;
     return {
       failure: {
         file: 'package.json',
         reason: 'manual_edit_validation_failed',
-        message: validation.error.message || String(validation.error),
+        message: error.message || String(error),
       },
     };
-  }
-  if (validation.status !== 0) {
-    return {
-      failure: {
-        file: 'package.json',
-        reason: 'manual_edit_validation_failed',
-        message: [validation.stderr, validation.stdout].filter(Boolean).join('\n').trim(),
-      },
-    };
+  } finally {
+    // Generated, task-owned diagnostic directory; never a project/user path.
+    fs.rmSync(outDir, { recursive: true, force: true });
   }
   return null;
 }
@@ -459,56 +495,188 @@ function runCodex(prompt, { cwd, env, resultPath, logPath, timeoutMs = DEFAULT_T
 }
 
 
+function signalOwnedGroup(child, signal) {
+  if (!Number.isSafeInteger(child.pid) || child.pid <= 1) return;
+  // Node owns/reaps this direct child. Signal its live process handle, not an
+  // old numeric PGID that could belong to another session after owner exit.
+  // The supervisor itself performs pidfd-bound descendant termination.
+  if (child.exitCode !== null || child.signalCode !== null) return;
+  child.kill(signal);
+}
+
+function groupHasRunningMembers(pid) {
+  try { process.kill(-pid, 0); }
+  catch (error) { if (error.code === 'ESRCH') return false; throw error; }
+  // kill(0) sees zombies too. They cannot write and may remain until their
+  // adoptive parent reaps them; waiting for that unrelated parent is unsafe.
+  if (process.platform === 'linux') {
+    for (const name of fs.readdirSync('/proc')) {
+      if (!/^\d+$/.test(name)) continue;
+      let stat;
+      try { stat = fs.readFileSync(`/proc/${name}/stat`, 'utf8'); }
+      catch (error) { if (error.code === 'ENOENT' || error.code === 'ESRCH') continue; throw error; }
+      const fields = stat.slice(stat.lastIndexOf(')') + 2).split(' ');
+      if (Number(fields[2]) === pid && !['Z', 'X'].includes(fields[0])) return true;
+    }
+    return false;
+  }
+  // Stock macOS has no /proc. Inspect, never execute, process metadata.
+  const result = spawnSync('ps', ['-axo', 'pgid=,stat='], { encoding: 'utf8', timeout: 1000 });
+  if (result.error || result.status !== 0) throw new Error('Cannot verify copy-edit process-group shutdown');
+  return result.stdout.split('\n').some((line) => {
+    const [group, state = ''] = line.trim().split(/\s+/);
+    return Number(group) === pid && !/^[ZX]/.test(state);
+  });
+}
+
+async function waitForGroupStop(pid, limitMs) {
+  const deadline = Date.now() + limitMs;
+  do {
+    if (!groupHasRunningMembers(pid)) return true;
+    await new Promise((resolve) => setTimeout(resolve, 20));
+  } while (Date.now() < deadline);
+  return !groupHasRunningMembers(pid);
+}
+
+async function terminateOwnedGroup(child) {
+  if (!child.pid) return;
+  signalOwnedGroup(child, 'SIGTERM');
+  // The supervisor owns even setsid/double-fork descendants. TERM requests its
+  // own bounded TERM/KILL cleanup. Killing that owner would orphan the writers.
+  if (await waitForGroupStop(child.pid, SHUTDOWN_GRACE_MS + SHUTDOWN_KILL_MS + 1000)) return;
+  throw new Error(`Copy-edit supervisor ${child.pid} did not stop; preserve the transaction and do not retry`);
+}
+
 function runAgentProcess(command, args, stdin, { cwd, env, logPath, timeoutMs, mirrorOutputPath }) {
+  if (process.platform !== 'linux') return Promise.reject(new Error('Live copy-edit supervision requires Linux or WSL with subreaper/pidfd support; native Windows and macOS workers are unsupported'));
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) return Promise.reject(new Error('Copy-edit timeout must be a positive finite number'));
+  // Validate Node's synchronous spawn boundary before recording any launch
+  // intent or opening logs. Invalid argv/environment proves no worker existed.
+  const spawnEnv = Object.fromEntries(Object.entries(env || {}).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]));
+  const values = [command, cwd, ...(Array.isArray(args) ? args : [null]), ...Object.keys(spawnEnv), ...Object.values(spawnEnv)];
+  if (values.some(value => typeof value !== 'string' || value.includes('\0'))) return Promise.reject(new Error('Copy-edit spawn arguments/environment must be strings without NUL bytes'));
+  // Capture the caller before launch: the supervisor may already have been
+  // reparented by the time its Python imports finish after a caller crash.
+  const parentPid = process.pid;
+  const parentStat = fs.readFileSync('/proc/' + parentPid + '/stat', 'utf8');
+  const parentBirth = parentStat.slice(parentStat.lastIndexOf(')') + 2).split(' ')[19];
+  if (!/^[0-9]+$/.test(parentBirth)) return Promise.reject(new Error('Cannot bind copy-edit supervision to caller birth identity'));
   return new Promise((resolve, reject) => {
+    const nonce = randomUUID();
+    const { statusPath, registerPid, confirmNoLaunch } = prepareManualEditWorker(cwd, nonce);
     const log = fs.createWriteStream(logPath, { flags: 'a' });
-    const child = spawn(command, args, {
+    // Handle open errors immediately, including before child listeners exist.
+    let earlyLogError = null;
+    log.on('error', error => { earlyLogError = error; });
+    const supervisor = fileURLToPath(new URL('./process-supervisor.py', import.meta.url));
+    const child = spawn('python3', [supervisor, '--status-file', statusPath, '--nonce', nonce,
+      '--parent-pid', String(parentPid), '--parent-birth', parentBirth, '--', command, ...args], {
       cwd,
-      env,
+      env: spawnEnv,
+      // Isolate the supervisor's lifetime from caller termination. The helper
+      // owns descendants and signals them by pidfd, even across new sessions.
+      detached: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
     let output = '';
-    let settled = false;
-    const timer = setTimeout(() => {
-      child.kill('SIGTERM');
-      rejectOnce(new Error(`AI copy-edit worker timed out after ${timeoutMs}ms`));
-    }, timeoutMs);
-
-    const rejectOnce = (err) => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      log.end();
-      reject(err);
+    let settling = false;
+    let outcomeError = null;
+    let complete;
+    const stopped = new Promise((done) => { complete = done; });
+    const worker = {
+      cwd: path.resolve(cwd),
+      stop: (reason) => {
+        const error = new Error(`AI copy-edit worker interrupted: ${reason}`);
+        error.code = 'COPY_EDIT_INTERRUPTED';
+        void finish(error);
+        return stopped;
+      },
     };
-    const resolveOnce = () => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timer);
-      if (mirrorOutputPath) fs.writeFileSync(mirrorOutputPath, output);
-      log.end();
-      resolve();
-    };
-
-    process.once('SIGTERM', () => {
-      try { child.kill('SIGTERM'); } catch {}
-    });
-    child.stdout.on('data', (chunk) => {
+    activeCopyEditWorkers.add(worker);
+    // Direct process.exit cannot await cleanup. Keep the subreaper alive to
+    // finish exact-descendant cleanup after the caller exits; never kill it.
+    const onParentExit = () => { try { signalOwnedGroup(child, 'SIGTERM'); } catch {} };
+    const onParentTerm = () => { void worker.stop('SIGTERM'); };
+    const onParentInt = () => { void worker.stop('SIGINT'); };
+    const onOutput = (chunk) => {
       output += chunk.toString();
       log.write(chunk);
-    });
-    child.stderr.on('data', (chunk) => {
-      log.write(chunk);
-    });
-    child.on('error', rejectOnce);
-    child.on('exit', (code, signal) => {
-      if (code === 0) {
-        resolveOnce();
-      } else {
-        const hint = extractRunnerErrorMessage(output, command);
-        rejectOnce(new Error(hint || `${command} exited with ${signal || code}`));
+    };
+    const onStderr = (chunk) => { log.write(chunk); };
+    const onError = (error) => { void finish(error); };
+    const onSpawnError = (error) => {
+      // A trusted ChildProcess spawn-error event with no PID proves this
+      // invocation never launched a supervisor. Crashes/blank files do not.
+      if (!child.pid) {
+        try { confirmNoLaunch(); }
+        catch (ownershipError) { error = ownershipError; error.workerShutdownConfirmed = false; }
       }
-    });
+      void finish(error);
+    };
+    const onExit = (code, signal) => {
+      const hint = code === 0 ? null : extractRunnerErrorMessage(output, command);
+      void finish(code === 0 ? null : new Error(hint || `${command} exited with ${signal || code}`));
+    };
+    const timer = setTimeout(() => { void finish(new Error(`AI copy-edit worker timed out after ${timeoutMs}ms`)); }, timeoutMs);
+
+    async function finish(error) {
+      if (error && !outcomeError) outcomeError = error;
+      if (settling) return stopped;
+      settling = true;
+      clearTimeout(timer);
+      let shutdownConfirmed = true;
+      try {
+        // Even a zero-exit leader may leave a writing descendant behind.
+        await terminateOwnedGroup(child);
+        if (child.pid) {
+          const status = JSON.parse(fs.readFileSync(statusPath, 'utf8'));
+          if (status.nonce !== nonce || status.supervisor_pid !== child.pid || status.quiescent !== true) {
+            throw new Error('Copy-edit owned-descendant shutdown lacks a valid quiescence certificate');
+          }
+        }
+      } catch (shutdownError) {
+        shutdownConfirmed = false;
+        outcomeError = shutdownError;
+        outcomeError.workerShutdownConfirmed = false;
+        outcomeError.code = 'COPY_EDIT_SHUTDOWN_UNCONFIRMED';
+      }
+      child.stdin.destroy();
+      child.stdout.removeListener('data', onOutput);
+      child.stderr.removeListener('data', onStderr);
+      child.stdout.destroy();
+      child.stderr.destroy();
+      await new Promise((done) => {
+        if (log.destroyed || log.closed) { done(); return; }
+        log.once('close', done);
+        log.end(done);
+      });
+      process.removeListener('SIGTERM', onParentTerm);
+      process.removeListener('SIGINT', onParentInt);
+      child.removeListener('exit', onExit);
+      if (shutdownConfirmed) {
+        activeCopyEditWorkers.delete(worker);
+        process.removeListener('exit', onParentExit);
+      }
+      if (!outcomeError && mirrorOutputPath) {
+        try { fs.writeFileSync(mirrorOutputPath, output); } catch (writeError) { outcomeError = writeError; }
+      }
+      complete(outcomeError);
+      if (outcomeError) reject(outcomeError);
+      else resolve();
+    }
+
+    process.on('exit', onParentExit);
+    process.on('SIGTERM', onParentTerm);
+    process.on('SIGINT', onParentInt);
+    log.on('error', onError);
+    child.stdin.on('error', onError);
+    child.stdout.on('data', onOutput);
+    child.stderr.on('data', onStderr);
+    child.on('error', onSpawnError);
+    child.on('exit', onExit);
+    try { registerPid(child.pid || null); }
+    catch (error) { void finish(error); return; }
+    if (earlyLogError) { void finish(earlyLogError); return; }
     if (stdin) child.stdin.end(stdin);
     else child.stdin.end();
   });
@@ -536,8 +704,7 @@ function commandExists(command) {
 
 /**
  * Build a diagnostic error message explaining why no AI runner is usable.
- * Splits the previous "Install/authenticate Codex or Claude" lump into a
- * per-provider summary so the user knows exactly which step unblocks them.
+ * Distinguishes Codex installation/authentication from chat-route availability.
  */
 export function describeNoProviderError({
   exists = commandExists,
@@ -562,8 +729,7 @@ export function describeNoProviderError({
 /**
  * Pull a human-readable failure reason out of a subprocess's stdout when the
  * process exited non-zero. Recognizes:
- *   - Claude CLI `--output-format json` errors:
- *     {"is_error": true, "result": "Not logged in · Please run /login", ...}
+ *   - JSON error envelopes with an `is_error` flag and `result` string.
  *   - Generic JSON payloads with `message` or `error` strings.
  *   - The last non-empty line of unstructured output.
  * Returns null when nothing meaningful surfaces, so the caller can fall back
@@ -601,17 +767,9 @@ export function extractRunnerErrorMessage(output, command) {
 }
 
 /**
- * Pre-flight a CLI provider with a trivial prompt and report whether it can
- * actually do work. Cached per process so the `auto` branch of
- * chooseCopyEditAgent only pays the cost once per server boot.
- *
- * For claude we run the same `--print --output-format json` invocation we use
- * for real batches; an unauthenticated CLI fails in ~36 ms with
- * { is_error: true, result: "Not logged in · ..." }.
- * For codex we only confirm the binary exists — `codex exec` always burns a
- * real LLM call, so checking auth without spending tokens is not possible
- * here; if the user has codex installed but unauthed, the runtime error from
- * runCodex (now improved by extractRunnerErrorMessage) will surface clearly.
+ * Inspect Codex login status without a model request. Cached per process so
+ * the `auto` branch pays the cost once per server boot. Login status is not
+ * proof a future request will succeed; runtime failures still surface.
  */
 const COMMAND_AUTH_CACHE = new Map();
 

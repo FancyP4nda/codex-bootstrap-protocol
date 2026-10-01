@@ -13,6 +13,8 @@ import {
 } from './manual-apply.mjs';
 import { buildManualEditEvidence } from '../live-manual-edit-evidence.mjs';
 import { commitManualEdits } from '../live-commit-manual-edits.mjs';
+import { acquireManualEditOwnership, runWithManualEditOwnership, finishManualEditOwnership,
+  withSynchronousManualEditOwnership } from './manual-edit-ownership.mjs';
 
 export function createManualEditRoutes({
   getToken,
@@ -97,15 +99,36 @@ export function createManualEditRoutes({
       const pageUrl = url.searchParams.get('pageUrl');
       const asyncMode = /^(1|true|yes)$/i.test(url.searchParams.get('async') || '');
       const repairOnly = /^(1|true|yes)$/i.test(url.searchParams.get('repair') || '');
-      const existingTransaction = manualApply.readTransaction();
+      let owner;
+      try { owner = acquireManualEditOwnership(projectCwd()); }
+      catch (error) {
+        sendJson(res, 409, { error: 'manual_edit_operation_owned', message: error.message });
+        return true;
+      }
+      let existingTransaction;
+      try { existingTransaction = manualApply.readTransaction(); }
+      catch (error) {
+        finishManualEditOwnership(owner);
+        sendJson(res, 409, { error: 'manual_edit_recovery_unconfirmed', message: error.message });
+        return true;
+      }
       if (repairOnly && !existingTransaction) {
+        finishManualEditOwnership(owner);
         sendJson(res, 409, { error: 'manual_edit_repair_transaction_missing' });
         return true;
       }
-      const recoveredTransaction = repairOnly ? null : manualApply.rollbackTransaction({
-        pageUrl,
-        reason: 'manual_edit_commit_recovered_abandoned_transaction',
-      });
+      let recoveredTransaction;
+      try {
+        recoveredTransaction = repairOnly ? null : runWithManualEditOwnership(owner, () => manualApply.rollbackTransaction({
+          pageUrl,
+          reason: 'manual_edit_commit_recovered_abandoned_transaction',
+        }));
+        if (recoveredTransaction?.rollbackFailures?.length) throw Object.assign(new Error('Previous restore failed; preserve snapshot and repair the recovery obstacle'), { code: 'MANUAL_EDIT_OPERATION_OWNED' });
+      } catch (error) {
+        finishManualEditOwnership(owner);
+        sendJson(res, 409, { error: 'manual_edit_recovery_unconfirmed', message: error.message });
+        return true;
+      }
       const before = getManualEditStatus();
       const pendingCount = pageUrl ? (before.perPage[pageUrl] || 0) : before.totalCount;
       recordManualEditActivity('manual_edit_commit_started', {
@@ -130,7 +153,7 @@ export function createManualEditRoutes({
           perPage: before.perPage,
         });
       }
-      (async () => {
+      runWithManualEditOwnership(owner, async () => {
         let result;
         let routedProvider = 'subprocess';
         let transaction = null;
@@ -184,10 +207,12 @@ export function createManualEditRoutes({
           }
         } catch (err) {
           if (transaction) {
-            manualApply.rollbackTransaction({
-              pageUrl,
-              reason: 'manual_edit_commit_exception',
-            });
+            try {
+              manualApply.rollbackTransaction({ pageUrl, reason: 'manual_edit_commit_exception' });
+            } catch (recoveryError) {
+              result = { needsManualDecision: true, rollbackDeferred: true };
+              recordManualEditActivity('manual_edit_recovery_unconfirmed', { message: recoveryError.message });
+            }
           }
           const message = err.stderr?.toString?.() || err.message;
           recordManualEditActivity('manual_edit_commit_failed', {
@@ -206,7 +231,7 @@ export function createManualEditRoutes({
           return;
         } finally {
           if (transaction) {
-            const shouldKeepTransaction = result?.needsManualDecision === true;
+            const shouldKeepTransaction = result?.needsManualDecision === true || result?.rollbackFailures?.length > 0;
             if (!shouldKeepTransaction) manualApply.clearTransaction(transaction.id);
           }
         }
@@ -245,7 +270,10 @@ export function createManualEditRoutes({
         if (!asyncMode) {
           sendJson(res, 200, { ...result, totalCount, perPage });
         }
-      })();
+      }).finally(() => finishManualEditOwnership(owner)).catch((error) => {
+        recordManualEditActivity('manual_edit_operation_failed', { message: error.message });
+        if (!asyncMode && !res.writableEnded) sendJson(res, 409, { error: 'manual_edit_operation_owned', message: error.message });
+      });
       return true;
     }
 
@@ -266,10 +294,13 @@ export function createManualEditRoutes({
           sendJson(res, 400, { error: 'unsupported_manual_edit_repair_decision', action });
           return;
         }
-        const rollback = manualApply.rollbackTransaction({
-          pageUrl,
-          reason: 'manual_edit_user_requested_rollback',
-        });
+        let rollback;
+        try {
+          rollback = manualApply.rollbackTransaction({ pageUrl, reason: 'manual_edit_user_requested_rollback' });
+        } catch (error) {
+          sendJson(res, 409, { error: 'manual_edit_operation_owned', message: error.message });
+          return;
+        }
         const { totalCount, perPage } = countPendingByPage(projectCwd());
         const response = {
           action,
@@ -294,11 +325,13 @@ export function createManualEditRoutes({
       let canceledApplyEvents = [];
       let transactionRollback = null;
       try {
+        withSynchronousManualEditOwnership(projectCwd(), () => {
         const buffer = readManualEditsBuffer(projectCwd());
         transactionRollback = manualApply.rollbackTransaction({
           pageUrl,
           reason: 'manual_edit_discarded',
         });
+        if (transactionRollback?.rollbackFailures?.length) throw Object.assign(new Error('Restore failed; pending edits and recovery snapshot were preserved'), { code: 'MANUAL_EDIT_OPERATION_OWNED' });
         if (pageUrl) {
           discardedEntries = buffer.entries.filter((entry) => entry.pageUrl === pageUrl);
           discarded = removeManualEditEntries(projectCwd(), (entry) => entry.pageUrl === pageUrl);
@@ -307,8 +340,9 @@ export function createManualEditRoutes({
           discarded = truncateManualEditsBuffer(projectCwd());
         }
         canceledApplyEvents = manualApply.cancelPendingEvents(pageUrl);
+        });
       } catch (err) {
-        sendJson(res, 500, { error: 'discard_failed', message: err.message });
+        sendJson(res, err.code === 'MANUAL_EDIT_OPERATION_OWNED' ? 409 : 500, { error: 'discard_failed', message: err.message });
         return true;
       }
       const { totalCount, perPage } = countPendingByPage(projectCwd());

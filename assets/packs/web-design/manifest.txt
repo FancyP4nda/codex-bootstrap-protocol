@@ -112,6 +112,8 @@ file	.agents/skills/impeccable/scripts/live/event-validation.mjs	copy	Managed Co
 file	.agents/skills/impeccable/scripts/live/generation-preflight.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/live/insert-ui.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/live/manual-apply.mjs	copy	Managed Codex asset.
+file	.agents/skills/impeccable/scripts/live/manual-edit-owner-lock.py	copy	Managed Codex asset.
+file	.agents/skills/impeccable/scripts/live/manual-edit-ownership.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/live/manual-edit-routes.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/live/manual-edits-buffer.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/live/poll-lanes.mjs	copy	Managed Codex asset.
@@ -126,6 +128,7 @@ file	.agents/skills/impeccable/scripts/live/vocabulary.mjs	copy	Managed Codex as
 file	.agents/skills/impeccable/scripts/modern-screenshot.umd.js	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/palette.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/pin.mjs	copy	Managed Codex asset.
+file	.agents/skills/impeccable/scripts/process-supervisor.py	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/serve-question.mjs	copy	Managed Codex asset.
 file	.agents/skills/impeccable/scripts/surface-brief.mjs	copy	Managed Codex asset.
 file	.agents/skills/taste-skill/LICENSE	copy	Managed Codex asset.
