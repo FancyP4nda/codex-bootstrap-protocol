@@ -39,7 +39,7 @@ Options:
                                      Manage ~/.local/bin/codex-bootstrap symlink.
   --update-path                      Opt-in idempotent Bash/Zsh/Fish PATH setup/removal.
   --global-only                      Global core/config only; Beads not required.
-  --doctor                           Read-only prerequisite/config/discovery checks.
+  --doctor [target]                   Read-only health checks (auto-detect local-core).
   -h, --help                         Show this help.
 
 Missing global core is installed automatically. Existing differences require
@@ -133,7 +133,9 @@ config_layer() {
     mkdir -p -- "$STAGE/$namespace"
     local config_source="$config"
     [[ -f "$config" ]] || config_source="$KIT_DIR/assets/scaffold/.codex/config.toml"
-    helper config "$config_source" "${opts[@]}" > "$STAGE/$namespace/config.toml"
+    # Bash 3.2 treats an empty array as unset under nounset. The + form emits
+    # zero arguments for an empty array without weakening nounset elsewhere.
+    helper config "$config_source" ${opts[@]+"${opts[@]}"} > "$STAGE/$namespace/config.toml"
     if [[ -s "$STAGE/$namespace/config.toml" || -f "$config" ]]; then
         append_file config.toml "$STAGE/$namespace" "$dest" merge
         [[ ! -f "$config" ]] || diff -u -- "$config" "$STAGE/$namespace/config.toml" || [[ $? == 1 ]]
@@ -153,20 +155,53 @@ config_layer() {
         ENTRY_SRCROOT[${#ENTRY_SRCROOT[@]}-1]="$STAGE/$namespace"
     fi
 }
+retain_global_optional_helpers() {
+    local rel
+    # Config documents stay untouched unless explicitly requested. Previously
+    # installed owned helpers remain in the payload plan so missing helpers can
+    # be repaired and explicit --update-global can update their implementation.
+    check_ancestors "$CODEX_USER_DIR" bootstrap-managed.json
+    helper retained-helpers "$CODEX_USER_DIR/bootstrap-managed.json" > "$STAGE/retained-helpers"
+    while IFS= read -r rel; do
+        [[ -n "$rel" ]] || continue
+        case "$rel" in hooks/session-context.py) ;; *) die "unknown retained optional helper: $rel";; esac
+        mkdir -p -- "$STAGE/retained-global/hooks"
+        cp -p -- "$KIT_DIR/assets/native/session-context.py" "$STAGE/retained-global/$rel"
+        append_file "$rel" "$STAGE/retained-global" "$CODEX_USER_DIR" global
+    done < "$STAGE/retained-helpers"
+}
 doctor() {
-    local failures=0 cmd p
-    for cmd in bash python3 git codex bd; do
+    local failures=0 cmd p core_mode=global skills="$USER_SKILLS_DIR" agents="$CODEX_USER_DIR" project prerequisites=(bash python3 git codex) config_roots=("$CODEX_USER_DIR")
+    project="$(canon "${TARGET_DIR:-$PWD}")"
+    if [[ "$GLOBAL_ONLY" != 1 ]]; then prerequisites+=(bd); config_roots+=("$project/.codex")
+    else info "Global-only diagnostic: Beads not required."
+    fi
+    for cmd in "${prerequisites[@]}"; do
         if command -v "$cmd" >/dev/null 2>&1; then info "$cmd: $(command -v "$cmd")"
         else info "$cmd: missing (install before project bootstrap)"; failures=1; fi
     done
-    for p in "$CODEX_USER_DIR/config.toml" "${TARGET_DIR:-$PWD}/.codex/config.toml"; do
-        [[ ! -f "$p" ]] || python3 -c 'import tomllib,sys; tomllib.load(open(sys.argv[1],"rb"))' "$p" || failures=1
+    for p in "${config_roots[@]}"; do
+        [[ ! -f "$p/config.toml" ]] || python3 -c 'import tomllib,sys; tomllib.load(open(sys.argv[1],"rb"))' "$p/config.toml" || failures=1
+        helper hook-health "$p" || failures=1
     done
-    for p in "$CODEX_USER_DIR/hooks.json" "${TARGET_DIR:-$PWD}/.codex/hooks.json"; do
-        [[ ! -f "$p" ]] || python3 -m json.tool "$p" >/dev/null || failures=1
-    done
-    info "Skills: $USER_SKILLS_DIR; agents/config: $CODEX_USER_DIR"
-    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR" || failures=1
+    if [[ "$GLOBAL_ONLY" != 1 && "$LOCAL_CORE" == 1 ]]; then core_mode=local
+    elif [[ "$GLOBAL_ONLY" != 1 && -f "$project/.codex/bootstrap.json" ]]; then
+        core_mode="$(helper core-mode "$project/.codex/bootstrap.json")" || failures=1
+    fi
+    if [[ "$core_mode" == local ]]; then
+        skills="$project/.agents/skills"; agents="$project/.codex"
+        info "Health scope: local-core at $project (global core is not required)."
+    else
+        info "Health scope: global core (CODEX_HOME: $CODEX_USER_DIR)."
+    fi
+    info "Skills: $skills; agents: $agents"
+    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$skills" "$agents" || failures=1
+    if [[ "$failures" != 0 ]]; then
+        if [[ "$core_mode" == local ]]; then info "Health FAILED. Inspect the named paths; repair with bootstrap <target> --local-core (use --force only for reviewed core conflicts)."
+        else info "Health FAILED. Inspect the named paths; install missing core with bootstrap --global-only. Differences are preserved; --update-global is explicit."
+        fi
+    else info "Core health passed. Valid customizations are preserved; hook trust/execution was not verified."
+    fi
     info "Review project trust in Codex, then use /hooks; no trust records are created."
     return "$failures"
 }
@@ -205,7 +240,12 @@ command_setup() {
     fi
     if [[ "$UPDATE_PATH" == 1 ]] && ! cmp -s -- "$rcfile" "$STAGE/path-candidate"; then
         [[ ! -f "$rcfile" ]] || backup_file "$rcfile" "$USER_ROOT" "${rcfile#"$USER_ROOT/"}"
-        mkdir -p -- "$(dirname -- "$rcfile")"; cp -p -- "$STAGE/path-candidate" "$rcfile"
+        mkdir -p -- "$(dirname -- "$rcfile")"
+        # The candidate's staging permissions must not replace a user's
+        # private profile mode; ordinary cp preserves an existing target mode.
+        if [[ -f "$rcfile" ]]; then cp -- "$STAGE/path-candidate" "$rcfile"
+        else cp -p -- "$STAGE/path-candidate" "$rcfile"
+        fi
     fi
     if [[ ":$PATH:" != *":$bin:"* ]]; then
         info "PATH lacks $bin. Restart your shell after --update-path, or add it manually."
@@ -219,7 +259,7 @@ wizard() {
     local answer pack
     [[ -t 0 && -t 1 && -z "${CI:-}" ]] || die "--interactive requires a TTY outside CI; use --non-interactive"
     info "Global assets are installed when missing; differing assets require an update choice."
-    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR" || true
+    python3 "$KIT_DIR/verification/check-assets.py" --inventory "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR"
     confirm "Update differing global core files with backups?" && UPDATE_GLOBAL=1
     read -r -p "Target project [$PWD]: " answer || die "input ended; nothing written"
     TARGET_DIR="${answer:-${TARGET_DIR:-$PWD}}"
@@ -279,7 +319,7 @@ global_obsolete() {
     done < "$STAGE/obsolete-$prefix"
 }
 record_layer() {
-    local root="$1" stamp="$2" i rel
+    local root="$1" stamp="$2" i rel record_opts=()
     check_ancestors "$root" "$stamp"
     for i in "${!ENTRY_PATH[@]}"; do
         [[ "${ENTRY_KIND[i]}" == file ]] || continue
@@ -291,7 +331,16 @@ record_layer() {
     for i in "${!OBSOLETE_REL[@]}"; do
         [[ "${OBSOLETE_ROOT[i]}" != "$root" || "${OBSOLETE_STATE[i]}" != remove ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
     done
-    helper record "$root/$stamp" "$SOURCE_COMMIT" "${PACKS[@]}" < "$STAGE/record-rows" > "$STAGE/stamp"
+    if [[ "$root" == "$TARGET_DIR" ]]; then
+        if [[ "$LOCAL_CORE" == 1 ]]; then record_opts+=(--core-mode local); else record_opts+=(--core-mode global); fi
+    fi
+    if [[ "$root" == "$CODEX_USER_DIR" && ( "$GLOBAL_ONLY" == 1 || "$PROMOTE" == 1 ) || "$root" == "$TARGET_DIR" && "$PROMOTE" != 1 ]]; then
+        [[ "$STATUS" != 1 ]] || record_opts+=(--configuration-option status-line)
+        [[ "$NOTIFICATIONS" != 1 ]] || record_opts+=(--configuration-option notifications)
+        [[ "$HOOKS" != 1 ]] || record_opts+=(--configuration-option hooks)
+        [[ "$DOCS_MCP" != 1 ]] || record_opts+=(--configuration-option docs-mcp)
+    fi
+    helper record "$root/$stamp" "$SOURCE_COMMIT" ${PACKS[@]+"${PACKS[@]}"} ${record_opts[@]+"${record_opts[@]}"} < "$STAGE/record-rows" > "$STAGE/stamp"
     mkdir -p -- "$(dirname -- "$root/$stamp")"
     [[ ! -f "$root/$stamp" ]] || backup_file "$root/$stamp" "$root" "$stamp"
     check_ancestors "$root" "$stamp"
@@ -344,10 +393,10 @@ main() {
             load_manifest "$KIT_DIR/assets/global/manifest.txt" "$KIT_DIR/assets/global" "$TARGET_DIR" project
         else
             for rel in "$KIT_DIR"/assets/global/.agents/skills/*; do
-                [[ ! -d "$TARGET_DIR/.agents/skills/${rel##*/}" ]] || info "Duplicate project skill shadows global: ${rel##*/}. Reconcile manually or choose --local-core."
+                [[ ! -d "$TARGET_DIR/.agents/skills/${rel##*/}" ]] || info "Duplicate project/global skill: ${rel##*/}. Codex may expose both; verify the loaded path or choose --local-core."
             done
         fi
-        for pack in "${PACKS[@]}"; do
+        for pack in ${PACKS[@]+"${PACKS[@]}"}; do
             case "$pack" in falcon|herald|web-design) ;; *) die "unknown pack: $pack";; esac
             [[ "$pack" != web-design || "$ALLOW_UNVERIFIED" == 1 ]] || die "web-design is UNVERIFIED; acknowledge with --allow-unverified-pack"
             [[ "$pack" != web-design || "$DRY_RUN" == 1 ]] || need node "Node.js 22+ for web-design helpers"
@@ -364,6 +413,9 @@ main() {
     if [[ "$LOCAL_CORE" != 1 ]]; then
         load_manifest "$KIT_DIR/assets/global/agents-manifest.txt" "$KIT_DIR/assets/global/.codex" "$CODEX_USER_DIR" global
         load_manifest "$KIT_DIR/assets/global/skills-manifest.txt" "$KIT_DIR/assets/global/.agents" "$USER_ROOT/.agents" global
+        if [[ "$HOOKS" != 1 || "$PROMOTE" != 1 && "$GLOBAL_ONLY" != 1 ]]; then
+            retain_global_optional_helpers
+        fi
     fi
     if [[ "$PROMOTE" == 1 || "$GLOBAL_ONLY" == 1 && ( "$STATUS" == 1 || "$NOTIFICATIONS" == 1 || "$HOOKS" == 1 || "$DOCS_MCP" == 1 ) ]]; then
         if [[ "$HOOKS" == 1 && -n "$TARGET_DIR" && -f "$TARGET_DIR/.codex/hooks.json" ]]; then
@@ -384,7 +436,7 @@ main() {
         [[ "${PLAN_STATE[i]}" != overwrite ]] || check_ancestors "${ENTRY_DESTROOT[i]}" "bootstrap-backups/$RUN_ID/${ENTRY_PATH[i]}"
     done
     print_plan_and_summary
-    [[ ${#PLAN_FATAL[@]} == 0 ]] || { for msg in "${PLAN_FATAL[@]}"; do printf '%s\n' "$msg" >&2; done; die "conflicts found; nothing written"; }
+    [[ ${#PLAN_FATAL[@]} == 0 ]] || { for msg in ${PLAN_FATAL[@]+"${PLAN_FATAL[@]}"}; do printf '%s\n' "$msg" >&2; done; die "conflicts found; nothing written"; }
     [[ "$DRY_RUN" != 1 ]] || { info "Dry run complete; nothing written to project or user configuration."; return; }
     [[ "$MODE" != interactive ]] || confirm "Apply this combined project/global plan?" || { info "Declined; nothing written."; return; }
     if [[ "$GLOBAL_ONLY" != 1 ]]; then
@@ -413,6 +465,10 @@ main() {
     done
     if [[ "$LOCAL_CORE" != 1 ]]; then
         record_layer "$USER_ROOT/.agents" bootstrap/managed.json
+        record_layer "$CODEX_USER_DIR" bootstrap-managed.json
+    elif [[ "$PROMOTE" == 1 ]]; then
+        # Explicit personal configuration promotion is tracked independently
+        # even when the project deliberately skips global core installation.
         record_layer "$CODEX_USER_DIR" bootstrap-managed.json
     fi
     [[ "$GLOBAL_ONLY" == 1 ]] || record_layer "$TARGET_DIR" .codex/bootstrap.json

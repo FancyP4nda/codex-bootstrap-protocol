@@ -11,12 +11,22 @@ import json
 import os
 from pathlib import Path
 import re
+import shlex
 import sys
 import tomllib
 
 STATUS_LINE = ["model-with-reasoning", "context-remaining", "git-branch", "current-dir"]
 BEGIN = "<!-- BEGIN CODEX BOOTSTRAP -->"
 END = "<!-- END CODEX BOOTSTRAP -->"
+# These are merged user-owned documents, not exclusively owned core payloads.
+# The legacy release put them in `managed`; normalize that format conservatively
+# before making any retirement decision. Omission of a flag is never uninstall.
+# These paths are relative to CODEX_HOME, the only configuration layer passed
+# to global retirement. Project `managed` remains the compatible installation
+# inventory (including .codex/config.toml); project files are never retired.
+CONFIGURATION_FILES = {"config.toml", "hooks.json"}
+OPTIONAL_MANAGED_FILES = {"hooks/session-context.py"}
+CONFIGURATION_OPTIONS = {"status-line", "notifications", "hooks", "docs-mcp"}
 
 
 def read(path):
@@ -148,10 +158,29 @@ def load_stamp(path):
     value = json.loads(text)
     if not isinstance(value, dict) or value.get("format") != 1 or not isinstance(value.get("managed"), dict):
         raise ValueError(f"unknown bootstrap metadata format: {path}")
-    for rel, digest in value["managed"].items():
-        parts = Path(rel).parts
-        if Path(rel).is_absolute() or ".." in parts or not parts or not isinstance(digest,str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
-            raise ValueError(f"unsafe managed stamp entry: {rel}")
+    for category in ("managed", "configuration", "optional_managed"):
+        entries = value.setdefault(category, {})
+        if not isinstance(entries, dict):
+            raise ValueError(f"unsafe {category} metadata: {path}")
+        for rel, digest in entries.items():
+            parts = Path(rel).parts
+            if Path(rel).is_absolute() or ".." in parts or not parts or not isinstance(digest,str) or not re.fullmatch(r"[a-f0-9]{64}", digest):
+                raise ValueError(f"unsafe managed stamp entry: {rel}")
+            if category == "configuration" and rel not in CONFIGURATION_FILES:
+                raise ValueError(f"unknown merged configuration entry: {rel}")
+            if category == "optional_managed" and rel not in OPTIONAL_MANAGED_FILES:
+                raise ValueError(f"unknown optional managed entry: {rel}")
+    for rel in CONFIGURATION_FILES:
+        if rel in value["managed"]:
+            value["configuration"].setdefault(rel, value["managed"].pop(rel))
+    for rel in OPTIONAL_MANAGED_FILES:
+        if rel in value["managed"]:
+            value["optional_managed"].setdefault(rel, value["managed"].pop(rel))
+    options = value.setdefault("configuration_options", [])
+    if not isinstance(options, list) or any(not isinstance(option, str) or option not in CONFIGURATION_OPTIONS for option in options):
+        raise ValueError(f"unsafe configuration options metadata: {path}")
+    if value.get("core_mode", "global") not in ("global", "local"):
+        raise ValueError(f"unsafe core mode metadata: {path}")
     packs = value.get("packs", [])
     if not isinstance(packs,list) or any(p not in ("falcon","herald","web-design") for p in packs):
         raise ValueError(f"unsafe pack metadata: {path}")
@@ -162,14 +191,68 @@ def hash_file(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
+def hook_health(root):
+    """Inspect our configured handler without executing arbitrary commands/trusting it."""
+    text = read(Path(root)/"hooks.json")
+    config = read(Path(root)/"config.toml")
+    documents = []
+    if text:
+        documents.append(("hooks.json", json.loads(text)))
+    if config:
+        documents.append(("config.toml", tomllib.loads(config)))
+    if not any("hooks" in data for _, data in documents if isinstance(data, dict)):
+        if any(not isinstance(data, dict) for _, data in documents):
+            raise ValueError(f"invalid hooks document object at {root}")
+        return f"Optional orientation hook at {root}: not configured; trust/execution not inferred.\n"
+    own = []
+    events = []
+    for filename, data in documents:
+        if not isinstance(data, dict) or not isinstance(data.get("hooks", {}), dict):
+            raise ValueError(f"invalid hooks object in {filename} at {root}")
+        events.extend(data.get("hooks", {}).items())
+    for event, groups in events:
+        if not isinstance(groups, list):
+            raise ValueError(f"invalid {event} hooks at {root}: expected an array")
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("hooks"), list):
+                raise ValueError(f"invalid {event} hook group at {root}")
+            if "matcher" in group and not isinstance(group["matcher"], str):
+                raise ValueError(f"invalid {event} hook matcher at {root}")
+            for handler in group["hooks"]:
+                if not isinstance(handler, dict):
+                    raise ValueError(f"invalid {event} hook handler at {root}")
+                kind = handler.get("type")
+                if kind not in ("command", "mcp_tool", "prompt", "agent"):
+                    raise ValueError(f"unsupported {event} hook type at {root}")
+                required = ("command",) if kind == "command" else ("server", "tool") if kind == "mcp_tool" else ("prompt",)
+                for key in required:
+                    if not isinstance(handler.get(key), str) or not handler[key].strip():
+                        raise ValueError(f"invalid {event} hook {key} at {root}: expected a nonempty string")
+                if event == "SessionStart" and handler.get("statusMessage") == "Codex bootstrap orientation":
+                    own.append(handler)
+    if not own:
+        return f"Optional orientation hook at {root}: not configured; existing user hooks preserved.\n"
+    for handler in own:
+        command = handler.get("command", "")
+        if not isinstance(command, str):
+            raise ValueError(f"invalid bootstrap orientation command at {root}")
+        words = shlex.split(command)
+        helper = Path(root)/"hooks/session-context.py"
+        if str(helper) in words and (helper.is_symlink() or not helper.is_file()):
+            raise ValueError(f"configured orientation helper missing/unsafe: {helper}; rerun bootstrap --hooks in this layer")
+    return f"Optional orientation hook at {root}: configured; trust/execution UNKNOWN. Review /hooks; no handler was run.\n"
+
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("mode", choices=["instructions", "ignore", "config", "hooks", "record", "obsolete", "prefix", "check"])
+    parser.add_argument("mode", choices=["instructions", "ignore", "config", "hooks", "record", "obsolete", "prefix", "check", "core-mode", "hook-health", "retained-helpers"])
     parser.add_argument("path")
     parser.add_argument("extra", nargs="*")
     parser.add_argument("--status-line", action="store_true")
     parser.add_argument("--notifications", action="store_true")
     parser.add_argument("--docs-mcp", action="store_true")
+    parser.add_argument("--configuration-option", action="append", choices=sorted(CONFIGURATION_OPTIONS), default=[])
+    parser.add_argument("--core-mode", choices=["global", "local"])
     args = parser.parse_args()
     if args.mode == "instructions":
         result = merge_instructions(read(args.path), read(args.extra[0]))
@@ -185,6 +268,14 @@ def main():
     elif args.mode == "check":
         load_stamp(args.path)
         return
+    elif args.mode == "core-mode":
+        stamp = load_stamp(args.path)
+        result = "local" if stamp.get("core_mode") == "local" or (
+            ".agents/skills/session-start/SKILL.md" in stamp["managed"]) else "global"
+    elif args.mode == "hook-health":
+        result = hook_health(args.path)
+    elif args.mode == "retained-helpers":
+        result = "".join(rel+"\n" for rel in sorted(load_stamp(args.path).get("optional_managed", {})))
     elif args.mode == "obsolete":
         stamp = load_stamp(args.path)
         current = set(sys.stdin.read().splitlines())
@@ -202,9 +293,15 @@ def main():
             if state == "remove":
                 stamp["managed"].pop(rel, None)
             elif state in ("create", "overwrite", "identical") and Path(full).is_file():
-                stamp["managed"][rel] = hash_file(full)
+                category = ("configuration" if rel in CONFIGURATION_FILES else
+                            "optional_managed" if rel in OPTIONAL_MANAGED_FILES else "managed")
+                stamp.setdefault(category, {})[rel] = hash_file(full)
         packs = list(dict.fromkeys([*stamp.get("packs", []), *args.extra[1:]]))
         stamp.update({"format": 1, "version": "1.0.0", "source_commit": args.extra[0], "packs": packs})
+        stamp["configuration_options"] = list(dict.fromkeys([
+            *stamp.get("configuration_options", []), *args.configuration_option]))
+        if args.core_mode:
+            stamp["core_mode"] = args.core_mode
         result = json.dumps(stamp, indent=2, sort_keys=True) + "\n"
     sys.stdout.write(result)
 

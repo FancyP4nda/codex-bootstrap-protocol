@@ -12,25 +12,92 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def installed(kit, skills, codex):
+def installed(kit, skills, codex, strict=True):
+    """Health is strict about absence/broken paths, not valid customization.
+
+    Inventory is display-only for a setup wizard before assets are installed.
+    Neither mode executes configured commands or asserts project/hook trust.
+    """
     failures = 0
+    customized = 0
+
+    def state(source, dest):
+        nonlocal failures, customized
+        if dest.is_symlink() or any(parent.is_symlink() for parent in dest.parents):
+            failures += 1
+            return 'unsafe symlink (reconcile manually)'
+        if not dest.is_file():
+            failures += 1
+            return 'missing' if not dest.exists() else 'invalid non-file path'
+        try:
+            if source.suffix == '.toml':
+                data = tomllib.loads(dest.read_text())
+                if source.parent.name == 'agents':
+                    for key in ('name', 'description', 'developer_instructions'):
+                        if not isinstance(data.get(key), str) or not data[key].strip():
+                            raise ValueError(f'native role requires a nonempty {key} string')
+                    expected_name = tomllib.loads(source.read_text())['name']
+                    if data['name'] != expected_name:
+                        raise ValueError(f'core role name must remain {expected_name!r}; add renamed roles separately')
+                    if 'sandbox_mode' in data and data['sandbox_mode'] not in ('read-only', 'workspace-write', 'danger-full-access'):
+                        raise ValueError('unsupported native role sandbox_mode')
+            if source.name == 'SKILL.md':
+                text = dest.read_text()
+                header = re.match(r'---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)', text)
+                if not header:
+                    raise ValueError('skill requires YAML frontmatter with name and description')
+                fields = header.group(1)
+                name = re.search(r'^name:\s*([^\n\r]+)', fields, re.M)
+                if not name or re.split(r'\s+#', name.group(1), maxsplit=1)[0].strip().strip('"\'') != source.parent.name:
+                    raise ValueError(f'core skill name must remain {source.parent.name!r}')
+                description = re.search(r'^description:[ \t]*(.*?)(?=\n\S|\Z)', fields, re.M | re.S)
+                value = description.group(1).strip() if description else ''
+                if not value or value.startswith('#') or value in ('""', "''", 'null', '~'):
+                    raise ValueError('skill requires a nonempty description string')
+                # A lightweight required-field check, not a full YAML parser:
+                # accept the native scalar/block forms without extra packages,
+                # but do not call obvious YAML collections/numbers/bools valid.
+                if value[0] not in ('"', "'"):
+                    lines = value.splitlines()
+                    first = re.split(r'\s+#', lines[0], maxsplit=1)[0].strip()
+                    if first.startswith(('[', '{')) or first.lower() in ('null', '~', 'true', 'false') or re.fullmatch(r'[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?', first):
+                        raise ValueError('skill description must be a string, not a collection/number/bool')
+                    if re.fullmatch(r'[>|][+-]?[1-9]?[+-]?', first) and not '\n'.join(lines[1:]).strip():
+                        raise ValueError('skill description block is empty')
+            if sha(dest) != sha(source):
+                customized += 1
+                return 'customized (differing; preserved, not corruption)'
+        except (OSError, ValueError) as exc:
+            failures += 1
+            return f'invalid/unreadable ({exc})'
+        return 'current'
+
     for source in (kit/'assets/global/.agents/skills').iterdir():
         if not source.is_dir():
             continue
         target = skills/source.name
         expected = [p for p in source.rglob('*') if p.is_file()]
-        state = 'current'
+        states = []
         for p in expected:
             dest = target/p.relative_to(source)
-            if not dest.is_file():
-                state = 'missing'; break
-            if dest.is_symlink() or sha(dest) != sha(p):
-                state = 'differing'
-        print(f'global skill {source.name}: {state}')
+            current = state(p, dest)
+            states.append(current)
+            if current != 'current':
+                print(f'core skill asset {dest}: {current}')
+        summary = 'missing/invalid' if any(s not in ('current', 'customized (differing; preserved, not corruption)') for s in states) else (
+            'customized (differing; preserved)' if any(s != 'current' for s in states) else 'current')
+        print(f'core skill {source.name}: {summary}')
     for p in (kit/'assets/global/.codex/agents').glob('*.toml'):
         dest = codex/'agents'/p.name
-        print(f'global agent {p.stem}: '+('missing' if not dest.exists() else 'current' if sha(p) == sha(dest) else 'differing'))
-    return failures
+        print(f'core agent {p.stem} ({dest}): {state(p, dest)}')
+    # Skills depend on these referenced instructions and executable helpers too.
+    base = kit/'assets/global/.agents/bootstrap'
+    for p in base.rglob('*'):
+        if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc':
+            dest = skills.parent/'bootstrap'/p.relative_to(base)
+            print(f'core support {dest}: {state(p, dest)}')
+    print(f'Core health: {failures} missing/unsafe/invalid files; {customized} valid differing files preserved.')
+    return 1 if strict and failures else 0
 
 
 def check(root):
@@ -105,6 +172,6 @@ def check(root):
 
 
 if __name__ == '__main__':
-    if sys.argv[1:2] == ['--installed']:
-        sys.exit(installed(*(Path(p) for p in sys.argv[2:])))
+    if sys.argv[1:2] in (['--installed'], ['--inventory']):
+        sys.exit(installed(*(Path(p) for p in sys.argv[2:]), strict=sys.argv[1] == '--installed'))
     check(Path(__file__).resolve().parents[1])

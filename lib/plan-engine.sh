@@ -16,7 +16,7 @@ validate_entry_path() {
     [[ "$rel" != *$'\n'* && "$rel" != *$'\r'* ]] || die "manifest line $line: control character"
     local -a comps=()
     IFS=/ read -r -a comps <<< "$rel"
-    for comp in "${comps[@]}"; do
+    for comp in ${comps[@]+"${comps[@]}"}; do
         [[ -n "$comp" && "$comp" != . && "$comp" != .. ]] || die "manifest line $line: traversal or empty component: $raw"
     done
     is_protected_path "$rel" && die "manifest line $line: protected path: $raw"
@@ -34,7 +34,7 @@ check_ancestors() {
     current="$root"
     local -a comps=()
     IFS=/ read -r -a comps <<< "$rel"
-    for comp in "${comps[@]}"; do
+    for comp in ${comps[@]+"${comps[@]}"}; do
         current="$current/$comp"
         [[ ! -L "$current" ]] || die "symlink managed path: $current"
         if [[ "$current" != "$root/$rel" ]]; then
@@ -134,7 +134,13 @@ apply_plan() {
         if [[ "${ENTRY_KIND[i]}" != file ]]; then mkdir -p -- "$tgt" || return; continue; fi
         if [[ "$state" == overwrite ]]; then backup_file "$tgt" "$dest" "$rel" || return; fi
         mkdir -p -- "$(dirname -- "$tgt")" || return
-        cp -p -- "$src" "$tgt" || return
+        if [[ "$state" == overwrite && "${ENTRY_POLICY[i]}" == merge ]]; then
+            # Merged user documents keep their existing access permissions.
+            # cp -p would widen a private 0600 file to a staged 0644 mode.
+            cp -- "$src" "$tgt" || return
+        else
+            cp -p -- "$src" "$tgt" || return
+        fi
         cmp -s -- "$src" "$tgt" || return
     done
 }
