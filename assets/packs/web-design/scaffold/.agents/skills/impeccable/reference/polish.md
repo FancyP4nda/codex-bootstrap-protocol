@@ -92,6 +92,6 @@ Walk the complete path again with mouse, keyboard, and touch where applicable. C
 - console errors, layout shift, interaction latency, image loading, and supported browsers;
 - agreement with DESIGN.md, neighboring features, and the user's scope.
 
-Follow the quality guidance supplied by `context.mjs` and hooks, then run any other relevant QA commands. Context requests a manual scan only when no automatic detector is active; never add another detector pass. Fix real defects and document only narrow intentional exceptions. A clean scan does not replace visual judgment.
+Follow the quality guidance supplied by `context.mjs` and hooks, then run relevant QA commands. Complete the one bounded manual detector pass requested for finished changed web targets, even when hooks are configured or locally observed; neither proves trust or current coverage. Do not repeat a manual pass already completed for those finished targets. Stop output is an advisory UI/event-stream warning, not model context or a continuation. Fix real defects and document only narrow intentional exceptions. A clean scan does not replace visual judgment.
 
 Finish with a source diff: remove accidental churn, orphaned code, redundant values, and temporary artifacts. Ship only when the feature is functionally complete and consistently finished across the path.

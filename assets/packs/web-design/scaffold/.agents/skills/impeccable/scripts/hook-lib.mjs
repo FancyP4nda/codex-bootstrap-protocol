@@ -922,10 +922,14 @@ function cleanIgnoreValueDisplay(value) {
     .replace(/\s+/g, ' ');
 }
 
-export function dedupeAgainstCache(findings, cache, sessionId, filePath) {
+export function dedupeAgainstCache(findings, cache, sessionId, filePath, eventName = 'PostToolUse') {
   if (!Array.isArray(findings) || findings.length === 0) return [];
   const fileEntry = ensureFile(cache, sessionId, filePath);
-  const known = new Set(fileEntry.findings || []);
+  // Per-edit context and Stop warnings are distinct attempted outputs. A
+  // cache cannot prove either reached Codex/the model. Stop additionally omits
+  // findings already attempted by the per-edit channel for this file.
+  const known = new Set([...(fileEntry.findings || []),
+    ...(eventName === 'Stop' ? fileEntry.stopWarningFindings || [] : [])]);
   const fresh = [];
   for (const f of findings) {
     const key = findingCacheKey(f);
@@ -936,7 +940,8 @@ export function dedupeAgainstCache(findings, cache, sessionId, filePath) {
   return fresh;
 }
 
-// Sync the remembered set to the findings present in the scan just performed.
+// Sync the attempted per-edit set to the current scan. No delivery receipt is
+// available; this is dedupe state, not evidence that the model saw findings.
 //
 // This replaces rather than accumulates, and that is the whole point. An
 // append-only set made the hook lie twice over: the pending ack counted
@@ -1754,6 +1759,10 @@ export async function runHook({ stdinJson, env = {}, cwd = process.cwd(), now = 
         continue;
       }
 
+      ensureSession(cache, sessionId).localExecution = {
+        event: 'PostToolUse', observedAt: now(), delivery: 'unconfirmed',
+      };
+
       // Sync the cache to this scan before deciding what to emit, so fixed
       // findings stop being remembered and a reintroduced one reads as fresh.
       // Only the immediate tier is remembered: a deferred finding the per-edit
@@ -1932,8 +1941,9 @@ export const STOP_MAX_FILES = 20;
  *   { exitCode, stdout, audit, emission? }
  *
  * Never throws; exits silent (and fast) when the session touched no UI
- * files. Output uses the Stop hookSpecificOutput channel: additionalContext
- * is delivered to the model and the conversation continues so it can act.
+ * files. Codex Stop output is a systemMessage warning in the UI/event stream,
+ * not model context or a continuation. Local dedupe records warning attempts,
+ * never confirmed delivery. A bounded manual detector fallback remains required.
  */
 export async function runStopHook({ stdinJson, env = {}, cwd = process.cwd(), now = Date.now, detector } = {}) {
   const audit = { ts: new Date(now()).toISOString(), event: 'Stop' };
@@ -1960,16 +1970,8 @@ export async function runStopHook({ stdinJson, env = {}, cwd = process.cwd(), no
       return result({ skipped: 'stdin-empty', durationMs: Date.now() - started });
     }
 
-    // Claude Code's Stop-hook contract: `stop_hook_active` is true when this
-    // hook is being re-invoked only because a prior invocation kept the turn
-    // alive (here, via hookSpecificOutput.additionalContext). Re-scanning and
-    // re-blocking now would loop until Claude Code's consecutive-block cap
-    // force-ends the turn (issue #400). The prior fire already surfaced the
-    // findings; whether to act on them is the agent's call. Exit fast with no
-    // output before any scan. Only Claude Code sends this field; other
-    // harnesses omit it, so the strict `=== true` is a no-op for them. This
-    // guard makes the loop impossible regardless of the finding cache key's
-    // line-number sensitivity (out of scope here; see findingCacheKey).
+    // Codex marks turns already continued by a Stop hook. We are advisory and
+    // never request continuation; nevertheless do not scan or emit on re-entry.
     if (event.stop_hook_active === true) {
       return result({ skipped: 'stop-hook-active', durationMs: Date.now() - started });
     }
@@ -2031,42 +2033,57 @@ export async function runStopHook({ stdinJson, env = {}, cwd = process.cwd(), no
         : (ext === '.html' || ext === '.htm');
 
       if (useHtmlEngine && typeof det.detectHtml === 'function') {
-        try { findings = await det.detectHtml(filePath, scanOptions); } catch { findings = []; }
+        try { findings = await det.detectHtml(filePath, scanOptions); } catch { continue; }
       } else {
-        try { findings = await det.detectText(content, filePath, scanOptions); } catch { findings = []; }
+        try { findings = await det.detectText(content, filePath, scanOptions); } catch { continue; }
       }
 
       // Full rule set: no tier split here. Config/inline ignores still apply,
       // and the session dedupe drops everything the per-edit pass (or an
       // earlier Stop pass) already surfaced.
       const filtered = filterFindings(findings || [], content, ext, config);
-      const fresh = dedupeAgainstCache(filtered, cache, sessionId, filePath);
+      const fresh = dedupeAgainstCache(filtered, cache, sessionId, filePath, 'Stop');
+      const fileEntry = ensureFile(cache, sessionId, filePath);
+      // Replace with the complete current scan, including clean results, so a
+      // fixed and reintroduced issue can produce a fresh warning attempt.
+      fileEntry.stopWarningFindings = filtered.map(findingCacheKey);
+      fileEntry.findings = (fileEntry.findings || []).filter(key => fileEntry.stopWarningFindings.includes(key));
+      ensureSession(cache, sessionId).localExecution = {
+        event: 'Stop', observedAt: now(), delivery: 'unconfirmed',
+      };
       if (fresh.length > 0) {
-        rememberFindings(cache, sessionId, filePath, fresh);
         freshGroups.push({ filePath, findings: fresh });
       }
     }
     audit.scannedFiles = scanned;
 
     if (freshGroups.length === 0) {
+      persistCache(projectCwd, cache);
       return result({ emitted: false, skipped: 'stop-clean', durationMs: Date.now() - started });
     }
 
-    // Fresh findings earn the cache write so the next Stop fire is silent
-    // unless new issues appear.
+    // Construct a valid event-specific warning before remembering its attempt.
+    // Persistence is not a delivery acknowledgement from the client.
+    const text = appendDesignSystemNote(renderGroupedTemplate(freshGroups, config, { cwd: projectCwd }), scanOptions);
+    const stdout = payload(text, 'Stop', harness);
+    ensureSession(cache, sessionId).stopWarningAttempt = {
+      observedAt: now(), delivery: 'unconfirmed', event: 'Stop',
+      findings: freshGroups.reduce((sum, group) => sum + group.findings.length, 0),
+    };
     persistCache(projectCwd, cache);
 
-    const text = appendDesignSystemNote(renderGroupedTemplate(freshGroups, config, { cwd: projectCwd }), scanOptions);
     return {
       exitCode: 0,
-      stdout: payload(text, 'Stop', harness),
+      stdout,
       emission: {
-        kind: 'stop-deep-pass',
+        kind: 'stop-advisory-warning',
         groups: freshGroups,
       },
       audit: {
         ...audit,
         emitted: true,
+        warningAttempted: true,
+        delivery: 'unconfirmed',
         freshFiles: freshGroups.length,
         freshFindings: freshGroups.reduce((sum, group) => sum + group.findings.length, 0),
         chars: text.length,
@@ -2083,6 +2100,9 @@ export async function runStopHook({ stdinJson, env = {}, cwd = process.cwd(), no
 }
 
 export function payload(text, eventName = 'PostToolUse', harness = 'codex') {
+  if (eventName === 'Stop' && harness === 'codex') {
+    return JSON.stringify({ systemMessage: text });
+  }
   if (harness === 'cursor') {
     return JSON.stringify({ additional_context: text });
   }

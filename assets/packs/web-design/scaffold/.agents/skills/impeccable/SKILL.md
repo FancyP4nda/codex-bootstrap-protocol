@@ -3,7 +3,16 @@ name: impeccable
 description: Design, review and refine frontend interfaces, using focused playbooks for new surfaces, accessibility, typography, motion and live browser iteration.
 ---
 
-This skill gives you the tools and permission to create design that earns to be called out-of-distribution craft: Whereas before, your design work would have been safe, timid and measured, you now approach every design task as a award-winning design director with impeccable understanding for what makes exceptional design work: production-grade code, peak creativity, a clear POV, deep understanding of the needs of the client and users, and exceptional craft.
+Runtime boundary: supervised live copy-edit/validation and transactional manual
+Apply require Linux or WSL with subreaper/pidfd support and Python 3.11+.
+Unsupported host worker paths fail before launch; installer portability is
+separate from worker supervision. Overlapping Apply/rollback/discard returns
+409 without restoring the active transaction. Never erase ownership evidence
+or kill its supervisor to force retry; inspect unconfirmed or legacy recovery
+state. Hook configuration is not trust/current QA coverage, and this pack
+remains explicitly unverified/release-invalid.
+
+Approach the requested design work with a clear point of view, production-grade implementation, and attention to the user's brief. This skill supplies playbooks, not new permissions: honor the actual request, system/developer instructions, and applicable project workflow. Delegate only where that authority permits it.
 
 Core principles:
 - Go all out. No hedging, no shortcuts. The deliverable must be complete (except assets the user must provide).
@@ -70,9 +79,9 @@ Routing:
 
 After init writes PRODUCT.md, resume without rerunning `context.mjs`; init loads the native platform reference itself when the platform it recorded is `ios`, `android`, or `adaptive`.
 
-**Pin / Unpin:** `node .agents/skills/impeccable/scripts/pin.mjs <pin|unpin> <command>` creates or removes a standalone `/<command>` shortcut. Report the script's result concisely; relay stderr verbatim on error.
+**Pin / Unpin:** `node .agents/skills/impeccable/scripts/pin.mjs <pin|unpin> <command>` creates or removes a standalone `$<command>` skill shortcut. Report the script's result concisely; relay stderr verbatim on error.
 
-**Hooks:** `$impeccable hooks <on|off|status|ignore-rule|ignore-file|ignore-value|reset>` manages the design detector hook for this project (auto-runs the detector after UI file edits and surfaces findings). Load [reference/hooks.md](reference/hooks.md) when the user invokes it with any argument.
+**Hooks:** `$impeccable hooks <on|off|status|ignore-rule|ignore-file|ignore-value|reset>` prepares project-local detector configuration; execution still requires Codex project trust and `/hooks` review. Stop findings are advisory UI/event-stream warnings, not model context or automatic continuation. Keep the single bounded manual detector fallback, even after a local invocation is observed. Load [reference/hooks.md](reference/hooks.md) when invoked with any argument.
 
 **Doctor:** `$impeccable doctor` reports and repairs drift between this project's Impeccable artifacts (PRODUCT.md, DESIGN.md and its sidecar, config, surface briefs, the hook) and what this version reads. Load [reference/doctor.md](reference/doctor.md) when the user invokes it, or when they ask what is out of date, stale, or needs refreshing. A `CONTEXT_STALE` directive in Setup's output is the cheap subset of the same report; act on it there per its own instructions rather than running doctor unasked.
 

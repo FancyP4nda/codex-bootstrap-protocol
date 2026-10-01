@@ -37,7 +37,7 @@ Run once per session, from your project root:
 node .agents/skills/impeccable/scripts/context.mjs
 ```
 
-This loads `PRODUCT.md`, `DESIGN.md`, and the matching surface brief. The skill's own instructions say not to rerun it. On a new project with no `PRODUCT.md`, run `/impeccable init` first to capture durable product context.
+This loads `PRODUCT.md`, `DESIGN.md`, and the matching surface brief. The skill's own instructions say not to rerun it. On a new project with no `PRODUCT.md`, run `$impeccable init` first to capture durable product context.
 
 ### Executable surface
 
@@ -47,12 +47,12 @@ Impeccable is not a documentation-only skill. It vendors roughly 2.6 MB of Node 
 |---|---|
 | `hook-*.mjs` | Codex hooks that run a design detector after UI file edits and surface findings |
 | `live-*.mjs`, `live-browser.js` | Local HTTP dev server plus a bundled browser-automation runtime for `live` mode |
-| `context.mjs`, `doctor.mjs`, `pin.mjs` | Session context loading, drift repair, and `/command` shortcut registration |
+| `context.mjs`, `doctor.mjs`, `pin.mjs` | Session context loading, drift repair, and `$command` skill shortcut registration |
 | `generate-image.mjs` | Image generation, which calls whichever backend you configure |
 
 Three things worth knowing:
 
-1. **Hooks are opt-in and off until you turn them on.** `/impeccable hooks on|off|status` controls them. Once on, they execute after UI file edits. Leave them off until you want that.
+1. **Hooks are opt-in.** `$impeccable hooks on|off|status` manages configuration, not Codex trust. Review project trust and changed definitions in `/hooks` before expecting execution. PostToolUse attempts context; Stop emits an advisory UI/event-stream warning, not model context or continuation. Local cache observations do not prove delivery or later coverage, so finish with the one bounded manual detector pass. Commands use literal project-local paths; after relocation, rerun `hooks on` from the new root and review `/hooks` again. The kit's separately authorized disposable delivery check passed; your project's trust/current coverage remains unknown until reviewed and observed. This does not certify the pack's release evidence.
 2. **`live` mode starts a local server and drives a browser.** It binds `127.0.0.1` only and injects into the page under edit. Run it only against your own project.
 3. **Skill prose is not permission enforcement.** Native Codex sandbox, approval and execution-policy settings govern access. The migration removes misleading allowed-tools declarations.
 

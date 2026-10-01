@@ -10,7 +10,9 @@
  *     `hookSpecificOutput.additionalContext` when findings exist.
  *   - Stop: runs the FULL detector rule set over every UI file touched this
  *     session (the deep pass), deduped against what the per-edit pass already
- *     surfaced, and emits once via the Stop additionalContext channel.
+ *     attempted, and emits an advisory systemMessage warning for Codex's
+ *     UI/event stream. It never injects Stop model context or continues a turn.
+ *     Cached attempts are not proof of delivery; manual QA remains bounded.
  *
  * Contract: never break a turn. Always exit 0. Clean files emit a small ack
  * unless quiet mode is enabled; a clean Stop pass is silent.

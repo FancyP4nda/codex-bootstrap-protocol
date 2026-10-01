@@ -214,63 +214,113 @@ function collectHookCommands(value, out = []) {
   return out;
 }
 
-const HOOK_MARKER = /skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs/;
+const HOOK_MARKER = /skills\/impeccable\/scripts\/hook(?:-(?:probe|before-edit|after-edit|stop))?\.mjs/;
+const HOOK_SCRIPT_PATH = /(?:^|\/)skills\/impeccable\/scripts\/hook(?:-(?:probe|before-edit|after-edit|stop))?\.mjs$/;
 
-// Pull the script-path token out of a hook command line, placeholders intact.
-// The forms our manifests ship:
-//   * bare:            node "${CLAUDE_PROJECT_DIR}/.../hook.mjs"
-//   * bundle-relative: node ".agents/.../hook.mjs"
-//   * legacy unquoted: node .claude/.../hook.mjs
-//   * guarded (#399):  [ ! -f "PATH" ] || node "PATH"   (PATH twice, identical)
-//   * absolute:        node "/Users/.../hook.mjs"        (user-level installs)
-//   * github portable: node "$(git rev-parse --show-toplevel)/.../hook.mjs"
-// A quoted path wins; the guard's two occurrences are identical, so the first
-// quoted match is the path. Otherwise fall back to the whitespace/metachar-
-// delimited token that ends at the marker, so we don't absorb `node`, `[`, `!`
-// or `||`. Returns the token verbatim; resolution happens separately.
-function hookScriptTokenFrom(command) {
-  const str = String(command);
-  if (!HOOK_MARKER.test(str)) return null;
-  const quoted = str.match(/"([^"]*skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs)"/);
-  if (quoted) return quoted[1];
-  const bare = str.match(/([^\s"'|&;()]*skills\/impeccable\/scripts\/hook(?:-before-edit)?\.mjs)/);
-  return bare ? bare[1] : null;
+// Shared, non-executing checks for the supported native JSON representation.
+// Unknown sibling keys survive; parsed-but-skipped prompt/agent hooks are valid
+// configuration, not a claim that the current Codex release executes them.
+export function nativeHookManifestIssue(value) {
+  const object = item => item !== null && typeof item === 'object' && !Array.isArray(item);
+  const nonempty = item => typeof item === 'string' && item.trim().length > 0;
+  if (!object(value)) return 'expected a hook manifest object';
+  if (value.hooks === undefined) return null;
+  if (!object(value.hooks)) return 'expected a hooks object';
+  for (const [event, groups] of Object.entries(value.hooks)) {
+    if (!Array.isArray(groups)) return `${event}: expected matcher-group array`;
+    for (const group of groups) {
+      if (!object(group) || !Array.isArray(group.hooks)) return `${event}: expected group object with hooks array`;
+      if (group.matcher !== undefined && typeof group.matcher !== 'string') return `${event}: matcher must be a string`;
+      for (const handler of group.hooks) {
+        if (!object(handler)) return `${event}: handler must be an object`;
+        if (!['command', 'mcp_tool', 'prompt', 'agent'].includes(handler.type)) return `${event}: unsupported handler type`;
+        const fields = handler.type === 'command' ? ['command'] : handler.type === 'mcp_tool' ? ['server', 'tool'] : ['prompt'];
+        for (const field of fields) {
+          if (!nonempty(handler[field])) return `${event}: ${handler.type} handler requires nonempty ${field}`;
+        }
+        if (handler.type === 'mcp_tool' && handler.input !== undefined && !object(handler.input)) return `${event}: mcp_tool input must be an object`;
+      }
+    }
+  }
+  return null;
 }
 
-// Resolve a script token to an absolute path the doctor can existsSync, or null
-// when the doctor cannot know where it points — in which case the caller must
-// NOT report it missing (a doctor never asserts a negative it cannot verify).
-//
-// Per-placeholder policy, mirroring what each runtime actually expands:
-//   ${CLAUDE_PROJECT_DIR}  → the project root being scanned. This is exactly the
-//                            runtime mapping (Claude Code sets it to the project
-//                            dir at hook time), so we EXPAND it against `root`.
-//                            Not doing so was the #402 bug: the literal
-//                            `${CLAUDE_PROJECT_DIR}/...` string never exists.
-//   ${CLAUDE_PLUGIN_ROOT}  → plugin-package install dir, set by the harness to
-//   ${PLUGIN_ROOT}           wherever the plugin/codex/grok bundle was unpacked
-//   ${GROK_PLUGIN_ROOT}      (grok aliases CLAUDE_PLUGIN_ROOT). The doctor has no
-//                            way to know that location → SKIP (return null).
-//   $(...) / backticks     → command substitution, e.g. GitHub's
-//                            `$(git rev-parse --show-toplevel)`. Not statically
-//                            resolvable → SKIP.
-//   any other ${VAR}/$VAR  → unknown to the doctor → SKIP.
-// A token with no placeholder is a literal path: absolute as-is, else relative
-// to `root`.
-function resolveHookScriptPath(token, root) {
-  if (!token) return null;
-  // Command substitution or backtick expansion we can't evaluate.
-  if (token.includes('$(') || token.includes('`')) return null;
-  const expanded = token.replace(/\$\{CLAUDE_PROJECT_DIR\}/g, root);
-  // Any placeholder or shell variable still present is one we can't map.
-  if (/\$\{[^}]*\}|\$[A-Za-z_]/.test(expanded)) return null;
-  return path.isAbsolute(expanded) ? expanded : path.join(root, expanded);
+function nativeHookCommands(value) {
+  return Object.values(value.hooks || {}).flatMap(groups => groups.flatMap(group => group.hooks))
+    .filter(handler => handler.type === 'command' && HOOK_MARKER.test(handler.command))
+    .map(handler => handler.command);
+}
+
+// Decode literal POSIX words only. This never executes a configured command.
+// Supports concatenated quoting (including our 'path'\''quote' convention).
+function literalShellWords(command) {
+  const words = []; let word = ''; let started = false; let quote = null;
+  for (let i = 0; i < command.length; i++) {
+    const c = command[i];
+    if (quote === "'") {
+      if (c === "'") quote = null; else word += c;
+      continue;
+    }
+    if (c === '\\') {
+      if (i + 1 >= command.length) return null;
+      word += command[++i]; started = true; continue;
+    }
+    if (c === '"') { quote = quote === '"' ? null : '"'; started = true; continue; }
+    if (!quote && c === "'") { quote = "'"; started = true; continue; }
+    if (c === '$' || c === '`' || (!quote && /[;&|<>()*?\[\]{}~]/.test(c))) return null;
+    if (!quote && /\s/.test(c)) {
+      if (started) words.push(word);
+      word = ''; started = false;
+    } else { word += c; started = true; }
+  }
+  if (quote) return null;
+  if (started) words.push(word);
+  return words;
+}
+
+function legacyNativeHookSuffix(command) {
+  const legacy = command.match(/^node "\$\(git rev-parse --show-toplevel\)(\/[^"\n]+)"$/);
+  return legacy && !/[$`]/.test(legacy[1]) && HOOK_SCRIPT_PATH.test(legacy[1]) ? legacy[1] : null;
+}
+
+// Retire only recognized literal node/script invocations (or the exact old
+// native Git-root form). A marker in an echo, prompt, metadata or shell program
+// is not ownership evidence and must not authorize deleting a user handler.
+export function isOwnedImpeccableHookCommand(command) {
+  if (typeof command !== 'string') return false;
+  if (legacyNativeHookSuffix(command)) return true;
+  const words = literalShellWords(command);
+  return !!words && words.length === 2 && path.basename(words[0]) === 'node' && HOOK_SCRIPT_PATH.test(words[1]);
+}
+
+export function inspectHookCommand(command, root, _repoRoot = null) {
+  if (typeof command !== 'string' || !HOOK_MARKER.test(command)) return { state: 'unknown', scriptPath: null };
+  // The buggy native release shipped exactly this substitution. Resolve it
+  // using a fixed read-only git argv, NOT by evaluating the configured shell.
+  const legacy = legacyNativeHookSuffix(command);
+  let scriptPath;
+  if (legacy) {
+    // Context may deliberately treat a nested package as its logical repoRoot.
+    // The old shell substitution instead used the actual Git working-tree root
+    // from the manifest cwd, so only this fixed argv reproduces its resolution.
+    const gitRoot = git(['rev-parse', '--show-toplevel'], root);
+    if (!gitRoot) return { state: 'unknown', scriptPath: null };
+    scriptPath = path.resolve(gitRoot, '.' + legacy);
+  } else {
+    const words = literalShellWords(command);
+    if (!words || words.length !== 2 || path.basename(words[0]) !== 'node' || !HOOK_SCRIPT_PATH.test(words[1])) {
+      return { state: 'unknown', scriptPath: null };
+    }
+    scriptPath = path.resolve(root, words[1]);
+  }
+  try {
+    return { state: fs.statSync(scriptPath).isFile() ? 'configured' : 'broken', scriptPath };
+  } catch { return { state: 'broken', scriptPath }; }
 }
 
 /**
- * A hook whose script path does not resolve is a silent no-op, and the user
- * believes the project is covered. Also catches the contradiction of an
- * installed manifest against `hook.enabled: false`.
+ * Diagnose missing, moved and unverifiable configured script paths without
+ * evaluating shell commands. Configuration is never proof of execution.
  */
 export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
   const findings = [];
@@ -284,19 +334,34 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
     for (const rel of manifests) {
       const manifestPath = path.join(root, rel);
       const raw = readJson(manifestPath);
+      const native = providerId === 'codex' || providerId === 'agents';
+      const issue = native ? nativeHookManifestIssue(raw) : (!raw || !raw.hooks || typeof raw.hooks !== 'object' || Array.isArray(raw.hooks) ? 'invalid hook manifest' : null);
+      if (fs.existsSync(manifestPath) && issue) {
+        findings.push(finding({
+          id: 'hook-manifest-malformed', artifact: 'hook manifest', filePath: toRelative(manifestPath, projectRoot || root),
+          severity: 'mention', summary: `Hook JSON/schema is malformed (${issue}); execution and coverage are not established.`,
+          fix: 'Preserve the file and repair its JSON/schema before using `$impeccable hooks on`; then review /hooks.',
+        }));
+        continue;
+      }
       if (!raw?.hooks) continue;
-      const commands = collectHookCommands(raw.hooks);
+      const commands = native ? nativeHookCommands(raw) : collectHookCommands(raw.hooks);
       if (!commands.length) continue;
       installedAt = toRelative(manifestPath, projectRoot || root);
 
-      const broken = commands.filter((command) => {
-        const token = hookScriptTokenFrom(command);
-        if (!token) return false;
-        const abs = resolveHookScriptPath(token, root);
-        // Unresolvable placeholder or command substitution: never assert missing.
-        if (!abs) return false;
-        return !fs.existsSync(abs);
-      });
+      const inspected = commands.map(command => ({ command, ...inspectHookCommand(command, root, repoRoot) }));
+      const broken = inspected.filter(entry => entry.state === 'broken').map(entry => entry.command);
+      const unknown = inspected.filter(entry => entry.state === 'unknown').map(entry => entry.command);
+      const localScript = path.resolve(projectRoot || root, '.agents/skills/impeccable/scripts/hook.mjs');
+      const stale = inspected.filter(entry => entry.state === 'configured' && fs.existsSync(localScript)
+        && entry.scriptPath !== localScript && entry.scriptPath.endsWith('/scripts/hook.mjs'));
+      if (stale.length) {
+        findings.push(finding({
+          id: 'hook-script-stale-location', artifact: 'hook manifest', filePath: installedAt, severity: 'mention',
+          summary: 'Hook commands point to a different installed script than this project-local skill. Moving or copying a project does not relocate literal hook paths.',
+          fix: 'Run `$impeccable hooks on` from the new project root, then review changed definitions in Codex /hooks. Keep the manual QA fallback.',
+        }));
+      }
       if (broken.length) {
         findings.push(finding({
           id: 'hook-script-missing',
@@ -304,9 +369,16 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
           filePath: installedAt,
           severity: 'mention',
           summary: `${installedAt} installs the design hook, but its script path does not exist: `
-            + `${broken.map((command) => `\`${command}\``).join(', ')}. The hook runs as a no-op, so UI edits `
-            + 'have been going unscanned while the project looks covered.',
-          fix: `Reinstall with \`impeccable hooks on\`, which rewrites the manifest against the skill's current location.`,
+            + `${broken.map((command) => `\`${command}\``).join(', ')}. Execution cannot cover UI edits with this path.`,
+          fix: `Reinstall with \`$impeccable hooks on\`, then review the changed definitions in Codex /hooks.`,
+        }));
+      }
+      if (unknown.length) {
+        findings.push(finding({
+          id: 'hook-script-unresolved', artifact: 'hook manifest', filePath: installedAt, severity: 'mention',
+          summary: `Cannot statically verify the hook script in ${unknown.map(command => `\`${command}\``).join(', ')}. `
+            + 'Configured commands were not executed; hook trust and current coverage remain unknown.',
+          fix: 'Review the command, or repair with `$impeccable hooks on` and review changed definitions in Codex /hooks. Keep the manual detector fallback.',
         }));
       }
     }
@@ -322,10 +394,10 @@ export function checkHookInstallation({ projectRoot, repoRoot, providerId }) {
             artifact: 'config.json',
             filePath: toRelative(path.join(root, '.impeccable', name), projectRoot || root),
             severity: 'mention',
-            summary: `${installedAt} installs the design hook while this config sets \`hook.enabled: false\`, `
-              + 'so the hook fires and then declines to scan.',
-            fix: 'Ask which was intended: `impeccable hooks on` to enable, or `impeccable hooks off` to uninstall '
-              + 'the manifest entry as well.',
+            summary: `${installedAt} contains a design hook definition while this config sets \`hook.enabled: false\`. `
+              + 'The local detector is disabled; definition presence does not mean edits are scanned.',
+            fix: 'No repair is needed if disabled intentionally. `$impeccable hooks on` updates the enable preference; '
+              + 'review changed definitions in /hooks before expecting execution. `off` disables the runtime, not the manifest.',
           }));
           return findings;
         }

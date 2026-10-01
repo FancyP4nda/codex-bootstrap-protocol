@@ -55,7 +55,7 @@ components:
     scan_date: null
     verdict: pass                  # placeholder verdict; unverifiable without evidence
     content_hash: null
-    vendored_tree_digest: "b5bf98bdd6cba621e4609d5491adec224d7e2dbb03eb009abe73238db32813df"
+    vendored_tree_digest: "157c1a4489b448fefc3962174652b0086fa0b7d09e0e03f60d972b95f15bb180"
 
   - id: taste-skill
     kind: skill

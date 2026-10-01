@@ -1,6 +1,6 @@
 # Craft floor
 
-Load this after the direction is settled, and build without announcing the checklist. A pinned brief or the committed visual world overrides anything here; your own habit does not. When the design hook is active it already enforces the mechanical checks below as you edit: act on its findings instead of re-auditing each rule.
+Load this after the direction is settled, and build without announcing the checklist. A pinned brief or the committed visual world guides the design within current user/repository authority; your own habit does not. Hook findings are advisory, not proof of trust or current QA coverage. Act on observed findings and keep the one bounded manual detector pass required by context; configuration alone never replaces verification.
 
 ## Verify
 

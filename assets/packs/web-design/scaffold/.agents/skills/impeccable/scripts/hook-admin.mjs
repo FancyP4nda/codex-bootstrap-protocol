@@ -25,6 +25,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { IMPECCABLE_COMMAND } from './lib/provider.mjs';
+import { hookExecutionState } from './context.mjs';
+import { nativeHookManifestIssue, isOwnedImpeccableHookCommand } from './lib/staleness-deep.mjs';
 
 import {
   getConfigPath,
@@ -48,11 +50,8 @@ const IMPECCABLE_HOOK_COMMAND_MARKERS = [
 ];
 const TIMEOUT_SECONDS = 5;
 const STATUS_MESSAGE = 'Checking UI changes';
-// The Stop deep pass scans every UI file touched in the session with the full
-// rule set, so it gets a longer budget than the per-edit pass. Only Claude
-// Code and Codex dispatch a native Stop hook event, so only those manifests
-// carry the entry. Keep these shapes in sync with
-// scripts/lib/transformers/hooks.js in the repo.
+// The Stop deep pass scans session-touched UI files and emits an advisory
+// warning, never a continuation or model-context claim.
 const STOP_TIMEOUT_SECONDS = 30;
 const STOP_STATUS_MESSAGE = 'Design deep pass';
 
@@ -74,17 +73,23 @@ const HOOK_MANIFEST_TARGETS = [
     provider: '.agents',
     skillRel: '.agents/skills/impeccable',
     destRel: '.codex/hooks.json',
-    manifest: () => ({
+    manifest: (scriptPath) => ({
       hooks: {
         PostToolUse: [{matcher:'Edit|Write|apply_patch',hooks:[{
-          type:'command',command:'node "$(git rev-parse --show-toplevel)/.agents/skills/impeccable/scripts/hook.mjs"',
+          type:'command',command:`node ${shellQuote(scriptPath)}`,
           timeout:TIMEOUT_SECONDS,statusMessage:STATUS_MESSAGE
         }]}],
-        Stop: [stopManifestEntry('node "$(git rev-parse --show-toplevel)/.agents/skills/impeccable/scripts/hook.mjs"')]
+        Stop: [stopManifestEntry(`node ${shellQuote(scriptPath)}`)]
       }
     })
   }
 ];
+
+// POSIX literal argument quoting; $, backticks and quotes in project names
+// must never become shell expansion. Re-run hooks on after moving the project.
+function shellQuote(value) {
+  return "'" + String(value).replace(/'/g, "'\\''") + "'";
+}
 
 function readRawConfigFile(filePath) {
   assertSafePath(filePath);
@@ -94,6 +99,14 @@ function readRawConfigFile(filePath) {
   } catch {
     return { exists: true, malformed: true, raw: null };
   }
+}
+
+function assertPreferenceObject(filePath) {
+  const info = readRawConfigFile(filePath);
+  if (info.exists && (info.malformed || !info.raw || typeof info.raw !== 'object' || Array.isArray(info.raw))) {
+    throw new Error(`Malformed config preserved: ${filePath}; repair its JSON object before rerunning`);
+  }
+  return info;
 }
 
 function assertSafePath(filePath) {
@@ -156,8 +169,7 @@ function stripDetectorKeys(raw) {
 function writeHookConfig(cwd, hookConfig, opts = {}) {
   const filePath = opts.local ? getLocalConfigPath(cwd) : getConfigPath(cwd);
   if (opts.local) ensureHookGitExcludes(cwd);
-  const existingRaw = readRawConfigFile(filePath).raw;
-  if (fs.existsSync(filePath) && existingRaw === null) throw new Error(`Malformed config preserved: ${filePath}; repair it before rerunning`);
+  const existingRaw = assertPreferenceObject(filePath).raw;
   const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
   const existingHook = stripDetectorKeys(hookSection(existing));
   // Merge over the existing hook object so fields the merge helpers don't manage
@@ -171,8 +183,7 @@ function writeHookConfig(cwd, hookConfig, opts = {}) {
 function writeDetectorConfig(cwd, detectorConfig, opts = {}) {
   const filePath = opts.local ? getLocalConfigPath(cwd) : getConfigPath(cwd);
   if (opts.local) ensureHookGitExcludes(cwd);
-  const existingRaw = readRawConfigFile(filePath).raw;
-  if (fs.existsSync(filePath) && existingRaw === null) throw new Error(`Malformed config preserved: ${filePath}; repair it before rerunning`);
+  const existingRaw = assertPreferenceObject(filePath).raw;
   const existing = existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw) ? existingRaw : {};
   const nextHook = stripDetectorKeys(hookSection(existing));
   const existingDetector = mergeDetectorConfig(detectorSection(existing));
@@ -284,23 +295,32 @@ function statusReport(cwd) {
     `  maxChars:     ${cfg.limits.maxChars}`,
     `  env override: ${envState}`,
     `  cache file:   ${fs.existsSync(getCachePath(cwd)) ? cachePath : `${cachePath} (not present)`}`,
+    `  observation:  ${hookExecutionState({ projectRoot: cwd }).state}`,
+    '  Codex trust/current coverage: unknown; local observations are not proof. Review /hooks.',
+    '  QA fallback:  one bounded manual detector pass after changed web UI is finished.',
   ];
   return lines.join('\n');
 }
 
 function setEnabled(cwd, value) {
+  // Both files will be consulted/possibly changed. Reject invalid existing
+  // preferences before the first shared write, preserving sibling values.
+  assertPreferenceObject(getConfigPath(cwd));
+  const local = assertPreferenceObject(getLocalConfigPath(cwd));
+  const overridesEnabled = Object.prototype.hasOwnProperty.call(hookSection(local.raw) || {}, 'enabled');
   if (value) preflightNativeHooks(cwd);
   const config = mergeHookConfig(readRawHookConfig(cwd));
   config.enabled = value;
   const target = writeHookConfig(cwd, config);
   if (!value) {
+    if (overridesEnabled) writeHookConfig(cwd, { enabled: false }, { local: true });
     return `Design hook disabled for this project (wrote ${path.relative(cwd, target) || target}).`;
   }
 
-  const localTarget = writeHookConfig(cwd, { consent: 'accepted' }, { local: true });
+  const localTarget = writeHookConfig(cwd, { consent: 'accepted', ...(overridesEnabled ? { enabled: true } : {}) }, { local: true });
   const repaired = repairHookManifests(cwd);
   const parts = [
-    `Design hook enabled for this project (wrote ${path.relative(cwd, target) || target}).`,
+    `Design hook configuration enabled for this project (wrote ${path.relative(cwd, target) || target}); execution still depends on effective Codex settings and /hooks review.`,
     `Recorded detector preference (Codex /hooks trust still required) in ${path.relative(cwd, localTarget) || localTarget}.`,
   ];
   if (repaired.written.length > 0) {
@@ -330,7 +350,10 @@ function repairHookManifests(cwd) {
       continue;
     }
 
-    const fresh = target.manifest();
+    const scriptPath = path.resolve(cwd, target.skillRel, 'scripts/hook.mjs');
+    assertSafePath(scriptPath);
+    if (!fs.statSync(scriptPath).isFile()) throw new Error(`Hook script is not a file: ${scriptPath}`);
+    const fresh = target.manifest(scriptPath);
     let next = fresh;
     if (fs.existsSync(dest)) {
       try {
@@ -359,7 +382,17 @@ function preflightNativeHooks(cwd) {
   assertSafePath(path.join(cwd, '.codex/hooks.json'));
   execFileSync('python3', ['-c', 'import pathlib,sys,tomllib; p=pathlib.Path(sys.argv[1]); d=tomllib.loads(p.read_text()) if p.exists() else {}; assert "hooks" not in d, "Inline hooks exist: reconcile them in /hooks before adding hooks.json"', config], {stdio:'pipe'});
   const hooks = readRawConfigFile(path.join(cwd, '.codex/hooks.json'));
-  if (hooks.malformed || (hooks.exists && (!hooks.raw || typeof hooks.raw !== 'object' || Array.isArray(hooks.raw)))) throw new Error('Malformed native hooks.json preserved; repair it before enabling');
+  if (hooks.exists) {
+    const issue = hooks.malformed ? 'malformed JSON' : nativeHookManifestIssue(hooks.raw);
+    if (issue) throw new Error(`Malformed native hooks.json preserved (${issue}); repair it in /hooks before enabling`);
+  }
+  // Validate every candidate script before writing enable/consent preferences.
+  for (const target of HOOK_MANIFEST_TARGETS) {
+    if (!fs.existsSync(path.join(cwd, target.skillRel))) continue;
+    const script = path.resolve(cwd, target.skillRel, 'scripts/hook.mjs');
+    assertSafePath(script);
+    if (!fs.existsSync(script) || !fs.statSync(script).isFile()) throw new Error(`Hook script missing: ${script}; restore the skill before enabling`);
+  }
 }
 
 function safeReadText(filePath) {
@@ -418,19 +451,15 @@ function valueHasImpeccableHookMarker(value) {
 
 function stripImpeccableHookEntry(entry) {
   if (!entry || typeof entry !== 'object') return entry;
-  // `command`/`args`: Claude/Codex/Cursor. `bash`/`powershell`: GitHub Copilot's
-  // flat entry shape, where the marker lives under the shell-command keys.
-  if (valueHasImpeccableHookMarker(entry.command) || valueHasImpeccableHookMarker(entry.args)
-    || valueHasImpeccableHookMarker(entry.bash) || valueHasImpeccableHookMarker(entry.powershell)) {
-    return null;
+  if (!Array.isArray(entry.hooks)) {
+    return entry.type === 'command' && isOwnedImpeccableHookCommand(entry.command) ? null : entry;
   }
-  if (!Array.isArray(entry.hooks)) return entry;
 
   const strippedHooks = entry.hooks
     .map(stripImpeccableHookEntry)
-    .filter(Boolean);
+    .filter(hook => hook !== null);
 
-  if (strippedHooks.length === 0 && entry.hooks.some(valueHasImpeccableHookMarker)) {
+  if (strippedHooks.length === 0 && strippedHooks.length !== entry.hooks.length) {
     return null;
   }
   return { ...entry, hooks: strippedHooks };
