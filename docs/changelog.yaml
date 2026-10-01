@@ -2,6 +2,39 @@ version: 1
 changes:
   - date: 2026-09-30
     bead_ids:
+      - codex-bootstrap-protocol-d0p
+      - codex-bootstrap-protocol-d0p.1
+      - codex-bootstrap-protocol-d0p.2
+      - codex-bootstrap-protocol-d0p.3
+      - codex-bootstrap-protocol-d0p.4
+      - codex-bootstrap-protocol-d0p.5
+      - codex-bootstrap-protocol-d0p.6
+    changed_areas:
+      - bootstrap
+      - lib/
+      - assets/global/
+      - assets/scaffold/
+      - assets/native/process-supervisor.py
+      - assets/packs/
+      - .agents/
+      - .codex/agents/
+      - verification/
+      - tools/
+      - docs/
+      - README.md
+      - .beads/issues.jsonl
+    summary: >-
+      Remediate systems review F01-F15: retain optional personal configuration
+      during core updates, preserve Bash 3.2 compatibility, enforce truthful
+      doctor health and project-local role/resource selection, reconcile native
+      prompts and Beads commands, and move sandboxed Falcon commits to steering.
+      Add fresh report/state protections, shared Linux/WSL descendant supervision,
+      durable web transaction ownership and fail-closed recovery, native nested
+      hook paths, manual QA fallback and advisory Stop delivery. Preserve frozen
+      provenance and web-design release-invalid status; exact acceptance evidence
+      and platform limits are recorded in docs/remediation-review.md.
+  - date: 2026-09-30
+    bead_ids:
       - codex-bootstrap-protocol-ung
       - codex-bootstrap-protocol-ung.1
       - codex-bootstrap-protocol-ung.2

@@ -6,63 +6,63 @@
       "destination": "assets/global/.codex/agents/navigator-maintenance.toml",
       "source_sha256": "df0f546550ecff25d547817dfbf797fbb48f64550d283a6bdd47c0d9191c71e9",
       "acceptance": "native-agent-schema",
-      "native_sha256": "9c788707ed9aa046cb414300e59ebe08deb7e5640b6f092b342fc1e8574bc952"
+      "native_sha256": "a9946c6966905fe07e933ab371804f3a594de94ffcbea6741ab01f0b231a0121"
     },
     {
       "source": "assets/global/.claude/agents/navigator/navigator-recon.md",
       "destination": "assets/global/.codex/agents/navigator-recon.toml",
       "source_sha256": "beabd02a413cfb2b42e265be271a1cd4aa442de3f2e228529202fb4d4ce75edd",
       "acceptance": "native-agent-schema",
-      "native_sha256": "54ee8889b5622c19035133701ef87e0ca5f6685886354c9c67074106798cf55c"
+      "native_sha256": "e38ec5f021f3e1c0be9c1a8b7a66c374c32ad0cb38716fb0f6d8c7ffe79f20ef"
     },
     {
       "source": "assets/global/.claude/agents/navigator/navigator-survey.md",
       "destination": "assets/global/.codex/agents/navigator-survey.toml",
       "source_sha256": "6756d9a60c404affebac543fac3322aa50a189a1d249b8bca72b8cc8233b438d",
       "acceptance": "native-agent-schema",
-      "native_sha256": "bff065cfab0d12b7107c57dc472d3257d80b75783d7982f3271e69d04743e4ab"
+      "native_sha256": "41cb1593f491546bbaf1dbb23f3df67ee57f66167c5ad2572a40f32b6fd75fba"
     },
     {
       "source": "assets/global/.claude/rules/bootstrap-protocol.md",
       "destination": "assets/global/.agents/bootstrap/instructions/bootstrap-protocol.md",
       "source_sha256": "7752f67ccbd81b8adbb660a2beaf6dff1e13352e48da4c7d2e021bbc68f44b4f",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "d965ac2c604d64c8b456ce746d5482c004a35beb074ffa21d09a80dc70e351d6"
+      "native_sha256": "9bebed5349415e3717979e8e7e79a9b7b33945f87591a54fc8c90e37c2f24aa5"
     },
     {
       "source": "assets/global/.claude/rules/workflow-agents.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-agents.md",
       "source_sha256": "f55322cabc62c8e5fc6d5bf799801d8cf7a94821e918c0f1c985f0386f1e422b",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "60dba38bd1d8a1b81ee69ea8371b80c7f360cb7c17c3dae173a2292c0ed3f63d"
+      "native_sha256": "fda8bff262daadc0b93efadc46fd6192e02a03d31038622393435956b0273a49"
     },
     {
       "source": "assets/global/.claude/rules/workflow-execution.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-execution.md",
       "source_sha256": "f9a228279be11857cfbc7e9b8acc17fffe44a5d185709a3d79fc2214e9846601",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "6df79b9a864dc846c2a704a593d49de191d1867dac1f8570c7a6095a671b6bfc"
+      "native_sha256": "40081e4b2019499093a669585daf345fb3d21314c17a0d54aca85135ed1aad9d"
     },
     {
       "source": "assets/global/.claude/rules/workflow-planning.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-planning.md",
       "source_sha256": "f2c0cc683dd4bf73c65386e4c9b298959b300390e017d4e48d6ab1ed5ceeab78",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "6f19a1321d5660ed36c1fd9ac59915d0c89a6be61cf45ccdc3bd7fbd08670a08"
+      "native_sha256": "52b295e50d1ec9d8209d0c5b186529216f2870a7f69e1118d53a61761fe06d13"
     },
     {
       "source": "assets/global/.claude/rules/workflow-session.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow-session.md",
       "source_sha256": "264c616d637ebd28cc19abacbc371f196d8872a6bd0479d2df2383ff3a9291d4",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "317bdb70d2d393166cdcea2648973f6699f9b6cda0e10fbd7c8905171569cf7a"
+      "native_sha256": "65a2687a43ff03a1251397c0818f5264d124ad1e1a79f060473c4424e308aa46"
     },
     {
       "source": "assets/global/.claude/rules/workflow.md",
       "destination": "assets/global/.agents/bootstrap/instructions/workflow.md",
       "source_sha256": "3cf282bfe4ead4ec000b020fc4739a9988c0895ea79ff1ee892a50287a24e46e",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "969bb16a7f1cdac35de78f7e54cb0c135575d44a1ffcc157a3fdb5153cf599f4"
+      "native_sha256": "b2355372be95097da915c05b6109a0bf6fe7b0213b6f51ef4a463038e367d29e"
     },
     {
       "source": "assets/global/.claude/skills/adversarial-review/SKILL.md",
@@ -160,7 +160,7 @@
       "destination": "assets/global/.agents/skills/plan-to-beads-unified/SKILL.md",
       "source_sha256": "c4fc1381e1bbd86431c4044dbf734e46a3cb2c4de6fd2238b4633fcda361fd57",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "243b2fb495d845e0fe574a0a64c901235f608cab9800a758d4f60606e666db2f"
+      "native_sha256": "e7d9ebb084391ea74867730553ab674093fbfb5350ea877af57ae3c2a5a4d8f4"
     },
     {
       "source": "assets/global/.claude/skills/product-architect/SKILL.md",
@@ -216,7 +216,7 @@
       "destination": "assets/global/.agents/skills/refine-beads/SKILL.md",
       "source_sha256": "35894cbf5809bbb1859e8f7a0180e3825edaf2d0f390c697428e2988c2070148",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "de733f54f386ea9f18c5c0dc3dcc6a5d8f13ebc981a50c30b5744e46645ae6db"
+      "native_sha256": "d002a0da5952cfe73752ed7c836bba3029964eccdd8e8dbc7d72448deb79bb12"
     },
     {
       "source": "assets/global/.claude/skills/refine-beads/work-item-templates.md",
@@ -251,14 +251,14 @@
       "destination": "assets/global/.agents/skills/session-wrapup/changelog-schema.md",
       "source_sha256": "45e32dc767d9aaa800a659d5385c28296186d8d1e158dfc11c6197dcca9a0bb7",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "2b5aa3611d828b901a728b26d29789823bc0f39dfd58b79a58c4a66312da647d"
+      "native_sha256": "ab3dfbaccfccb57230479e273ceaf86a9e47ad70f4b8ee40b4c6420fc84a99ce"
     },
     {
       "source": "assets/global/.claude/skills/session-wrapup/handoff-schema.md",
       "destination": "assets/global/.agents/skills/session-wrapup/handoff-schema.md",
       "source_sha256": "8c21c490795ec5a732019ec3f6cba0a8fba20dc9672e7ebd5594654df89b8a01",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "37cc0159a47f51805369e4f20318624a8bac54878fcb1176df700eb3f6917edd"
+      "native_sha256": "708249d4e599f93791b53cc5599ddffb71e0d6c25ac18770abc69b573146a9ee"
     },
     {
       "source": "assets/global/.claude/skills/ste-writing/SKILL.md",
@@ -279,7 +279,7 @@
       "destination": "assets/global/.agents/skills/tdd/SKILL.md",
       "source_sha256": "0b22917effc98730c105eb4bfa69963e9cc413a22c78afe21e7c9ab026ff11df",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "c672f147a6264bcb013676f5f75f44025fb1edcedc010aaf62e8e2848a64039d"
+      "native_sha256": "0fc2741334fd1ffba90e5e9c6c57e6d56bdcc5114f788bafb155880b73263609"
     },
     {
       "source": "assets/global/.claude/skills/technical-writer/SKILL.md",
@@ -370,7 +370,7 @@
       "destination": "assets/scaffold/docs/PULL_REQUEST_TEMPLATE.md",
       "source_sha256": "73f8cafde016fce126097383ed2e461d5f2ed0ec65a80e18d4a92768e76ce9b9",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "7cb635ecca3e7b8f0b948374892ee2e453f8a645bcd81d3f418009ad1ff7a52e"
+      "native_sha256": "164fb97d9ed2e8ce47bdba052fb191c587e15c31369ac37561362e80fc151c40"
     },
     {
       "source": "assets/scaffold/.claude/docs/adr/README.md",
@@ -405,7 +405,7 @@
       "destination": "assets/scaffold/docs/changelog.yaml",
       "source_sha256": "b254aab73b11aea8f6b578cb4a40f5618489a3edd216f64badf0749e0eb73a9c",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "f1c772bdc11328d0db108023d2818edb271d154fda11dfd6e37f452b033b57cb"
+      "native_sha256": "77bff2494159e9d3a547416a8ef366d5318b07b2eed838d1dd94de9d40adf865"
     },
     {
       "source": "assets/scaffold/.claude/docs/data-model.md",
@@ -440,7 +440,7 @@
       "destination": "assets/scaffold/docs/handoff.yaml",
       "source_sha256": "cd40857fefaae82150d309628172dae8594adc389d372c6110660675895b304e",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "ce1f8b94907a31b435842239e9f46959191616c888f9623d042e430e06e9e8fd"
+      "native_sha256": "173ddc607ede8e393487e089a2cdbdfda6577abfdc36952b6febaa93c993a64b"
     },
     {
       "source": "assets/scaffold/.claude/docs/prd.md",
@@ -545,7 +545,7 @@
       "destination": "assets/packs/falcon/manifest.txt",
       "source_sha256": "7b5b7465df5a53ba7fa8ebd0b53ad5c741c4f2cace75aa2e0ecaefe533834d19",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "c13608e1aa0effb98ff53c39fc3c3db081b7b4711c6d2d002da6c0ca4454969b"
+      "native_sha256": "209a72d3f0a47c56a52849df1a8f7c8dcbc6a0c39c4dc384d749d397e2cd20a9"
     },
     {
       "source": "assets/packs/falcon/pack.yaml",
@@ -566,7 +566,7 @@
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/COMMANDS.md",
       "source_sha256": "7b9180084f860e4c7ab5027e3b1fd39e02fb84a1280502571ffe1abec20e5575",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "7c6243c8c8d978fc1b66ddbc340a98a863b5ece68719f82104db59ec9c50d3e3"
+      "native_sha256": "31d11084a4f937cc2328d52773d69455fbf098534d83a76e8e82c7c18b732378"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/CRONS.md",
@@ -580,28 +580,28 @@
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/PROTOCOL.md",
       "source_sha256": "c9e81e5feede79667bc47cf59f9f870dcbb38644708cc9f134b1a19c396206bb",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "b78eb7bbe8395b3101d6b0f3a872ead65e28c65be09adf82f176cb5bb6b3cab0"
+      "native_sha256": "b20603574e57864d2853256c5ec915ef0cdc754ee1fd623bee165af18fd9df12"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/REFERENCE.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/REFERENCE.md",
       "source_sha256": "cd0c5d9dc68e8b9a4800aab9f66d917dab7230eb56d7339e36869533524dc3c4",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "2104fbc9834695a844f1dff957d0b395fe7e291092966ce16f395dc88690a44d"
+      "native_sha256": "e927f66393b39dbf817bd70ede2222ef3fc2ee9b65b7ccccffaed76436e69c5d"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/SKILL.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/SKILL.md",
       "source_sha256": "a1a8019a4dcbee23598da7b190a5010d7c72b9de2fd0544caf1789187b018716",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "a64b0865574991800a546b88c8248070daedc0e2a7c44cce9a380b4e36690a85"
+      "native_sha256": "54a8f9d0b62b9daa4c441f98fd9eebc7a82e83b4c0d3c051400a003dc31b6a8c"
     },
     {
       "source": "assets/packs/falcon/scaffold/.claude/skills/falcon/SYNTHESIS.md",
       "destination": "assets/packs/falcon/scaffold/.agents/skills/falcon/SYNTHESIS.md",
       "source_sha256": "c3d00b7a93e0b90d2677425c5f612c0ad1bbf781ad1b116b15f82bd4c7c729fa",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "b859c4a05937e48866e74bebed2e0a7076ba3dc626597067e4dde6d9d4dd57c9"
+      "native_sha256": "4f59baacf99bd5e4c0aa0c19d24d60ef12aadca5a0993bb17dea4fb0d886c705"
     },
     {
       "source": "assets/packs/herald/manifest.txt",
@@ -657,14 +657,14 @@
       "destination": "assets/packs/web-design/manifest.txt",
       "source_sha256": "d58d56e8cba45dc30e9872d11a10b7862ef745aee1171bfc6d8b639499fa8297",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "259f50299dd498adda134e9204a99027b7f1abd706f3537b0df56434afab7b31"
+      "native_sha256": "ff34692fa6ad74e308c6d401c63058f061808afefff85c5f47cc3ea49bb0349c"
     },
     {
       "source": "assets/packs/web-design/pack.yaml",
       "destination": "assets/packs/web-design/pack.yaml",
       "source_sha256": "4bc4b6e5901796c9086b9488b4a00940e2c59f285a883ad23f269a07eae37bc0",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "24b29f573f3532c9e5a572f01f629c75f44c1e27f68b47e3e746dfb8340a9fc0"
+      "native_sha256": "ce912aee3fc0245ea1fbbf5902b2adf7f23a0f07cb43e22c55afeb9286c11a07"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/docs/web-design-mission.md",
@@ -678,7 +678,7 @@
       "destination": "assets/packs/web-design/scaffold/docs/web-design-notes.md",
       "source_sha256": "e256c849f144a9f4d69675e9c1900464fc7137bd7d4c8c468a10763edbd939d4",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "6142a9cdf453368e1b450e96d5f56468b0c840566ba25ac5677aff9aa04e7f60"
+      "native_sha256": "d4c50bd59fde8a0b202c71dcdf68966cfc5b4e32e64b08ee3ae3407b167bd3a6"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/rules/web-design-pack.md",
@@ -692,7 +692,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/SKILL.md",
       "source_sha256": "73c764804fcbd076e82bfdeffd275213b1178a28d97e0dffdaed96708eee68b4",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "d07f69244cb35f69504a6edd168dd655565249208f79e6727e6546e3e290755f"
+      "native_sha256": "cb01bc36c85e5bc56f6c189c57680a45cadebf3db9481c3c04e627f1baa7b933"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/adapt.md",
@@ -762,7 +762,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/craft-floor.md",
       "source_sha256": "e419d816711a6e979b38d7f04abe79ca6079d76447eef04428b9fab3a155210f",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "e419d816711a6e979b38d7f04abe79ca6079d76447eef04428b9fab3a155210f"
+      "native_sha256": "17e5bbc04c0aa9960d77efb5d1479f1167ecf300bb36096c1d6d6b2f852f0914"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/craft.md",
@@ -853,7 +853,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/hooks.md",
       "source_sha256": "d24ff44255fd29738ef05b78afa2e519dbf12cb7bbdaa4c9696b3a656e41d9a7",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "fedd7a9d5cf7fd3505a2c826fa0257c7cae2875f801a3fe4fbc685fcadbe9f73"
+      "native_sha256": "15c8119d66efc663669919fb57ae3f86d27d92cf3bafe34955f8fd2145cb9e85"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/init.md",
@@ -923,7 +923,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/reference/polish.md",
       "source_sha256": "8897a5f97150747bbe0df3cd2bb1c61ab89a3f29c1777a5c506c412c59e1d6b2",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "bcd4514f498fb056878c618b17271bcf3f10c1f66cb131f4b4f03145bb763ae1"
+      "native_sha256": "dd33befa57bdce79202813a47574e35f9e47a84bc4e6e346aac7275083095e5c"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/reference/quieter.md",
@@ -986,7 +986,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/context.mjs",
       "source_sha256": "9624eec1da4235b4f9d45d5cdb29ecb812ae01cb7e8a3953fcbfdc55f011d03e",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "274d7bf856caaa2a14ae062efd9cac0506ef8d0afadd82a1dfcb6543600dfd51"
+      "native_sha256": "57cd6d8841b50fda76b7d8bf5b63b7c881cfc119e0c5f1d314ec08aa3cb24534"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/critique-storage.mjs",
@@ -1168,7 +1168,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook-admin.mjs",
       "source_sha256": "d767c332a64f09cdeecb53bb103725cdcacde4a6b5b4468fedd1cc0ce1e0947d",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "57c2934ae4451048b210c6f22a4ca12e9f121905f4c39a0d763ea33050d1bbcb"
+      "native_sha256": "e9301fec8e8a723f330dfa4f3c0c30f3fb4d0cd0bd6741d05cd5b6307a922a4a"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook-before-edit.mjs",
@@ -1182,14 +1182,14 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook-lib.mjs",
       "source_sha256": "79e42b74d827adcc6d75db607bdc3ca2d08bbfcaf3ffbdf6e38eeeba74939595",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "8ac0a5eea4c82ebe8fb38892cd4b154ed662c8d33ef9d02a4507bd9783cc8a58"
+      "native_sha256": "5daf43d52c339be3f4001c9935fedb602a0e68a1b0724646f315ab1d8ce0b821"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/hook.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/hook.mjs",
       "source_sha256": "4e3629e60d2672258ab98ae382325096a237f100cb0f430d9f692b6d5b93cc7e",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "4e3629e60d2672258ab98ae382325096a237f100cb0f430d9f692b6d5b93cc7e"
+      "native_sha256": "db977748632df06fac0e9d8d88c529116f4bd1b5136ba9b6586d8313075de451"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/artifact-schema.mjs",
@@ -1252,7 +1252,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/lib/staleness-deep.mjs",
       "source_sha256": "52f28d2834b00b82ab58fed7aa9bba19d1a9813fa86c39933a23b2f102c7668c",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "1ea42ff65197b9e469cf46dfc663950bd1142ceb5aefe0152c9f6c90e42ce8f0"
+      "native_sha256": "1f2740208113b9b50e0bf7b499ba739658e947d582c399df9d52c59e6dc9c3af"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/lib/staleness-notice.mjs",
@@ -1336,14 +1336,14 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/manual-apply.mjs",
       "source_sha256": "c0e7fc5c3d4a7d6e1d6a8e6f85cbe005e5dc01d77b16fd0735605f287c4c8b66",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "c0e7fc5c3d4a7d6e1d6a8e6f85cbe005e5dc01d77b16fd0735605f287c4c8b66"
+      "native_sha256": "a09e79ea22d48387bd82230a251ca2d546ba7051bd322fe828ca07fb0af32387"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/manual-edit-routes.mjs",
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live/manual-edit-routes.mjs",
       "source_sha256": "5517c40db7c91a5b24b134f79cb0f87c90e307b2f7831b1de670d60e529557c0",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "f82b6357d1ea5f748510fcadd4839f20bfacec0e4669a6fc140b84c09415ebd2"
+      "native_sha256": "24e2746e7cf66875696ac4ba519164d9a2cb4b8076acf6c1a31d8847a7f34d01"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live/manual-edits-buffer.mjs",
@@ -1448,7 +1448,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-commit-manual-edits.mjs",
       "source_sha256": "f179372ebcd34723cfca72bf718853beb5cfa05ea3a02e9137508d585eb94aa9",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "752f6f908a23cd455bfd2f6b7652c7cd03809d5e3001628648d62a94b6f38d02"
+      "native_sha256": "ddff5be71e3632e057b3d97b731e96ac1f5752370a7d33ec48420ab840cb9b5c"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-complete.mjs",
@@ -1462,7 +1462,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-copy-edit-agent.mjs",
       "source_sha256": "d8ec18a339675d252edf878cdfdb96cffb35ece471ec9008a792a302eb529db3",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "2cfe36f367f811929c36bbeb9896101b12946ab1dcd998b6c3a19fe2dc9e0be8"
+      "native_sha256": "12d677803cf7512b7692bb37ebc0c458a5b27efcd5f03b9ee591262ef812e621"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-discard-manual-edits.mjs",
@@ -1511,7 +1511,7 @@
       "destination": "assets/packs/web-design/scaffold/.agents/skills/impeccable/scripts/live-server.mjs",
       "source_sha256": "86f215fdd8b237dc94e8747a2d039cb2168c50d3a7b1a685d864256fa9fd969e",
       "acceptance": "skill-discovery-and-supporting-assets",
-      "native_sha256": "86f215fdd8b237dc94e8747a2d039cb2168c50d3a7b1a685d864256fa9fd969e"
+      "native_sha256": "8fef87000deb2867b11115ec947d0a8fc0104888f5b7c5f081334142f1829ee3"
     },
     {
       "source": "assets/packs/web-design/scaffold/.claude/skills/impeccable/scripts/live-status.mjs",
@@ -1595,7 +1595,7 @@
       "destination": "verification/pack-validator/pack.schema.json",
       "source_sha256": "fb48d932b21c8f8f38e23926a9cd82352f1fc04c7fae01bef7b12129cef773ea",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "7866cb3175a1799443a6af324e4db5b4f1e2cb81965427c13be899bbc5c8d20a"
+      "native_sha256": "f68d62aad4f2e9cf8e3ed6c024a8d388d24a526f66e9d8ff1a106b2b01e929e1"
     },
     {
       "source": "verification/pack-validator/pack_update.py",
@@ -1651,14 +1651,14 @@
       "destination": "verification/fixtures/packs/web-design-fixture/manifest.txt",
       "source_sha256": "cf956469c98be2bc120b0cc30d74711f35104afc3b59939a13586e6de9d62d8a",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "37c5f43181b25e0881a45df5aad1d9a63ed9366dafeebac7eb51af4a29aae451"
+      "native_sha256": "d0638253d1a740493a87562ac1947296453d250bf356ca0990c6a175903e7356"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/pack.yaml",
       "destination": "verification/fixtures/packs/web-design-fixture/pack.yaml",
       "source_sha256": "398f3a2edfee71e24b416be49a68c541765ea03af36f1d7ba057268e868f2228",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "7476c89113bf5d28891cbd922da03959f614d508442439f30e5b5b3aee181bb6"
+      "native_sha256": "4d4a949c4da871dcc0bad2a3444e23118bd20428a285b3cc586f3570ce4ff79e"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.claude/mcp/web-design-fixture-mcp/index.js",
@@ -1690,24 +1690,24 @@
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture/scaffold/.mcp.json",
-      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.mcp.json",
+      "destination": "verification/fixtures/packs/web-design-fixture/scaffold/.codex/config.toml",
       "source_sha256": "c2edf1167c63846e79ed25a8e9141ba0e43b5bd3c23e5bf13ca12787df8110d7",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "c2edf1167c63846e79ed25a8e9141ba0e43b5bd3c23e5bf13ca12787df8110d7"
+      "native_sha256": "06da6cb57c282cb00d06a43dd4256594c93a1bcaa1f84e6cab00d4a388ed61cb"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/manifest.txt",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/manifest.txt",
       "source_sha256": "316adab5717eebcdeca1129ff230369a2d750b1122ebb2fe35fde2c10e7c3ddc",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "b100eced731dc759809aaa8e74fd545a9c9ff5cf82396d1101138bc0ba98b548"
+      "native_sha256": "0a34bda63676fe057ec5d38e313a114f9773ed9627fbdd29cb33dbe049f67a95"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/pack.yaml",
       "destination": "verification/fixtures/packs/web-design-fixture-valid/pack.yaml",
       "source_sha256": "f8a477866083477441437593e009d69c41f8bf352c1e9f2e4041481d45925460",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "02e38efee9264d008cae2c95510ea74e2bd350c4a0e632089859b2cf9a6523e9"
+      "native_sha256": "6990e67062d48558df0cfac6c60bd98beec8e95f61f30e495efca11c79aeaa02"
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.claude/docs/web-design-mission.md",
@@ -1760,10 +1760,10 @@
     },
     {
       "source": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.mcp.json",
-      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.mcp.json",
+      "destination": "verification/fixtures/packs/web-design-fixture-valid/scaffold/.codex/config.toml",
       "source_sha256": "ee01742b883e4ea7d85301d23912be406e7cae2f9a267d7320d0887142e7e0d2",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "ee01742b883e4ea7d85301d23912be406e7cae2f9a267d7320d0887142e7e0d2"
+      "native_sha256": "12ad15c3fd1f975d98c09357e4d1568cc559ca71ffbfa4a6ea7d3c8ebf8675a5"
     },
     {
       "source": "verification/fixtures/regenerate-valid-digests.py",
@@ -1777,14 +1777,14 @@
       "destination": "lib/plan-engine.sh",
       "source_sha256": "2bf148e5f4589ea9fdf4f6bc0f5b68c3918fe1f75f48996947d4e239ec601ab0",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "0c1894b07eb028cb539eab92a1478bea3661a97bf3227a190588adb96dbc34ee"
+      "native_sha256": "93368c91dedd46493fe421bdaed951ecd6f0c84301b48ea7fde10c1e92f3e069"
     },
     {
       "source": "bootstrap",
       "destination": "bootstrap",
       "acceptance": "installer-regression-suite",
       "conversion": "selective engine reuse; native global config and wizard replace source runtime",
-      "native_sha256": "e6b185006df84cca2a40edeaa342defdbaefe9ae506f9c6be145f66f2828a597"
+      "native_sha256": "9232f9fd4f414bb408d93a2c766ae21adb8c792e046cfdc5a8fd5763e8d3ceb4"
     },
     {
       "source": "Starting-workflow.md",
@@ -1808,7 +1808,8 @@
     "worker",
     "guided wizard",
     "command setup/removal",
-    "hash-tracked updates"
+    "hash-tracked updates",
+    "assets/native/process-supervisor.py: Linux/WSL subreaper and pidfd-owned descendant quiescence"
   ],
   "exclusions": [
     "source Git and Beads history",

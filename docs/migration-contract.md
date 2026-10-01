@@ -32,6 +32,17 @@ process, defaulting to 30 seconds. It installs no service. Remote dispatch is
 explicit. Steering owns integration and PR actions. Optional read-only Claude
 review advises the Codex owner; isolated Codex review is the labeled fallback.
 
+Remediation moves Git staging/commits from workspace-write workers to explicit
+hash-bound steering handoff/commit/recover. Required skill resources resolve
+from the loaded core, and supporting guidance respects current authorization.
+Merged optional configuration is never retired as an exclusively owned file.
+Owned-descendant supervisors supply both Falcon and web workers from one
+canonical `assets/native/process-supervisor.py`: Linux/WSL subreaper and pidfd
+capabilities are required before launch. Unsupported macOS/native Windows
+workers fail closed; Bash installer compatibility remains separate. Quiescence
+proof is required before scope release, rollback and retry, including detached
+children and unexpected caller death. No platform matrix beyond Linux is claimed.
+
 Web-design retains upstream commits, licenses and incomplete evidence. Its
 installation requires `--allow-unverified-pack` or explicit wizard acknowledgment.
 Migration digests establish integrity, never substitute for release evidence.

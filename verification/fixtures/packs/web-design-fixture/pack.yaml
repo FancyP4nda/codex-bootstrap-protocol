@@ -29,10 +29,10 @@ pack:
   rules_file: null
   # Ownership partition (FR-004): union of all component vendored_paths plus
   # pack_paths must equal the scaffold/ tree exactly. This fixture ships one
-  # pack-authored asset: the target-root .mcp.json (FR-006 delivery surface,
+  # pack-authored asset: the target-root .codex/config.toml (FR-006 delivery surface,
   # T012) — authored by the pack, not vendored from any component.
   pack_paths:
-    - ".mcp.json"
+    - ".codex/config.toml"
 
 components:
   - id: fixture-skill
@@ -85,7 +85,7 @@ components:
       report_digest: null      # FIXTURE: no raw audit report exists
       report_location: null    # FIXTURE: no evidence bundle to point into
       adjudication: accepted
-    # FR-006: value never stored — .mcp.json carries only the ${VAR}
+    # FR-006: value never stored — .codex/config.toml inherits only the named environment variable, never its value
     # placeholder; the fixture server reports set/unset, never the value.
     required_env:
       - "WEB_DESIGN_FIXTURE_TOKEN"

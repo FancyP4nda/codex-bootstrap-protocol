@@ -3,11 +3,33 @@ project:
   name: Codex Bootstrap Protocol
   status: active
   summary: >-
-    Complete global-first native Codex bootstrap migration with optional
-    local-core, full wizard/command setup, protected retrofit, native config,
-    three optional packs and expanded real CLI verification.
+    Global-first native Codex migration and systems remediation F01-F15 are
+    implemented and independently accepted. Configuration ownership, portable
+    installer, native prompts, sandboxed worker handoff, supervised recovery
+    and trust-gated advisory hooks agree; explicit platform/release limits remain.
 active_work: []
 decisions:
+  - date: 2026-09-30
+    summary: >-
+      Systems remediation separates merged personal settings from deletable core
+      ownership; omitted opt-in flags retain prior choices. Local-core resources
+      and roles never fall back to stale globals when required project files are
+      missing. Report-only navigator uses explicit read-only native settings.
+  - date: 2026-09-30
+    summary: >-
+      Falcon workers implement and test under workspace-write; steering alone
+      audits scoped diffs/fresh reports and owns authorized commits, recovery and
+      integration. Shared Linux/WSL subreaper/pidfd supervision requires explicit
+      caller identity and durable shutdown proof before releasing scope or
+      restoring web transactions. Corrupt/unowned state and failed restores are
+      preserved for inspection, not silently treated as completion.
+  - date: 2026-09-30
+    summary: >-
+      User approved one bounded authenticated smoke and normal /hooks review of
+      only a disposable Stop handler. Both passed without personal installation,
+      credential copying or personal trust changes. Stop findings are advisory
+      UI warnings, not model context or automatic continuation. Keep manual QA
+      fallback and web-design release-invalid status; no external release stamp.
   - date: 2026-09-30
     summary: >-
       Execute approved migration from sibling claude-bootstrap-protocol at
@@ -63,6 +85,32 @@ decisions:
       Use normal Git for repository sync; do not require or run bd dolt
       push/pull in this repository.
 verification:
+  - date: 2026-09-30
+    command: BOOTSTRAP_TEST_BASH32=<actual-bash-3.2-fixture> PYTHON=<pinned-validator-venv>/bin/python ./verification/run-all.sh
+    result: passed
+    notes: >-
+      Final stable remediation gate: exit 0, no skips. 166 behavioral tests
+      (291.034 seconds), 28 validator and 8 updater checks; static integrity,
+      exact generated mirrors and real CLI 0.159.2 loading all 22 skill bodies.
+      Independent prompt/docs/residue/script/security/first-run/recovery reviews
+      accepted all F01-F15. See docs/remediation-review.md for reproducible
+      contracts, intermediate failures fixed and actual platform limits.
+  - date: 2026-09-30
+    command: python3 verification/trusted-hook-smoke.py
+    result: passed
+    notes: >-
+      Separately approved normal /hooks UI review trusted one disposable bundled
+      Stop handler. Exact successful native warning delivery then executed silent
+      repeat verified; two loopback requests, no continuation/model-context
+      warning, credential copy or personal trust/config change. Fixture removed.
+  - date: 2026-09-30
+    command: python3 verification/authenticated-smoke.py
+    result: passed
+    notes: >-
+      Separately approved fresh bounded remediation smoke: disposable real Beads,
+      local-core/Falcon/Herald install, authenticated read-only session-start,
+      canonical native TOML reviewer and real PTY footer. Existing login used
+      without credential copying; tracked project content unchanged. No workers.
   - date: 2026-09-30
     command: PYTHON=<validator-venv>/bin/python ./verification/run-all.sh
     result: passed
@@ -138,6 +186,15 @@ verification:
     command: bd ready
     result: passed
 next_steps:
+  - bead_id: codex-bootstrap-protocol-d0p
+    title: Systems remediation supersedes historical migration next-step context
+    action: >-
+      F01-F15 are fixed, regression-covered and independently verified. Use the
+      current README and docs/remediation-review.md for setup, trust, updates,
+      steering commits and fail-closed recovery. macOS/WSL/native Windows runtime
+      execution and external web-design release vetting were not performed;
+      these explicit boundaries are not substituted with fabricated evidence.
+      Older entries below are preserved history, not a new execution queue.
   - bead_id: codex-bootstrap-protocol-ung
     title: September migration supersedes the historical June next steps below
     action: >-

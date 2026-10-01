@@ -11,4 +11,4 @@ dir	.codex/mcp/web-design-fixture-mcp/	ensure_dir	Fixture MCP server stub direct
 file	.codex/mcp/web-design-fixture-mcp/package.json	copy	Fixture MCP package metadata (trivial; zero dependencies).
 file	.codex/mcp/web-design-fixture-mcp/package-lock.json	copy	Fixture MCP lockfile (trivial; zero dependencies).
 file	.codex/mcp/web-design-fixture-mcp/index.js	copy	Fixture MCP server entry (minimal runnable stdio stub; zero dependencies).
-file	.mcp.json	copy	Fixture target-root MCP config: launches the fixture server from its local vendored path with env-var placeholders only (no npx, no registry URLs; FR-006).
+file	.codex/config.toml	copy	Fixture target-root MCP config: launches the fixture server from its local vendored path with named inherited environment variables only (no npx, no registry URLs; FR-006).

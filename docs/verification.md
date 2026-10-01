@@ -30,7 +30,9 @@ third-party Python packages. Source commit: f89f7f3dffb1150fa7df30b180b397dd25a7
   expansion of their full canonical bodies into a loopback mock model request.
   Valid native footer/notifications; orientation hook observed as untrusted.
 
-Total: 84 behavioral/validator/updater checks, plus static and real CLI gates.
+Initial migration total: 84 behavioral/validator/updater checks, plus static and
+real CLI gates. This is historical baseline evidence; the systems remediation
+adds separate regressions and acceptance below.
 All test projects/homes are temporary. The loopback mock is test-only and makes
 no external model call. Process/socket sandboxes may require permission to run
 that local fixture; rejection is not silently skipped.
@@ -59,7 +61,9 @@ The real model smoke does not complete every long product/design workflow.
 All skills are discovered and explicitly loaded; behavioral workflow checks use
 controlled mocks where appropriate. macOS/WSL were not executed on this Linux
 host. Hooks are prepared and payload-tested but never silently approved; real
-CLI trust remained untrusted. Documentation MCP authentication is not automated.
+CLI trust remained untrusted in the initial migration gate. The separately
+approved remediation check below exercises only disposable hook trust.
+Documentation MCP authentication is not automated.
 
 Web-design remains unverified/release-invalid. Licenses, pins and digests are
 preserved/refreshed; migration integrity and inherited human triage are not an
@@ -67,3 +71,32 @@ adjudicated scanner evidence bundle. No release stamp is manufactured.
 
 Previous verification/PRD/plan history remains archived and in durable YAML;
 old passing checks are not substituted for this migration's gates.
+
+## Systems-review remediation
+
+The F01–F15 contracts, baseline reproductions, independent review and fresh
+acceptance results are maintained in [remediation-review.md](remediation-review.md).
+Use `BOOTSTRAP_TEST_BASH32=/absolute/path/to/bash-3.2` with the pinned validator
+environment for the real shell gate; missing that fixture is a skip, not a pass.
+Linux/WSL worker supervision requires subreaper/pidfd capabilities and refuses
+before launch on unsupported platforms. This Linux host is not a macOS/WSL or
+native Windows execution matrix.
+
+Both separately authorized supplemental checks passed in this remediation:
+
+- `python3 verification/authenticated-smoke.py`: real Beads/local-core install,
+  read-only authenticated session, native TOML compatibility loader, unchanged
+  tracked content and native PTY footer.
+- `python3 verification/trusted-hook-smoke.py`: normal project and `/hooks` UI
+  review of one disposable handler; enabled/trusted native observation, real
+  advisory Stop warning delivery, second-turn deduplication and no continuation
+  or model-context warning. This uses a loopback model, not credentials or a
+  trust bypass. At the handler review screen use `:trust` to send only the trust
+  key, then `:check`; `:enter` on the enabled row would toggle it off. Every
+  fixture and its temporary trust record is removed after the check.
+
+Final remediation gate: exit 0; 166 behavioral tests (including five actual
+Bash 3.2 cases), 28 validator and eight updater checks passed, with no skips.
+Static integrity/syntax/mirror checks and real CLI discovery/explicit loading
+of all 22 skills also passed. See the remediation record for the independently
+reviewed contracts, intermediate failures/fixes, exact environment and boundaries.

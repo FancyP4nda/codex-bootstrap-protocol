@@ -1,6 +1,6 @@
 {
   "falcon": {
-    "sha256": "2d0094cd1307e60af91de042f04c69fe199502255c42841b2a2eb0d67b382650",
+    "sha256": "0bf6ce1379e55b44494d29e72bbe2d9d9d8a8b719bc613382967df2f6cdcc8ff",
     "validation": "first-party native adaptation"
   },
   "herald": {
@@ -8,7 +8,7 @@
     "validation": "first-party native adaptation"
   },
   "web-design": {
-    "sha256": "0aeef8d3a4ffee57d2fd6fcd9914f81293d07edf054b667a7da0fabf1be428e5",
+    "sha256": "e19e6662ed79dbf1d46a1701b47364938c6c95b3c0cd10abeaef3f4bdf1d7714",
     "validation": "unverified: evidence fields remain null"
   }
 }

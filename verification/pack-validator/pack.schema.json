@@ -46,7 +46,7 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Pack-authored assets (mission guide, notes, rules file, .mcp.json) as scaffold-relative paths. Must be disjoint from every component's vendored_paths; the union of all component vendored_paths plus pack_paths must equal the scaffold/ tree exactly. That partition is T006 validator-checked semantics, not schema-expressible."
+          "description": "Pack-authored assets (mission guide, notes, rules file, .codex/config.toml) as scaffold-relative paths. Must be disjoint from every component's vendored_paths; the union of all component vendored_paths plus pack_paths must equal the scaffold/ tree exactly. That partition is T006 validator-checked semantics, not schema-expressible."
         }
       }
     },
@@ -283,12 +283,12 @@
           "type": "array",
           "uniqueItems": true,
           "items": { "type": "string", "minLength": 1 },
-          "description": "Env var names the component's server requires. Values are never stored; .mcp.json carries only ${VAR} placeholders (FR-006). Required when kind is mcp."
+          "description": "Env var names the component's server requires. Values are never stored; .codex/config.toml uses env_vars to inherit named variables without storing their values (FR-006). Required when kind is mcp."
         },
         "setup_steps": {
           "type": "array",
           "items": { "type": "string", "minLength": 1 },
-          "description": "Copy-pasteable, user-run setup commands (outside ./bootstrap). Required when kind is mcp. The .mcp.json/setup-flow contract itself is T012; this field records declarations only."
+          "description": "Copy-pasteable, user-run setup commands (outside ./bootstrap). Required when kind is mcp. The .codex/config.toml/setup-flow contract itself is T012; this field records declarations only."
         }
       },
       "allOf": [

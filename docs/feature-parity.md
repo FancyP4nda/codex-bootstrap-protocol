@@ -15,11 +15,17 @@
 | Global promotion/update | Diff-gated config, hash tracking, backups, unchanged obsolete retirement |
 | Manifest installer | Full preflight, protected paths, collisions, dry-run, safe retrofit |
 | Guided setup / command | TTY wizard, no-prompt flags, Bash/Zsh/Fish PATH, setup/removal |
-| Falcon | Codex worktrees, dispatch/status/amend/resume/cancel/release/paste, local autopilot monitor |
+| Falcon | Sandboxed worktrees, attempt-specific validated reports, audited hash-bound steering handoff/commit/recover; local stoppable monitor |
 | Herald | Native design/prototype/accessibility/review skill and four TOML specialists |
 | Impeccable / Taste | Full vendored subset, native helpers, licenses, explicit unverified opt-in |
 | Pack validation/updating | 28 validator and 8 updater checks; truthful missing-evidence rejection |
 
 Skill instructions express workflow intent; only native sandbox/approval controls enforce tool permissions. Global/project duplicate orientation handlers are avoided. No persistent Falcon service, Claude background runtime, automatic hook trust or hardcoded model default is shipped.
+
+Core update/config ownership is separate: prior opt-ins and merged personal
+settings survive omitted flags. Doctor has strict missing/invalid-core status,
+while valid customization is preserved and local-core is checked independently
+of global installation. Resource links follow the loaded core, and shared
+authorization/session guidance agrees with the native checkpoint/wrapup skills.
 
 Offline tests verify all workflows structurally and with mocks. Real Codex discovery verifies every skill; a bounded authenticated session exercises session invocation and the [native exec-config role loader](native-agents.md). CLI 0.159.2's generic spawn interface did not expose a named-role selector, so native named-role spawning is not claimed verified. This is not a claim that every lengthy design/product workflow has been completed against a real model. Linux is the tested host; macOS/WSL portability is an intended Bash contract, not an executed platform matrix.

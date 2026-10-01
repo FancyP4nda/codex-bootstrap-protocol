@@ -1,0 +1,5 @@
+# Test-only native MCP config; inherit the named variable, never store its value.
+[mcp_servers.web_design_fixture]
+command = "node"
+args = [".codex/mcp/web-design-fixture-mcp/index.js"]
+env_vars = ["WEB_DESIGN_FIXTURE_TOKEN"]
