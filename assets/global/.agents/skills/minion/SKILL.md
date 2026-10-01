@@ -1,9 +1,10 @@
 ---
 name: minion
 description: Run explicit Codex subagent fanout for report-only analysis or guarded write-capable execution; defaults to 6 workers and caps fanout at 6 workers.
-protocol_version: 2.0
-origin: SCAR Labs
-cognitive_tier: Execution
+metadata:
+  protocol_version: "2.0"
+  origin: SCAR Labs
+  cognitive_tier: Execution
 ---
 
 # Minion

@@ -19,14 +19,31 @@ def toml_value(value):
     return json.dumps(value)
 
 
+def local_core(root):
+    stamp=root/'.codex/bootstrap.json'
+    if stamp.exists():
+        data=json.loads(stamp.read_text())
+        if not isinstance(data,dict) or data.get('format')!=1 or not isinstance(data.get('managed'),dict):
+            raise ValueError('invalid project bootstrap metadata; cannot safely select role layer')
+        mode=data.get('core_mode')
+        if mode not in (None,'global','local'):
+            raise ValueError('invalid project core_mode; cannot safely select role layer')
+        return mode=='local' or (mode is None and '.agents/skills/session-start/SKILL.md' in data['managed'])
+    return (root/'.agents/skills/session-start/SKILL.md').is_file()
+
+
 def command(args):
     if not re.fullmatch(r'[a-zA-Z0-9_-]+',args.role): raise ValueError('invalid role name')
     root=Path(args.root).resolve(strict=True)
     home=Path(os.environ.get('CODEX_HOME',str(Path.home()/'.codex')))
-    choices=[root/'.codex/agents'/f'{args.role}.toml',home/'agents'/f'{args.role}.toml']
-    role=next((p for p in choices if p.is_file()),None)
-    if role is None: raise ValueError(f'role not found: {args.role}')
+    choices=[root/'.codex/agents'/f'{args.role}.toml']
+    project_local=local_core(root)
+    if not project_local: choices.append(home/'agents'/f'{args.role}.toml')
+    role=next((p for p in choices if p.exists() or p.is_symlink()),None)
+    if role is None:
+        raise ValueError(f'role not found: {args.role}'+('; declared local-core requires the project role; stale global fallback refused' if project_local else ''))
     if role.is_symlink(): raise ValueError('symlink role refused')
+    if not role.is_file(): raise ValueError('role is not a regular file')
     config=tomllib.loads(role.read_text())
     if any(not isinstance(config.get(k),str) or not config[k] for k in ('name','description','developer_instructions')):
         raise ValueError('role requires name, description and developer_instructions')

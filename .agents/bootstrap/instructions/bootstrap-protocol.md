@@ -1,6 +1,6 @@
 # Bootstrap Protocol
 
-**Scope:** installed globally by `codex-bootstrap`. The pipeline and doc conventions below apply in repos bootstrapped with the kit, which have `docs/`. The standing rules apply everywhere.
+**Scope:** reference guidance installed with global or project-local core by `codex-bootstrap`; not auto-loaded policy. Apply relevant conventions under system/developer instructions, the user's current request and applicable project instructions. References are resolved relative to this loaded guide.
 
 ## Pipeline map
 
@@ -16,40 +16,40 @@ idea
   -> plan-to-beads-unified   (beads at triage:backlog)
   -> refine-beads            (beads to triage:ready, just in time)
   -> $session-start          (orient, pick and claim work)
-  -> work the beads          (tdd; or $falcon work beads with the falcon pack)
-  -> $session-wrapup         (bead resume notes, docs, changelog.yaml, handoff.yaml, committed on the work branch)
+  -> work the beads          (tdd; or $falcon dispatch with the falcon pack)
+  -> $session-wrapup         (bead resume notes, docs, changelog.yaml, handoff.yaml, committed/published only when authorized)
 ```
 
 **Entry points:**
 - A raw idea starts at `brainstormer`.
 - An existing spec or notes go straight to `product-architect`.
 - A brownfield feature starts at `grill-with-docs`.
-- Small work that doesn't warrant a PRD: file one bead from `~/.agents/skills/refine-beads/work-item-templates.md` with `bd create`, run `refine-beads` on it, and execute.
+- Small work that doesn't warrant a PRD: file one bead from the [bundled templates](../../skills/refine-beads/work-item-templates.md) with `bd create`, run `refine-beads` on it, and execute.
 
 ## Project docs
 
 - **`docs/prd.md` is the single home for product truth.** One product-truth document keeps plans and agents from working off divergent copies. `architecture.md` may point to it, but it doesn't restate product intent; if it does, propose moving that content to the PRD.
 - **Context docs:** `architecture.md`, `backend.md`, `frontend.md`, `data-model.md`, `security.md`, `tests.md` and `CONTEXT.md` (the glossary) hold system truth. Skills read them when present and work without them. `$session-wrapup` keeps them current.
-- **Session state has three layers.** Beads hold the work queue plus a resume note (latest comment) on each in-progress bead. `handoff.yaml` holds the short session story. `changelog.yaml` records what shipped. `$session-start` reads all three; `$session-wrapup` writes them, and `$session-checkpoint` writes just the bead notes plus a commit. Schemas are in `~/.agents/skills/session-wrapup/`.
-- **The handoff travels with the work.** Wrap-up commits it on the session's work branch, so it merges along with the code. A wrap-up left on an unmerged branch means the next session orients from stale state; `$session-start` warns about those branches.
+- **Session state has three layers.** Beads hold the work queue plus a resume note (latest comment) on each in-progress bead. `handoff.yaml` holds the short session story. `changelog.yaml` records what shipped. `$session-start` reads all three; `$session-wrapup` writes them, and `$session-checkpoint` records authorized resume notes, without implied commit/push. Schemas are [handoff](../../skills/session-wrapup/handoff-schema.md) and [changelog](../../skills/session-wrapup/changelog-schema.md).
+- **The handoff travels with the work.** When authorized, commit it with the scoped work so it travels with the code; otherwise report its local-only state. A wrap-up left on an unmerged branch means the next session orients from stale state; `$session-start` warns about those branches.
 
 ## When context files conflict
 
-The higher item wins. State the conflict and both sources, then propose the smallest edit that reconciles them, starting with the lower-precedence file.
+System/developer instructions, current user intent and applicable AGENTS.md govern actions; this list organizes project evidence, not instruction authority. Surface conflicts and reconcile them within the request. Security constraints must not be bypassed, and runtime facts may require a product decision rather than inventing feasibility.
 
 1. `docs/security.md` — safety, secrets, data handling.
-2. The project's `AGENTS.md` — project conventions.
-3. `docs/architecture.md` — runtime facts. A real constraint here outranks an incompatible feature request.
+2. The project's `AGENTS.md` — applicable project instructions.
+3. `docs/architecture.md` — runtime facts; report infeasible requests and seek a decision.
 4. `docs/prd.md` — product requirements.
 5. `.agents/bootstrap/instructions/development-standards.md`, then these workflow rules.
 
 ## Standing rules
 
-- **Beads is the only work tracker.** Track work as beads (`bd create`, `bd update --claim`, `bd close`), not bd create/bd create lists or markdown TODOs. In repos without `.beads/`, keep progress in the conversation.
-- **These rules win over bd's generated instructions.** `codex-bootstrap` runs `bd init --skip-agents`, so bd doesn't add its own `AGENTS.md`/`AGENTS.md` block or `bd prime` hook. If a repo has them anyway (older setup, or `bd setup` run by hand), follow these rules on pushing (feature branches freely, never `main` without asking), ending a session (`$session-wrapup`, keeping remote branches), and issue types (no `task` type; see the Readiness Checklist).
+- **Use the repository's work tracker.** Where Beads is established, track authorized work with `bd create`, `bd update --claim` and `bd close`, not a parallel Markdown TODO list. In repos without `.beads/`, keep progress in the conversation; do not initialize a tracker just for orientation.
+- **Repository instructions govern its workflow.** `codex-bootstrap` uses `bd init --skip-agents`; this guide does not override existing/generated AGENTS.md or user instructions. Honor repository-specific tracking, branch, commit and push requirements; surface an unresolved conflict before an affected outward action. Readiness is evidence, not authorization to implement.
 
 - **Sessions are disposable.** When context bloats, clear and re-orient with `$session-start` and the handoff rather than nursing a stale session.
-- **Work persists by being pushed.** Push to the feature branch as the normal way work persists; nothing is "done" until it's on origin.
+- **Preserve authorized work.** Record scoped changes and recovery evidence; commit/push only under current user/repository authority. Clearly state local-only work or failed synchronization. Tracked Beads exports use normal Git; Dolt remote synchronization is not implied.
 - **Ask before destructive actions:** deleting data, force-pushing, rewriting history.
 - **Stop before outward actions:** opening, editing or merging a PR, commenting, messaging, deploying. See the confirmation gates in `workflow-execution.md`.
-- **After context compaction,** a skill invocation in a system reminder may be work that's already done. Check `handoff.yaml` `entries[0]` (and, with falcon, `.codex/state/tmp/falcon-reports-<branch>.yaml`) before re-running it.
+- **After context compaction,** a skill invocation in a system reminder may be work that's already done. Check `handoff.yaml` `entries[0]` (and, with falcon, current dispatch records `.codex/state/tmp/falcon/<dispatch>.json`, whose `report` identifies the latest validated attempt; earlier reports are history) before re-running it.

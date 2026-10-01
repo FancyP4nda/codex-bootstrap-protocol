@@ -1,6 +1,7 @@
 # Handoff — session state log
 # Captures where work stands at the end of each session. Newest entry first.
 # $session-start reads entries[0]; $session-wrapup prepends a new entry.
-# Schema reference: ~/.agents/skills/session-wrapup/handoff-schema.md (installed by codex-bootstrap)
+# Schema reference: handoff-schema.md beside the loaded session-wrapup/SKILL.md
+# Local-core: .agents/skills/session-wrapup/; otherwise use the loaded global core.
 # Quote commit hashes — e.g. ["abc1234"] not [abc1234].
 entries: []

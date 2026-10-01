@@ -9,7 +9,7 @@ Schema reference for `docs/handoff.yaml` — the session-state log. Each entry c
 | Role | Operation |
 |------|-----------|
 | `$session-start` | Reads `entries[0]` for session orientation |
-| `navigator-recon` | Reads `entries[0]` via `yq '.entries[0]' docs/handoff.yaml` |
+| `navigator-recon` | Reads `entries[0]` with an available YAML parser or bounded direct reading; no new prerequisite |
 | `$session-wrapup` | Prepends a new entry at session end. Never overwrites historical entries. |
 
 ## Universal conventions
@@ -63,7 +63,7 @@ entries:
 - **`next_steps`** — prose action list. Priority-ordered. Often references beads, sometimes named operations (e.g., "Open PR for branch X").
 - **`epic_progress`** — one-line delta per active epic, e.g., `"asteroid-001 35% → 48%"`.
 - **`commits`** — list of 7-char commit hashes from the session, in order. Always quoted.
-- **`notes`** — optional. Use for context that doesn't fit the structured fields (e.g., "5 falcon dispatches stashed at `.codex/state/tmp/falcon-reports-<branch>.yaml`").
+- **`notes`** — optional. Use for context that doesn't fit the structured fields (e.g., "5 Falcon dispatch records at `.codex/state/tmp/falcon/<id>.json`").
 
 ## Example entry
 
@@ -88,7 +88,7 @@ entries:
     epic_progress: "asteroid-001 35% → 35% (no movement); shop-economy epic 0% → 22%"
     commits: ["3f8a1c2", "9e02bb4", "11d4470"]
     notes:
-      - "1 falcon dispatch stashed at .codex/state/tmp/falcon-reports-feature-work-20260525-power-up-shop-rotation.yaml"
+      - "1 Falcon dispatch record at .codex/state/tmp/falcon/abc123.json; inspect its current report and steering commit"
 ```
 
 ## File location & lifecycle
@@ -97,6 +97,6 @@ entries:
 
 **First session:** the file does not exist yet. Run `$session-wrapup` at session end — it creates the file on first write.
 
-**Per session:** `$session-start` reads `entries[0]` for orientation; `$session-wrapup` prepends a new entry at session end. With the falcon pack, dispatch reports contribute via the per-branch stash at `.codex/state/tmp/falcon-reports-<sanitized-branch>.yaml`, which `$session-wrapup` consumes to populate `completed`, `discovered`, `commits`, etc.
+**Per session:** `$session-start` reads `entries[0]` for orientation; `$session-wrapup` prepends a new entry at session end. With the Falcon pack, inspect `.codex/state/tmp/falcon/<id>.json` and the current attempt file named by `report`. Include only independently verified results and steering-owned commits actually integrated into this session branch; worker output or a `complete` status alone is not integration evidence. Preserve report/hash and dispatch IDs as evidence; do not reuse old attempt results as current work.
 
 **Archive:** `$session-wrapup` keeps the live file scannable by moving the oldest entries to `.archive/handoff/<year>.yaml` once `entries` has more than 10 items. `$session-start` only reads `entries[0]`.

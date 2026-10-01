@@ -54,4 +54,4 @@ None.
 <!-- Any post-merge steps: migrations, env vars, worker restarts, etc. Delete this section if none. -->
 
 ---
-Generated with [Codex](https://claude.com/claude-code)
+Generated with [Codex](https://learn.chatgpt.com/docs/codex-cli)

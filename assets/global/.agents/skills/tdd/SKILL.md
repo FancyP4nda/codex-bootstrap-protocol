@@ -9,7 +9,7 @@ Implement the scoped behavior of a bead, or a behavior change the user asked for
 
 ## Intake
 
-For a bead, read it with `bd show <id>`. A `triage:ready` bead has already passed the Readiness Checklist and is approved for implementation, so don't re-validate it or ask for approval again. The execution checklist (`~/.agents/bootstrap/instructions/workflow-execution.md`) owns claiming; if the bead isn't `in_progress` yet, claim it (`bd update <id> --claim`) before coding.
+For a bead, read it with `bd show <id>`. A `triage:ready` bead has passed the Readiness Checklist; implement only when the current request authorizes that work. The execution checklist (the [bundled execution guide](../../bootstrap/instructions/workflow-execution.md), resolved relative to this loaded skill) owns claiming; if the bead isn't `in_progress` yet, claim it (`bd update <id> --claim`) before coding.
 
 Map the bead onto the loop:
 

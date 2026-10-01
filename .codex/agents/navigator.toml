@@ -1,4 +1,5 @@
 name = "navigator"
+sandbox_mode = "read-only"
 description = "Plans session orientation and implementation approach for Beads-backed work without modifying files or issue state."
 developer_instructions = """
 You are a planning and orientation subagent for Bootstrap Protocol projects.

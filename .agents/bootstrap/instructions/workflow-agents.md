@@ -3,7 +3,7 @@
 Purpose: Multi-agent coordination and Playwright testing conventions.
 
 > "Work item" / "item" / "issue" here means a **bead**, managed with the beads (`bd`) CLI.
-> **Scope:** installed globally (`~/.agents/bootstrap/instructions/`) and loaded only when referenced instructions are relevant. Markdown is not an automatically executed rule. Beads steps apply where the repo has `.beads`; elsewhere, omit them.
+> **Scope:** loaded from the active core's `.agents/bootstrap/instructions/` (global home or project-local core), only when referenced instructions are relevant. Markdown is not an automatically executed rule. Beads steps apply where the repo has `.beads`; elsewhere, omit them. Current user/repository authority controls delegation and writes.
 
 Use this file when **coordinating multiple agents** on the same project or running
 **Playwright tests** for UI verification. It is not needed for single-agent

@@ -9,7 +9,7 @@ Schema reference for `docs/changelog.yaml` — the structured release log. Each 
 | Role | Operation |
 |------|-----------|
 | `$session-start` | Reads `entries[0]` for recent context |
-| `navigator-recon` | Reads `entries[0]` via `yq '.entries[0]' docs/changelog.yaml` |
+| `navigator-recon` | Reads `entries[0]` with an available YAML parser or bounded direct reading; no new prerequisite |
 | `$session-wrapup` | Prepends a new entry at session end. Never overwrites historical entries. |
 
 ## Universal conventions
@@ -74,7 +74,7 @@ entries:
 - **`epic_progress`** — one-line delta per active epic, e.g., `"asteroid-001 35% → 48%"`.
 - **Area buckets** (`backend`, `frontend`, `infra`, `docs`, `tests`) — each bullet prefixed with `added:`, `changed:`, or `fixed:`. Omit any bucket that didn't change this session.
 - **`tests`** — short string, not a list. Format: `"N new/updated, M total passing"`.
-- **`standards`** — optional. Records which numbered standards rules (see [`development-standards.md`](../rules/development-standards.md)) fired this session, and any new candidate rules surfaced. Promote candidates to confirmed after they recur.
+- **`standards`** — optional. Records which numbered standards rules in the project's `.agents/bootstrap/instructions/development-standards.md` applied this session, and any new candidate rules surfaced. Promote candidates to confirmed after they recur.
 - **`commits`** — list of 7-char commit hashes from the session, in order. Always quoted.
 
 ## Example entry
@@ -109,6 +109,6 @@ entries:
 
 **First session:** the file does not exist yet. Run `$session-wrapup` at session end — it creates the file on first write.
 
-**Per session:** `$session-start` reads `entries[0]` for orientation; `$session-wrapup` prepends a new entry at session end. With the falcon pack, dispatch reports contribute via the per-branch stash at `.codex/state/tmp/falcon-reports-<sanitized-branch>.yaml`, which `$session-wrapup` consumes to populate `summary`, `beads`, area-bucket bullets, `commits`, and any `standards` firings flagged by workers.
+**Per session:** `$session-start` reads `entries[0]` for orientation; `$session-wrapup` prepends a new entry at session end. With the Falcon pack, inspect `.codex/state/tmp/falcon/<id>.json` and the current attempt file named by `report`. Include only independently verified results and steering-owned commits actually integrated into this session branch; worker output or a `complete` status alone is not integration evidence. Preserve report/hash and dispatch IDs as evidence; do not reuse old attempt results as current work.
 
 **Archive:** `$session-wrapup` keeps the live file scannable by moving the oldest entries to `.archive/changelog/<year>.yaml` once `entries` has more than 20 items. `$session-start` only reads `entries[0]`.

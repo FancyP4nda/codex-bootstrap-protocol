@@ -14,22 +14,22 @@ for scoping or planning work — see `workflow-planning.md` for that.
 
 ## Confirmation Gates (Publication Intent)
 
-Some actions take work from "private/local" to "the team is being asked to look at this, react to it, or merge it." These are publication events: they need explicit user confirmation first, whatever standing autonomy the user has granted, because others see them and they are hard to take back. Other shared-state operations (routine pushes, syncs, backups) aren't gated; they are how work normally moves.
+Actions require authority from the current request and applicable repository instructions. A request to implement normally covers scoped local edits/tests; a review/status request does not. Commits, branch pushes and work tracking follow explicit user/repository workflow, not universal autonomy. Shared-state changes are not authorized merely because they are called sync or backup.
 
-The test is **publication intent**: does this action signal to the team "review this / approve this / take action on this"? If yes, gate. If it's storage/sync/backup, don't.
+Check the action's scope and side effects. If current user/repository authority clearly covers it, proceed within that scope; otherwise ask before an outward/destructive action. Authorization for a branch push does not authorize a PR, deployment or message.
 
 ### What's gated, what isn't
 
 | Action | Gated? | Why |
 |--------|--------|-----|
-| Edit / Write / Read files | No | Local |
-| `git add`, `git commit` | No | Local |
+| Read files | No | Read-only within task scope |
+| Edit files, `git add`, `git commit` | As authorized | Implementation and applicable repo workflow only; never inferred from report-only requests |
 | Run tests, linters, build | No | Local |
-| Update local work-item state | No | Local |
-| `git push` to a feature branch (any number of times) | **No** | Storage/sync; the branch is just where the work lives until a PR points at it |
+| Update local work-item state | As authorized | Tracker writes belong to the authorized workflow |
+| `git push` to a feature branch | As authorized | Requires current user/repository publication authority; sync is still an external write |
 | `git push --force` (any branch) | **Yes** | Destructive; can overwrite others' commits |
-| `git push` to `main` / protected branch | **Yes** | Bypasses PR review entirely |
-| `bd dolt commit` / `bd dolt push` | No | Routine sync of shared work-tracking DB (note: `bd sync` was removed in bd 1.0) |
+| `git push` to `main` / protected branch | As authorized | Honor the repository's explicit branch/publication rules; never infer it from feature-branch permission |
+| `bd export -o .beads/issues.jsonl` | As authorized | Local tracked export; commit/publish through normal Git when permitted. No Dolt remote push/pull requirement |
 | `gh pr create` (including `--draft`) | **Yes** | The publication event |
 | `gh pr ready` (lift draft → ready) | **Yes** | Same publication event, different command |
 | `gh pr edit` (title or body changes) | **Yes** | Visible change to a public artifact |
@@ -42,9 +42,9 @@ The test is **publication intent**: does this action signal to the team "review 
 
 ### Procedure (end-of-request rhythm)
 
-The natural unit for confirmation is the **request**, not the commit or push. Inside one request you may make many local commits and many feature-branch pushes — all proceed under autonomy. The gate fires once, at the end of the request, when you're handing back control:
+The natural unit of scope is the request. Identify authorized local work and any repository-authorized publication at intake; a procedural list does not create permission. At handoff:
 
-1. **Finish the requested work.** Local edits, commits, tests, and feature-branch pushes happen freely.
+1. **Finish the requested work.** Perform scoped edits/tests and only the commits/pushes authorized by the current user/repository workflow.
 2. **Summarize what was done.** What changed, what was verified, what is on the branch (and on origin if pushed).
 3. **Check PR state.**
    - **No PR yet for this branch:** Ask: *"Work for [request] is done. Want me to open the PR?"* Wait for approval before `gh pr create`.
@@ -67,7 +67,7 @@ This is a fuller pass than a one-line append because the PR is the team's view o
 
 ### Autonomy instructions do not authorize gated actions
 
-A standing instruction like "work without stopping for clarifying questions" is **scope authorization** — approval to take judgment calls about approach, file structure, naming, sequencing, and similar local decisions. It isn't authorization to push to a protected branch, force-push, create/edit/merge a PR, or post externally. The gate holds for the whole session unless the user explicitly says you can do a specific gated action without asking.
+A standing instruction like "work without stopping" concerns persistence and approach, not new scope or outward authority. Follow explicit user/repository commit and publication instructions; never infer force-push, PR, deployment or message permission from generic autonomy.
 
 If the user says "ship it," that is approval for that one gated action in the immediate conversation context. It does not stand for the rest of the session.
 
@@ -81,7 +81,7 @@ The most common failure mode is treating "the workflow says to create the PR nex
 
 ## Branching Strategy
 
-All work is done on feature branches that are merged to `main` via pull request.
+Follow the repository's branch policy. Where it specifies feature branches and PR integration, use the convention below. Do not impose this policy on repositories with another explicit authorized workflow.
 
 ### Branch Naming Convention
 
@@ -151,7 +151,7 @@ When the Start Checklist's item ID has a `pair:<id>` label:
 
 If only one half of a pair is claimable (e.g., the sibling is `in_progress` by another session), don't claim just one half; pick a different pair. Paired beads must not be split across sessions.
 
-**Falcon integration (falcon pack only):** for paired-bead dispatches, use `$falcon work beads <bead-a>,<bead-b> --sequential` — one worker handles both in declared order, inheriting context cleanly. See `--sequential` in the project's `.agents/skills/falcon/COMMANDS.md`.
+**Falcon integration (pack only):** use `$falcon dispatch --prompt-file FILE --scope PATH [--bead ID]`. For ordered tasks, steering waits for and verifies the first dispatch before launching the next with fresh context; there is no `--sequential` subcommand. Workers implement/test but never stage/commit. Steering runs `handoff <id>`, independently reviews/tests the actual scoped diff and fresh report, then uses `commit <id> --message TEXT --report-hash HASH --diff-hash HASH` with the audited hashes. Review the returned worker-branch commit before authorized integration. Records are `.codex/state/tmp/falcon/<id>.json`; `report` points to current attempt evidence. See the installed pack's COMMANDS.md.
 
 ### Verify Effort Forecast
 
@@ -355,12 +355,12 @@ git push
 
 > Always stage specific files. Avoid `git add .` — it can accidentally stage secrets, binaries, or temporary files.
 
-> Pushing to a feature branch is ungated and proceeds under autonomy. `git push --force`, pushing to `main`/protected branches, and any `gh pr ...` operation are gated — see [Confirmation Gates](#confirmation-gates-publication-intent).
+> Run the push only when authorized by the current user/repository workflow. A local checkpoint does not authorize it. Destructive or additional outward actions require their own authority — see [Confirmation Gates](#confirmation-gates-publication-intent).
 
 **Don't:**
 
 - Write directly to `.beads/issues.jsonl`. Go through `bd update` / `bd label add` / `bd close` so bd validates and maintains its Dolt working set. (Reading a snapshot produced by `bd export` is fine — only writes are forbidden.)
-- Use `bd sync`. Removed in bd 1.0; use `bd export -o .beads/issues.jsonl` for jsonl sync and `bd dolt push` for cross-machine sync.
+- Use removed `bd sync` or require Dolt remote push/pull. Use `bd export -o .beads/issues.jsonl` for the tracked snapshot and ordinary Git synchronization under repository authority.
 
 > `bd show --json <id>` returns a list (single-element) in bd 1.0, not an object. Scripts that parse it must handle the list shape (`json.loads(out)[0]` or equivalent).
 
@@ -374,7 +374,7 @@ After completing a set of features, update `docs/changelog.yaml`.
 
 When the feature branch is ready for merge:
 
-1. **Push the branch** (ungated — proceeds under autonomy):
+1. **Push the branch if authorized** by the current user/repository workflow:
    ```bash
    git push -u origin <branch-name>
    ```
@@ -385,7 +385,7 @@ When the feature branch is ready for merge:
    ```
    See [Confirmation Gates](#confirmation-gates-publication-intent). At end-of-request, ask the user before running this command. Read `.github/PULL_REQUEST_TEMPLATE.md` and fill in all sections per `rules/pull-requests.md`. The `gh` CLI auto-populates the body from the template when it exists.
 
-3. **[GATE] Subsequent commits to a branch with an open PR:** Push freely (ungated), but at end-of-request ask the user whether to update the PR title/body to reflect the new work. If approved, do a full template re-review per the [Post-PR updates procedure](#post-pr-updates-full-template-re-review).
+3. **[GATE] Subsequent commits to a branch with an open PR:** Push only under current user/repository authority. Separately ask whether to update the PR title/body. If approved, perform the full template re-review above.
 
 4. **[GATE] Request human review:** After creating the PR, request human review; merging to main needs explicit human approval.
 

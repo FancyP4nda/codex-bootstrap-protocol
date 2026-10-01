@@ -20,12 +20,18 @@ Run `$session-start` when a session begins work. It checks the environment and g
 
 ### First-Time Setup (Optional)
 
-Install Codex hooks for automatic context refresh:
+Prepare optional advisory Codex hooks only when the user requests them:
 
 ```bash
 bd prime                # Orient this Beads workspace
-codex-bootstrap --doctor  # Verify native setup (read-only)
+codex-bootstrap --doctor /path/to/project  # Verify native setup (read-only)
+codex-bootstrap /path/to/project --hooks --non-interactive --no-launch
+# Trust the project and inspect/approve its exact hook definitions in Codex /hooks.
 ```
+
+Doctor does not install or trust hooks. Existing Beads setup needs no new prefix;
+fresh project setup requires its chosen prefix. Omitted flags on later core
+updates retain prior settings; hook execution remains user-controlled.
 
 ---
 
@@ -68,9 +74,9 @@ It is perfectly acceptable to find no patterns worth capturing. Improve slowly a
 
 ## Session Completion
 
-Run `$session-wrapup` before ending a session. It verifies the build, leaves a resume note on each in-progress bead, maintains the docs, writes the handoff, and commits and pushes it all on the work branch so the next `$session-start` finds it. Create a PR only when the user asks (see `workflow-execution.md`: Pull Requests).
+Run `$session-wrapup` before ending an implementation session. It verifies the build, leaves authorized bead resume notes, maintains relevant docs and writes the handoff. Commit or push only when authorized by the current request and applicable repository instructions; report unsynced work when publication is not authorized. Read-only review/status requests do not authorize these writes. Create a PR only when authorized (see `workflow-execution.md`: Pull Requests).
 
-Mid-session, run `$session-checkpoint` to commit, push and note in-progress beads in under a minute: before stepping away, before long or risky operations, or when context is getting full. A session that ends abruptly then loses nothing but the last few minutes.
+Mid-session, `$session-checkpoint` records authorized resume notes before stepping away, risky operations or context compaction. It does not imply a commit or push. Honor read-only requests and report notes instead if writes are not authorized; use the actual checkpoint skill contract.
 
 ### Doc upkeep at session completion
 

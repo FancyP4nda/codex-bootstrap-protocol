@@ -1,6 +1,6 @@
 # Development Workflow Blueprint
 
-These workflow rules are installed globally in `~/.agents/bootstrap/instructions/` by `codex-bootstrap` and load in every session. The beads (`bd`) steps apply only in repos that have `.beads/`. Project-specific standards live in each project's `.agents/bootstrap/instructions/development-standards.md`.
+These referenced guides live alongside the loaded core: global `~/.agents/bootstrap/instructions/` or project `.agents/bootstrap/instructions/` with `--local-core`. They do not auto-load as Codex rules; read relevant guides under applicable user/project instructions. The beads (`bd`) steps apply only in repos that have `.beads/`. Project-specific standards live in each project's `.agents/bootstrap/instructions/development-standards.md`.
 
 | File | Covers |
 |------|--------|

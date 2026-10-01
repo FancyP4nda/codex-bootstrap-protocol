@@ -37,7 +37,7 @@ Where a refine-beads field can't be derived mechanically from the plan, write `T
    - Skip `Execution-ready: No` and `HITL` tasks, and list them in the report. HITL tasks are human decisions; track them as beads only if the user asks.
    - `Execution-ready: Yes` means project-planner already checked the Agent Handoff Packet, so don't re-grade it. If a task plainly lacks a packet, ask for the plan to be fixed.
 4. **Skip existing beads.** Run `bd list --label task:<id> --limit 0` (and `--label epic:<id>`) and reuse beads that already exist for a plan ID. `--limit 0` matters: `bd list` otherwise stops at 50 results without warning.
-5. **Choose a template** from `~/.agents/skills/refine-beads/work-item-templates.md`:
+5. **Choose a template** from the [sibling refine-beads template](../refine-beads/work-item-templates.md), resolved relative to this loaded skill (pass that resolved path to delegated roles):
 
    | Plan signal | `--type` | Template |
    |---|---|---|

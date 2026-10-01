@@ -124,7 +124,7 @@ Tag work items for filtering and organization:
 
 ```bash
 bd create "Add dark mode" --type feature -l "frontend,ui"
-bd label add AES-42 "urgent" "needs-review"
+bd label add AES-42 "urgent,needs-review"
 bd label remove AES-42 "urgent"
 bd list --label "frontend"           # Issues with this label
 bd list --label-any "frontend,backend"  # OR matching
@@ -165,4 +165,4 @@ Heuristic: if your filter is narrow enough that you'd be surprised by >50 matche
 
 Before marking a work item as ready, apply the **self-sufficiency test**: could a fresh session read this item's description and implement it without any additional codebase research or verbal context? If not, enrich the description with more detail.
 
-For formal templates, cynefin classification, and sizing guidance, see [`~/.agents/skills/refine-beads/work-item-templates.md`](../docs/work-item-templates.md).
+For formal templates, cynefin classification, and sizing guidance, see the [bundled work-item templates](../../skills/refine-beads/work-item-templates.md), resolved relative to this loaded guide.
