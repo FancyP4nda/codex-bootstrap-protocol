@@ -107,7 +107,8 @@ def installed(kit, skills, codex, profiles=None, strict=True):
 def check(root):
     manifests = [(root/'assets/scaffold', root/'assets/scaffold/manifest.txt')]
     manifests += [(root/'assets/global', root/'assets/global/manifest.txt')]
-    manifests += [(p/'scaffold', p/'manifest.txt') for p in (root/'assets/packs').iterdir()]
+    manifests += [(p/'scaffold', p/'manifest.txt') for p in (root/'assets/packs').iterdir() if (p/'scaffold').is_dir()]
+    manifests += [(p/'global', p/'global-manifest.txt') for p in (root/'assets/packs').iterdir() if (p/'global').is_dir()]
     for base, manifest in manifests:
         seen = set()
         for line in manifest.read_text().splitlines():

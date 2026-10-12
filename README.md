@@ -83,6 +83,19 @@ does not imply a commit, push, PR or Dolt remote synchronization.
 
 Web-design preserves pinned Impeccable and Taste components and licenses. It remains **unverified and release-invalid** because upstream review evidence is absent. Explicit opt-in does not certify it. Node.js 22+ is required. Optional browser, detector and image-generation features require their own dependencies/consent; vendor update pings and concept telemetry default off.
 
+## Global packs
+
+A global pack installs once for every project instead of into one project. It goes into the same places as the global core: skills under `~/.agents/skills` (and shared references under `~/.agents/references`), roles under `${CODEX_HOME:-~/.codex}/agents`. Codex CLI 0.162.1 loads skills from `~/.agents/skills` as well as `$CODEX_HOME/skills` and the project's `.agents/skills`.
+
+```bash
+codex-bootstrap --global-only --pack <name> --dry-run   # preview
+codex-bootstrap --global-only --pack <name>             # install; a rerun reports 0 changes
+codex-bootstrap --global-only --pack <name> --update-global   # take the kit's newer files, with backups
+codex-bootstrap --remove-global-pack <name> [--dry-run]
+```
+
+Each pack keeps its own record of what it installed (`~/.agents/bootstrap/packs/<name>.json`, and `$CODEX_HOME/bootstrap-packs/<name>.json` when it ships roles), separate from the core's. A file you changed after installing is kept and reported, both on a rerun (until you pass `--update-global`, which backs it up under `bootstrap-backups/<run>/` first) and on removal, which deletes only the pack's files that are still as installed, then its record. Updating the core never removes a pack's files. A project pack (falcon, herald, web-design) cannot be installed globally, and a global pack cannot be installed into a project.
+
 ## herdr QA reviewer
 
 Global core also provisions the Codex side of the two-model review gate used by the sibling Claude kit: `${CODEX_HOME:-~/.codex}/qa.config.toml` (the `qa` profile: `gpt-6-astra`, high reasoning effort, read-only sandbox) and the `reviewer` role's QA passes and report shape (`VERDICT:` first line, then `Reviewed commit:`, findings, `Checks run:` and `Checks not performed:`). Codex 0.162 layers a profile file on `config.toml`, which stays untouched; do not also add a `[profiles.qa]` table or `profile = "qa"` there, because Codex then refuses `--profile qa`. An identical existing profile is left alone; a differing one is preserved unless you pass `--update-global`, which backs it up.

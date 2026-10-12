@@ -54,4 +54,9 @@ manifest(global,path.join(global,'manifest.txt'),p=>!['skills-manifest.txt','age
 manifest(path.join(global,'.agents'),path.join(global,'skills-manifest.txt'));
 manifest(path.join(global,'.codex'),path.join(global,'agents-manifest.txt'));
 for(const pack of ['falcon','herald','web-design']) manifest(path.join(root,'assets/packs',pack,'scaffold'),path.join(root,'assets/packs',pack,'manifest.txt'));
+// A global pack's global/ tree installs with --global-only --pack <name>; rows keep the .agents/ or .codex/ root.
+for(const pack of fs.readdirSync(path.join(root,'assets/packs'))) {
+  const tree=path.join(root,'assets/packs',pack,'global');
+  if(fs.existsSync(tree)) manifest(tree,path.join(root,'assets/packs',pack,'global-manifest.txt'));
+}
 console.log('Canonical core mirrors and manifests synchronized.');
