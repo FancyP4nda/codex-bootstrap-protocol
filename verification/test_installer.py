@@ -368,14 +368,28 @@ class InstallerTests(unittest.TestCase):
         (kit/'assets/packs/demo/global/.agents/skills/demo-skill/SKILL.md').write_text(shipped+'Changed upstream.\n')
         kept=self.run_bootstrap('--global-only','--pack','demo',kit=kit)
         self.assertIn(f'keep       {skill}',kept.stdout); self.assertEqual(skill.read_text(),shipped)
+        core=self.home/'.agents/skills/tdd/SKILL.md'; core.write_text('custom core skill')
         self.run_bootstrap('--global-only','--pack','demo','--update-global',kit=kit)
         self.assertTrue(skill.read_text().endswith('Changed upstream.\n'))
+        # A pack refresh updates only the pack: the customized core skill is kept.
+        self.assertEqual(core.read_text(),'custom core skill')
         self.assertEqual(next((self.home/'.agents/bootstrap-backups').rglob('demo-skill/SKILL.md')).read_text(),shipped)
         ref.write_text('my notes\n')
         removed=self.run_bootstrap('--remove-global-pack','demo',kit=kit)
         self.assertIn(str(ref),removed.stdout); self.assertIn('modified',removed.stdout)
         self.assertEqual(ref.read_text(),'my notes\n')
         self.assertFalse(skill.exists()); self.assertFalse((self.home/'.agents/bootstrap/packs/demo.json').exists())
+
+    def test_global_pack_never_claims_a_file_it_did_not_install(self):
+        kit=self.demo_kit()
+        ref=self.home/'.agents/references/demo-ref.md'; ref.parent.mkdir(parents=True); ref.write_text('# Demo reference\n')
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        stamp=json.loads((self.home/'.agents/bootstrap/packs/demo.json').read_text())
+        self.assertEqual(sorted(stamp['managed']),['skills/demo-skill/SKILL.md'])
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        self.run_bootstrap('--remove-global-pack','demo',kit=kit)
+        self.assertEqual(ref.read_text(),'# Demo reference\n')
+        self.assertFalse((self.home/'.agents/skills/demo-skill').exists())
 
     def test_global_pack_errors_name_the_fix(self):
         kit=self.demo_kit()

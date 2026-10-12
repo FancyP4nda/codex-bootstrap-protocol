@@ -99,7 +99,8 @@ build_plan() {
                 if cmp -s -- "$src" "$tgt"; then state=identical
                 elif [[ "$policy" == global ]]; then
                     state=keep
-                    [[ "$UPDATE_GLOBAL" != 1 ]] || state=overwrite
+                    # UPDATE_CORE=0 (a global pack run) leaves --update-global to pack entries.
+                    if [[ "$UPDATE_GLOBAL" == 1 && ( -n "${ENTRY_OWNER[i]:-}" || "${UPDATE_CORE:-1}" == 1 ) ]]; then state=overwrite; fi
                 elif [[ "$policy" == durable ]]; then state=keep
                 elif [[ "$policy" == merge ]]; then state=overwrite
                 elif [[ "$FORCE" == 1 && "$policy" != pack ]]; then state=overwrite

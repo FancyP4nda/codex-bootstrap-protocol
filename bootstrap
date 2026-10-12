@@ -62,6 +62,7 @@ PACKS=()
 ENTRY_KIND=() ENTRY_PATH=() ENTRY_SRCROOT=() ENTRY_DESTROOT=() ENTRY_POLICY=() ENTRY_OWNER=()
 PLAN_STATE=() PLAN_FATAL=() OBSOLETE_ROOT=() OBSOLETE_REL=() OBSOLETE_STATE=()
 OBSOLETE_HASH=() OBSOLETE_OWNER=() GLOBAL_PACKS=() REMOVE_PACK=""
+UPDATE_CORE=1
 STAGE="" RUN_ID="$(date -u +%Y%m%dT%H%M%S)-$$" NEW_PROJECT=0
 SOURCE_COMMIT=f89f7f3dffb1150fa7df30b180b397dd25a711f9
 source "$KIT_DIR/lib/plan-engine.sh"
@@ -332,7 +333,7 @@ global_obsolete() {
         [[ -n "$rel" ]] || continue
         validate_entry_path stamp "$rel"; check_ancestors "$root" "$rel"
         info "Global obsolete $state: $root/$rel"
-        if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 ]]; then
+        if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 && ( -n "$owner" || "$UPDATE_CORE" == 1 ) ]]; then
             check_ancestors "$root" "bootstrap-backups/$RUN_ID/$rel"
             OBSOLETE_ROOT+=("$root"); OBSOLETE_REL+=("$rel"); OBSOLETE_STATE+=("$state")
             OBSOLETE_HASH+=("$expected"); OBSOLETE_OWNER+=("$owner")
@@ -361,6 +362,8 @@ record_layer() {
         [[ "$HOOKS" != 1 ]] || record_opts+=(--configuration-option hooks)
         [[ "$DOCS_MCP" != 1 ]] || record_opts+=(--configuration-option docs-mcp)
     fi
+    # A pack owns only what it installed: an identical file already there stays the user's.
+    [[ -z "$owner" ]] || record_opts+=(--no-adopt)
     helper record "$root/$stamp" "$SOURCE_COMMIT" ${PACKS[@]+"${PACKS[@]}"} ${record_opts[@]+"${record_opts[@]}"} < "$STAGE/record-rows" > "$STAGE/stamp"
     mkdir -p -- "$(dirname -- "$root/$stamp")"
     [[ ! -f "$root/$stamp" ]] || backup_file "$root/$stamp" "$root" "$stamp"
@@ -454,6 +457,11 @@ main() {
     if [[ "$GLOBAL_ONLY" == 1 ]]; then
         # With --global-only, --pack names global packs; project packs need a target.
         GLOBAL_PACKS=(${PACKS[@]+"${PACKS[@]}"}); PACKS=()
+        if [[ ${#GLOBAL_PACKS[@]} -gt 0 ]]; then
+            # A pack run installs missing core files but updates only the pack's.
+            UPDATE_CORE=0
+            [[ "$UPDATE_GLOBAL" != 1 ]] || info "--update-global applies to the named packs only; update the core with: codex-bootstrap --global-only --update-global"
+        fi
         for pack in ${GLOBAL_PACKS[@]+"${GLOBAL_PACKS[@]}"}; do pack_root "$pack" >/dev/null; done
     fi
     if [[ "$MODE" == auto ]]; then

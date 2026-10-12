@@ -1777,14 +1777,14 @@
       "destination": "lib/plan-engine.sh",
       "source_sha256": "2bf148e5f4589ea9fdf4f6bc0f5b68c3918fe1f75f48996947d4e239ec601ab0",
       "acceptance": "manifest-and-runtime-scan",
-      "native_sha256": "6530b7b543189fcf38e843b90fa3b0be28911f839c9f3298bcc92fc366fdf613"
+      "native_sha256": "5de7263b4f18119e0b363ad89d6b178c0db7a6df61e7c8476280f839a20e1550"
     },
     {
       "source": "bootstrap",
       "destination": "bootstrap",
       "acceptance": "installer-regression-suite",
       "conversion": "selective engine reuse; native global config and wizard replace source runtime",
-      "native_sha256": "06aad073d6a63482b90b43346a3b7d40c1330430562c39daa6fbdf3bce6ded0d"
+      "native_sha256": "e3c87fde460d18dc33935bbc7ab9c6393d29beb2d2ba4dc1976864aa74c331a1"
     },
     {
       "source": "Starting-workflow.md",
