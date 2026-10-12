@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+# Starts the Codex QA reviewer of a herdr team: interactive codex in the project
+# with the qa profile and the reviewer role's instructions. Installed into
+# ~/.local/bin by `codex-bootstrap --install-command`; the profile and the role
+# come from `codex-bootstrap --global-only`.
+set -euo pipefail
+
+usage() {
+    cat <<'EOF'
+Usage:
+  herdr-qa <project-dir> [--no-alt-screen]
+  herdr-qa --check <project-dir>
+
+Starts interactive Codex in <project-dir> as the read-only QA reviewer:
+codex --profile qa --sandbox read-only, with the instructions of
+$CODEX_HOME/agents/reviewer.toml. When HERDR_TEAM_MANIFEST is set, the session
+is told to read that manifest and the herdr-team PROTOCOL.md (if present).
+
+Options:
+  --no-alt-screen   Pass --no-alt-screen to codex (inline TUI, keeps scrollback).
+  --check           Validate codex, the qa profile and the reviewer role, then
+                    exit; starts no model session. The last line names the fix.
+  -h, --help        Show this help.
+EOF
+}
+usage_error() { printf 'herdr-qa: %s\n' "$1" >&2; usage >&2; exit 2; }
+
+check=0 inline=0 dir="" have_dir=0
+while (($#)); do
+    case "$1" in
+        --check) check=1;;
+        --no-alt-screen) inline=1;;
+        -h|--help) usage; exit 0;;
+        --) shift; (($# == 1 && ! have_dir)) || usage_error "expected one project directory after --"; dir="$1"; have_dir=1;;
+        -*) usage_error "unknown option: $1";;
+        *) ((! have_dir)) || usage_error "unexpected extra argument: $1"; dir="$1"; have_dir=1;;
+    esac
+    shift
+done
+((have_dir)) || usage_error "missing project directory"
+command -v python3 >/dev/null 2>&1 || { printf 'herdr-qa: python3 (3.11+) is not on PATH; install it\n' >&2; exit 1; }
+
+# Validates the setup the way the Claude kit's review-gate and herdr-team do,
+# then prints the developer_instructions value as a TOML string for codex -c.
+read -r -d '' VALIDATE <<'PY' || true
+import json, os, re, shutil, sys
+from pathlib import Path
+mode, raw = sys.argv[1], sys.argv[2]
+try:
+    import tomllib
+except ImportError:
+    sys.exit('herdr-qa: python3 is older than 3.11 (no tomllib); install Python 3.11+')
+home = Path(os.environ.get('CODEX_HOME') or Path.home()/'.codex')
+profile, config, role = home/'qa.config.toml', home/'config.toml', home/'agents/reviewer.toml'
+setup = 'run codex-bootstrap --global-only (add --update-global to replace a differing file)'
+problems, facts = [], {}
+
+def load(path):
+    try:
+        return tomllib.loads(path.read_text()), None
+    except (OSError, UnicodeDecodeError, tomllib.TOMLDecodeError) as exc:
+        return None, f'{path} is not readable TOML ({exc}); fix or remove it, then {setup}'
+
+project = os.path.abspath(raw)
+if any(c in project for c in '\n\r\t'):
+    problems.append(f'{raw!r}: control characters in the project path; use another directory')
+elif not os.path.isdir(project):
+    problems.append(f'{project} is not a directory; pass the project directory')
+codex = shutil.which('codex')
+if not codex:
+    problems.append('codex is not on PATH; install the Codex CLI (npm install -g @openai/codex)')
+# Codex 0.162 refuses --profile next to a [profiles.qa] table or a profile = "qa" selector.
+try:
+    legacy = re.search(r'''^[ \t]*(\[[ \t]*profiles[ \t]*\.[ \t]*(qa|"qa"|'qa')[ \t]*[.\]]|profile[ \t]*=[ \t]*["']qa["'])''',
+                       config.read_text(errors='replace'), re.M)
+except OSError:
+    legacy = None
+if legacy:
+    problems.append(f'{config} holds a legacy [profiles.qa] table or profile = "qa", which codex refuses next to --profile qa; '
+                    f'move those settings into {profile} and remove them from config.toml')
+if not profile.is_file():
+    problems.append(f'no qa profile at {profile}; {setup}')
+else:
+    data, error = load(profile)
+    if error:
+        problems.append(error)
+    elif not isinstance(data.get('model'), str) or not data['model'].strip():
+        problems.append(f'{profile} sets no model = line, so codex would run on the default model; {setup}')
+    else:
+        facts['model'] = data['model']
+instructions = None
+if not role.is_file():
+    problems.append(f'no reviewer role at {role}; {setup}')
+else:
+    data, error = load(role)
+    if error:
+        problems.append(error)
+    elif not isinstance(data.get('developer_instructions'), str) or not data['developer_instructions'].strip():
+        problems.append(f'{role} has no developer_instructions; {setup}')
+    else:
+        instructions = data['developer_instructions'].strip()
+
+if problems:
+    for problem in problems[:-1]:
+        print(f'herdr-qa: {problem}', file=sys.stderr)
+    print(f'herdr-qa: not ready: {"; ".join(problems)}' if len(problems) > 1 else f'herdr-qa: {problems[0]}', file=sys.stderr)
+    sys.exit(1)
+if mode == 'check':
+    print(f'herdr-qa: ready: codex {codex}; profile qa {profile} (model {facts["model"]}); reviewer {role}; project {project}')
+    sys.exit(0)
+
+text = instructions + f'\n\nYou run as the QA reviewer for {project}, started by herdr-qa with the Codex qa profile, read-only.'
+manifest = os.environ.get('HERDR_TEAM_MANIFEST')
+if manifest:
+    protocol = Path(os.environ.get('CLAUDE_CONFIG_DIR') or Path.home()/'.claude')/'skills/herdr-team/PROTOCOL.md'
+    also = f' and the team protocol at {protocol}' if protocol.is_file() else ''
+    text += f'\nYou are the QA member of a herdr team. Before you act on any request, read the team manifest at {manifest}{also}.'
+# A JSON string with ASCII escapes is also a valid TOML basic string.
+print(json.dumps(text))
+PY
+
+if ((check)); then
+    exec python3 -I -c "$VALIDATE" check "$dir"
+fi
+value="$(python3 -I -c "$VALIDATE" launch "$dir")" || exit 1
+project="$(cd -- "$dir" && pwd)"
+args=(--profile qa --sandbox read-only -C "$project" -c "developer_instructions=$value")
+((! inline)) || args+=(--no-alt-screen)
+cd -- "$project"
+# exec, so herdr sees the pane's process as codex.
+exec codex "${args[@]}"

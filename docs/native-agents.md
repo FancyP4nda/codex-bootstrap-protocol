@@ -47,6 +47,10 @@ Falcon workers implement and test but never stage/commit. Steering
 audits the actual diff and fresh attempt report using `handoff`, then performs
 the hash-bound scoped `commit` and separately authorized integration.
 
+`herdr-qa` uses the same `developer_instructions` override to start an
+interactive QA session with the `reviewer` role and the `qa` profile; see the
+README's herdr QA reviewer section.
+
 The authenticated smoke validates this native-config path; TOML schema checks
 cover all ten roles. Native named-role spawning remains client-dependent. The
 official standalone-file format is retained for clients exposing role selection.

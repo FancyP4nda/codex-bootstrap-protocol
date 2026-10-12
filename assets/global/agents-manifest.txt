@@ -5,3 +5,4 @@ file	agents/navigator-survey.toml	copy	Managed Codex asset.
 file	agents/navigator.toml	copy	Managed Codex asset.
 file	agents/reviewer.toml	copy	Managed Codex asset.
 file	agents/worker.toml	copy	Managed Codex asset.
+file	qa.config.toml	copy	Managed Codex asset.
