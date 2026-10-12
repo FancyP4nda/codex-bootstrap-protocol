@@ -3,6 +3,7 @@ set -euo pipefail
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$root"
 bash -n bootstrap
+bash -n bin/herdr-qa
 while IFS= read -r -d '' file; do bash -n "$file"; done < <(find lib verification assets/global -name '*.sh' -type f -print0)
 python3 verification/check-assets.py
 cmp assets/native/process-supervisor.py assets/packs/falcon/scaffold/.agents/skills/falcon/scripts/process-supervisor.py

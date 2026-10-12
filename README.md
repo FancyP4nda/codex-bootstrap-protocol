@@ -14,7 +14,7 @@ codex-bootstrap /path/to/project --prefix MY --non-interactive
 codex -C /path/to/project '$session-start'
 ```
 
-Command setup creates an owned symlink in `~/.local/bin`. PATH editing is explicit and idempotent for Bash, Zsh and Fish. Unknown shells receive manual guidance. Preserve the kit checkout: relocating the checkout together with the home tree keeps the relative link valid; moving only the kit requires repairing the old owned link and reinstalling. `./bootstrap` also works directly.
+Command setup creates owned symlinks in `~/.local/bin`: `codex-bootstrap` and `herdr-qa` (see [herdr QA reviewer](#herdr-qa-reviewer)). PATH editing is explicit and idempotent for Bash, Zsh and Fish. Unknown shells receive manual guidance. Preserve the kit checkout: relocating the checkout together with the home tree keeps the relative link valid; moving only the kit requires repairing the old owned link and reinstalling. `./bootstrap` also works directly.
 
 ## Setup choices
 
@@ -82,6 +82,18 @@ and repository instructions. Checkpoint records authorized resume notes; it
 does not imply a commit, push, PR or Dolt remote synchronization.
 
 Web-design preserves pinned Impeccable and Taste components and licenses. It remains **unverified and release-invalid** because upstream review evidence is absent. Explicit opt-in does not certify it. Node.js 22+ is required. Optional browser, detector and image-generation features require their own dependencies/consent; vendor update pings and concept telemetry default off.
+
+## herdr QA reviewer
+
+Global core also provisions the Codex side of the two-model review gate used by the sibling Claude kit: `${CODEX_HOME:-~/.codex}/qa.config.toml` (the `qa` profile: `gpt-6-astra`, high reasoning effort, read-only sandbox) and the `reviewer` role's QA passes and report shape (`VERDICT:` first line, then `Reviewed commit:`, findings, `Checks run:` and `Checks not performed:`). Codex 0.162 layers a profile file on `config.toml`, which stays untouched; do not also add a `[profiles.qa]` table or `profile = "qa"` there, because Codex then refuses `--profile qa`. An identical existing profile is left alone; a differing one is preserved unless you pass `--update-global`, which backs it up.
+
+```bash
+./bootstrap --install-command && ./bootstrap --global-only   # add --update-global to replace differing files
+herdr-qa --check /path/to/project        # validates codex, profile and reviewer; starts no session
+herdr-qa /path/to/project --no-alt-screen
+```
+
+`herdr-qa <dir>` execs interactive `codex --profile qa --sandbox read-only -C <dir>` with the reviewer instructions passed as `-c developer_instructions=...`, so herdr detects the pane as Codex. When `HERDR_TEAM_MANIFEST` is set, the session is told to read that manifest and the herdr-team `PROTOCOL.md` from the Claude config directory, if present. Flags were verified against Codex CLI 0.162.1.
 
 ## Verification and documentation
 

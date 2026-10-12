@@ -36,7 +36,8 @@ Options:
                                      Optional native configuration (project by default).
   --launch | --no-launch              Launch only with a TTY, after successful setup.
   --install-command --uninstall-command
-                                     Manage ~/.local/bin/codex-bootstrap symlink.
+                                     Manage the ~/.local/bin/codex-bootstrap and
+                                     ~/.local/bin/herdr-qa symlinks.
   --update-path                      Opt-in idempotent Bash/Zsh/Fish PATH setup/removal.
   --global-only                      Global core/config only; Beads not required.
   --doctor [target]                   Read-only health checks (auto-detect local-core).
@@ -171,7 +172,7 @@ retain_global_optional_helpers() {
     done < "$STAGE/retained-helpers"
 }
 doctor() {
-    local failures=0 cmd p core_mode=global skills="$USER_SKILLS_DIR" agents="$CODEX_USER_DIR" project prerequisites=(bash python3 git codex) config_roots=("$CODEX_USER_DIR")
+    local failures=0 cmd p core_mode=global skills="$USER_SKILLS_DIR" agents="$CODEX_USER_DIR" profiles=("$CODEX_USER_DIR") project prerequisites=(bash python3 git codex) config_roots=("$CODEX_USER_DIR")
     project="$(canon "${TARGET_DIR:-$PWD}")"
     if [[ "$GLOBAL_ONLY" != 1 ]]; then prerequisites+=(bd); config_roots+=("$project/.codex")
     else info "Global-only diagnostic: Beads not required."
@@ -189,13 +190,13 @@ doctor() {
         core_mode="$(helper core-mode "$project/.codex/bootstrap.json")" || failures=1
     fi
     if [[ "$core_mode" == local ]]; then
-        skills="$project/.agents/skills"; agents="$project/.codex"
+        skills="$project/.agents/skills"; agents="$project/.codex"; profiles=()
         info "Health scope: local-core at $project (global core is not required)."
     else
         info "Health scope: global core (CODEX_HOME: $CODEX_USER_DIR)."
     fi
     info "Skills: $skills; agents: $agents"
-    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$skills" "$agents" || failures=1
+    python3 "$KIT_DIR/verification/check-assets.py" --installed "$KIT_DIR" "$skills" "$agents" ${profiles[@]+"${profiles[@]}"} || failures=1
     if [[ "$failures" != 0 ]]; then
         if [[ "$core_mode" == local ]]; then info "Health FAILED. Inspect the named paths; repair with bootstrap <target> --local-core (use --force only for reviewed core conflicts)."
         else info "Health FAILED. Inspect the named paths; install missing core with bootstrap --global-only. Differences are preserved; --update-global is explicit."
@@ -206,17 +207,23 @@ doctor() {
     return "$failures"
 }
 command_setup() {
-    local bin="$USER_ROOT/.local/bin" link rcfile="" path_text="" shell_name="${SHELL##*/}"
-    link="$bin/codex-bootstrap"
-    check_ancestors "$bin" .; # final command symlink is allowed only when owned.
-    if [[ -e "$link" || -L "$link" ]]; then
-        [[ -L "$link" && "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "$KIT_DIR/bootstrap" ]] || die "command collision at $link; move the existing command explicitly"
-    fi
-    if [[ "$COMMAND_MODE" == install-command ]]; then
-        local resolved
-        resolved="$(command -v codex-bootstrap || true)"
-        [[ -z "$resolved" || "$resolved" == "$link" ]] || die "another codex-bootstrap shadows $link on PATH: $resolved; reconcile PATH before setup"
-    fi
+    local bin="$USER_ROOT/.local/bin" link rcfile="" path_text="" shell_name="${SHELL##*/}" i resolved
+    # Owned symlinks into this checkout; herdr-qa starts a herdr team's Codex QA reviewer.
+    local names=(codex-bootstrap herdr-qa) sources=("$KIT_DIR/bootstrap" "$KIT_DIR/bin/herdr-qa") owned=()
+    check_ancestors "$bin" .; # final command symlinks are allowed only when owned.
+    for i in "${!names[@]}"; do
+        link="$bin/${names[i]}"; owned+=(0)
+        if [[ -e "$link" || -L "$link" ]]; then
+            if [[ -L "$link" && "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "${sources[i]}" ]]; then owned[i]=1
+            elif [[ "$COMMAND_MODE" == uninstall-command && "${names[i]}" == herdr-qa ]]; then info "Leaving $link: not this kit's command."
+            else die "command collision at $link; move the existing command explicitly"
+            fi
+        fi
+        if [[ "$COMMAND_MODE" == install-command ]]; then
+            resolved="$(command -v "${names[i]}" || true)"
+            [[ -z "$resolved" || "$resolved" == "$link" ]] || die "another ${names[i]} shadows $link on PATH: $resolved; reconcile PATH before setup"
+        fi
+    done
     if [[ "$UPDATE_PATH" == 1 ]]; then
         case "$shell_name" in
             bash) rcfile="$USER_ROOT/.bashrc"; path_text='export PATH="$HOME/.local/bin:$PATH"';;
@@ -227,17 +234,20 @@ command_setup() {
         check_ancestors "$(dirname -- "$rcfile")" "${rcfile##*/}"
         python3 "$KIT_DIR/lib/command-path.py" "$COMMAND_MODE" "$rcfile" "$path_text" > "$STAGE/path-candidate"
     fi
-    info "$COMMAND_MODE: $link -> $KIT_DIR/bootstrap"
+    for i in "${!names[@]}"; do info "$COMMAND_MODE: $bin/${names[i]} -> ${sources[i]}"; done
     [[ "$UPDATE_PATH" != 1 ]] || diff -u -- "${rcfile:-/dev/null}" "$STAGE/path-candidate" 2>/dev/null || true
     [[ "$DRY_RUN" != 1 ]] || return 0
-    if [[ "$COMMAND_MODE" == install-command ]]; then
-        mkdir -p -- "$bin"
-        [[ -L "$link" ]] || ln -s -- "$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "$KIT_DIR/bootstrap" "$bin")" "$link"
-        [[ "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "$KIT_DIR/bootstrap" ]] || die "command resolution failed; rerun --install-command"
-        "$link" --help >/dev/null || die "installed command failed verification"
-    elif [[ -L "$link" ]]; then
-        rm -f -- "$link"
-    fi
+    for i in "${!names[@]}"; do
+        link="$bin/${names[i]}"
+        if [[ "$COMMAND_MODE" == install-command ]]; then
+            mkdir -p -- "$bin"
+            [[ -L "$link" ]] || ln -s -- "$(python3 -c 'import os,sys;print(os.path.relpath(sys.argv[1],sys.argv[2]))' "${sources[i]}" "$bin")" "$link"
+            [[ "$(python3 -c 'import os,sys;print(os.path.realpath(sys.argv[1]))' "$link")" == "${sources[i]}" ]] || die "command resolution failed for $link; rerun --install-command"
+            "$link" --help >/dev/null || die "installed command $link failed verification"
+        elif [[ "${owned[i]}" == 1 ]]; then
+            rm -f -- "$link"
+        fi
+    done
     if [[ "$UPDATE_PATH" == 1 ]] && ! cmp -s -- "$rcfile" "$STAGE/path-candidate"; then
         [[ ! -f "$rcfile" ]] || backup_file "$rcfile" "$USER_ROOT" "${rcfile#"$USER_ROOT/"}"
         mkdir -p -- "$(dirname -- "$rcfile")"
@@ -249,17 +259,18 @@ command_setup() {
     fi
     if [[ ":$PATH:" != *":$bin:"* ]]; then
         info "PATH lacks $bin. Restart your shell after --update-path, or add it manually."
-    else
-        local resolved
-        resolved="$(command -v codex-bootstrap || true)"
-        [[ -z "$resolved" || "$resolved" == "$link" ]] || die "another codex-bootstrap shadows $link on PATH: $resolved"
+    elif [[ "$COMMAND_MODE" == install-command ]]; then
+        for i in "${!names[@]}"; do
+            resolved="$(command -v "${names[i]}" || true)"
+            [[ -z "$resolved" || "$resolved" == "$bin/${names[i]}" ]] || die "another ${names[i]} shadows $bin/${names[i]} on PATH: $resolved"
+        done
     fi
 }
 wizard() {
     local answer pack
     [[ -t 0 && -t 1 && -z "${CI:-}" ]] || die "--interactive requires a TTY outside CI; use --non-interactive"
     info "Global assets are installed when missing; differing assets require an update choice."
-    python3 "$KIT_DIR/verification/check-assets.py" --inventory "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR"
+    python3 "$KIT_DIR/verification/check-assets.py" --inventory "$KIT_DIR" "$USER_SKILLS_DIR" "$CODEX_USER_DIR" "$CODEX_USER_DIR"
     confirm "Update differing global core files with backups?" && UPDATE_GLOBAL=1
     read -r -p "Target project [$PWD]: " answer || die "input ended; nothing written"
     TARGET_DIR="${answer:-${TARGET_DIR:-$PWD}}"

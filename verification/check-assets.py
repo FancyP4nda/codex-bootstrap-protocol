@@ -12,11 +12,12 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def installed(kit, skills, codex, strict=True):
+def installed(kit, skills, codex, profiles=None, strict=True):
     """Health is strict about absence/broken paths, not valid customization.
 
     Inventory is display-only for a setup wizard before assets are installed.
     Neither mode executes configured commands or asserts project/hook trust.
+    Profiles live only in CODEX_HOME, so local-core health passes no profiles dir.
     """
     failures = 0
     customized = 0
@@ -90,6 +91,9 @@ def installed(kit, skills, codex, strict=True):
     for p in (kit/'assets/global/.codex/agents').glob('*.toml'):
         dest = codex/'agents'/p.name
         print(f'core agent {p.stem} ({dest}): {state(p, dest)}')
+    for p in (kit/'assets/global/.codex').glob('*.config.toml') if profiles else ():
+        dest = profiles/p.name
+        print(f'core profile {p.name.removesuffix(".config.toml")} ({dest}): {state(p, dest)}')
     # Skills depend on these referenced instructions and executable helpers too.
     base = kit/'assets/global/.agents/bootstrap'
     for p in base.rglob('*'):
@@ -123,6 +127,7 @@ def check(root):
             shipped.discard('.codex/config.toml')
         if base == root/'assets/global':
             shipped -= {'skills-manifest.txt', 'agents-manifest.txt'}
+            shipped -= {p for p in shipped if re.fullmatch(r'\.codex/[^/]+\.config\.toml', p)}  # CODEX_HOME-only profiles
         assert shipped <= seen, (manifest, shipped-seen)
     names = []
     for p in (root/'assets').rglob('SKILL.md'):
