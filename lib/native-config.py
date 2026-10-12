@@ -253,6 +253,7 @@ def main():
     parser.add_argument("--docs-mcp", action="store_true")
     parser.add_argument("--configuration-option", action="append", choices=sorted(CONFIGURATION_OPTIONS), default=[])
     parser.add_argument("--core-mode", choices=["global", "local"])
+    parser.add_argument("--no-adopt", action="store_true")
     args = parser.parse_args()
     if args.mode == "instructions":
         result = merge_instructions(read(args.path), read(args.extra[0]))
@@ -292,6 +293,8 @@ def main():
             rel, state, full = line.rstrip("\n").split("\t")
             if state == "remove":
                 stamp["managed"].pop(rel, None)
+            elif state == "identical" and args.no_adopt and rel not in stamp["managed"]:
+                continue
             elif state in ("create", "overwrite", "identical") and Path(full).is_file():
                 category = ("configuration" if rel in CONFIGURATION_FILES else
                             "optional_managed" if rel in OPTIONAL_MANAGED_FILES else "managed")

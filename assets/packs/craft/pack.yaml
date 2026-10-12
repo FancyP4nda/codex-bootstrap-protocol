@@ -1,0 +1,90 @@
+# =========================================================================
+# Craft pack — a global pack of engineering-craft skills (mirror of the
+# Claude kit's craft pack, minus its Claude-only review-gate and agents).
+#
+# Global-only: no scaffold/. `codex-bootstrap --global-only --pack craft`
+# installs global/.agents/ into ~/.agents (skills and the references they
+# link to); `--remove-global-pack craft` removes it. Opt-in because it adds
+# 16 skills to every session's skill list.
+#
+# Vendored from addyosmani/agent-skills at an exact commit, byte-identical
+# to upstream (no local patches). The notes file is the one pack-authored
+# file: roster, exclusions, install paths, dangling references and the
+# re-pin checklist (global/.agents/references/craft-pack-notes.md).
+#
+# Evidence-bearing fields are null: no airlock scan or adjudication exists
+# for this component. The verdict is a placeholder, as in web-design.
+# Paths are relative to the pack's global/ tree.
+# =========================================================================
+pack:
+  name: craft
+  description: >-
+    Global engineering-craft pack: 16 skills (implementation, API design,
+    frontend, source checks, adversarial doubt, debugging, browser testing,
+    review, simplification, security, performance, CI/CD, observability,
+    shipping, migration and constraint work) and the 7 reference checklists
+    they link to, from addyosmani/agent-skills, plus a notes file.
+  install_scope: global
+  mission_guide: ".agents/references/craft-pack-notes.md"
+  component_notes: ".agents/references/craft-pack-notes.md"
+  rules_file: null
+  pack_paths:
+    - ".agents/references/craft-pack-notes.md"
+  local_patches: []
+
+components:
+  - id: agent-skills
+    kind: skill
+    upstream_url: "https://github.com/addyosmani/agent-skills"
+    staging_fork: "not-yet-forked:agent-skills"
+    pinned_commit: "1be8e34187e34647bb83adc3a1323b26ae6f6abe"
+    scan_target: source-tree
+    selected_paths:
+      - "skills/incremental-implementation"
+      - "skills/api-and-interface-design"
+      - "skills/frontend-ui-engineering"
+      - "skills/source-driven-development"
+      - "skills/doubt-driven-development"
+      - "skills/debugging-and-error-recovery"
+      - "skills/browser-testing-with-devtools"
+      - "skills/code-review-and-quality"
+      - "skills/code-simplification"
+      - "skills/security-and-hardening"
+      - "skills/performance-optimization"
+      - "skills/ci-cd-and-automation"
+      - "skills/observability-and-instrumentation"
+      - "skills/shipping-and-launch"
+      - "skills/deprecation-and-migration"
+      - "skills/constraint-driven-development"
+      - "references"
+    vendored_paths:
+      - ".agents/skills/incremental-implementation/"
+      - ".agents/skills/api-and-interface-design/"
+      - ".agents/skills/frontend-ui-engineering/"
+      - ".agents/skills/source-driven-development/"
+      - ".agents/skills/doubt-driven-development/"
+      - ".agents/skills/debugging-and-error-recovery/"
+      - ".agents/skills/browser-testing-with-devtools/"
+      - ".agents/skills/code-review-and-quality/"
+      - ".agents/skills/code-simplification/"
+      - ".agents/skills/security-and-hardening/"
+      - ".agents/skills/performance-optimization/"
+      - ".agents/skills/ci-cd-and-automation/"
+      - ".agents/skills/observability-and-instrumentation/"
+      - ".agents/skills/shipping-and-launch/"
+      - ".agents/skills/deprecation-and-migration/"
+      - ".agents/skills/constraint-driven-development/"
+      - ".agents/references/accessibility-checklist.md"
+      - ".agents/references/definition-of-done.md"
+      - ".agents/references/observability-checklist.md"
+      - ".agents/references/orchestration-patterns.md"
+      - ".agents/references/performance-checklist.md"
+      - ".agents/references/security-checklist.md"
+      - ".agents/references/testing-patterns.md"
+    license: MIT
+    airlock_evidence_id: null
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: null

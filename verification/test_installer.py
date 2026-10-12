@@ -310,5 +310,125 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(proc.returncode,0,output.decode(errors='replace'))
         self.assertEqual(obsolete.read_text(),'user changed during confirmation')
 
+    # --- global packs -----------------------------------------------------
+
+    def demo_kit(self):
+        """A kit copy with a global-only pack 'demo' that fills both global roots."""
+        kit=self.kit_copy(); pack=kit/'assets/packs/demo'
+        files={'.agents/skills/demo-skill/SKILL.md':'---\nname: demo-skill\ndescription: Demo global pack skill.\n---\nSee ../../references/demo-ref.md.\n',
+               '.agents/references/demo-ref.md':'# Demo reference\n',
+               '.codex/agents/demo-agent.toml':'name = "demo-agent"\ndescription = "Demo"\ndeveloper_instructions = "Demo."\n'}
+        for rel,text in files.items():
+            p=pack/'global'/rel; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(text)
+        (pack/'pack.yaml').write_text('pack:\n  name: demo\n')
+        (pack/'global-manifest.txt').write_text('# demo\n'+''.join(f'file\t{rel}\tcopy\tDemo.\n' for rel in sorted(files)))
+        return kit
+
+    def global_pack_paths(self):
+        codex=self.home/'custom codex'
+        return (self.home/'.agents/skills/demo-skill/SKILL.md', self.home/'.agents/references/demo-ref.md',
+                codex/'agents/demo-agent.toml', self.home/'.agents/bootstrap/packs/demo.json', codex/'bootstrap-packs/demo.json')
+
+    def core_view(self):
+        """Installed files minus backups, with each core stamp reduced to its managed hashes."""
+        view={k:v for k,v in snapshot(self.home).items() if 'bootstrap-backups' not in Path(k).parts}
+        for rel in ('.agents/bootstrap/managed.json','custom codex/bootstrap-managed.json'):
+            if rel in view: view[rel]=json.loads((self.home/rel).read_text())['managed']
+        return view
+
+    def test_global_pack_install_repeat_and_remove(self):
+        kit=self.demo_kit()
+        self.run_bootstrap('--global-only',kit=kit)
+        before=snapshot(self.home); core_before=self.core_view()
+        dry=self.run_bootstrap('--global-only','--pack','demo','--dry-run',kit=kit)
+        self.assertIn('demo-skill',dry.stdout); self.assertEqual(snapshot(self.home),before)
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        for p in self.global_pack_paths(): self.assertTrue(p.is_file(),p)
+        pack_stamp=json.loads((self.home/'.agents/bootstrap/packs/demo.json').read_text())
+        self.assertEqual(sorted(pack_stamp['managed']),['references/demo-ref.md','skills/demo-skill/SKILL.md'])
+        core_stamp=json.loads((self.home/'.agents/bootstrap/managed.json').read_text())
+        self.assertNotIn('skills/demo-skill/SKILL.md',core_stamp['managed'])
+        again=self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        self.assertIn('0 planned non-identical operations',again.stdout)
+        # A core-only update does not treat the pack's files as obsolete core files.
+        self.run_bootstrap('--global-only','--update-global',kit=kit)
+        for p in self.global_pack_paths(): self.assertTrue(p.is_file(),p)
+        installed=snapshot(self.home)
+        self.run_bootstrap('--remove-global-pack','demo','--dry-run',kit=kit)
+        self.assertEqual(snapshot(self.home),installed)
+        self.run_bootstrap('--remove-global-pack','demo',kit=kit)
+        for p in self.global_pack_paths(): self.assertFalse(p.exists(),p)
+        self.assertFalse((self.home/'.agents/skills/demo-skill').exists())
+        self.assertEqual(self.core_view(),core_before)
+
+    def test_global_pack_refresh_and_modified_file_survives_removal(self):
+        kit=self.demo_kit()
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        skill,ref=self.global_pack_paths()[:2]; shipped=skill.read_text()
+        (kit/'assets/packs/demo/global/.agents/skills/demo-skill/SKILL.md').write_text(shipped+'Changed upstream.\n')
+        kept=self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        self.assertIn(f'keep       {skill}',kept.stdout); self.assertEqual(skill.read_text(),shipped)
+        core=self.home/'.agents/skills/tdd/SKILL.md'; core.write_text('custom core skill')
+        self.run_bootstrap('--global-only','--pack','demo','--update-global',kit=kit)
+        self.assertTrue(skill.read_text().endswith('Changed upstream.\n'))
+        # A pack refresh updates only the pack: the customized core skill is kept.
+        self.assertEqual(core.read_text(),'custom core skill')
+        self.assertEqual(next((self.home/'.agents/bootstrap-backups').rglob('demo-skill/SKILL.md')).read_text(),shipped)
+        ref.write_text('my notes\n')
+        removed=self.run_bootstrap('--remove-global-pack','demo',kit=kit)
+        self.assertIn(str(ref),removed.stdout); self.assertIn('modified',removed.stdout)
+        self.assertEqual(ref.read_text(),'my notes\n')
+        self.assertFalse(skill.exists()); self.assertFalse((self.home/'.agents/bootstrap/packs/demo.json').exists())
+
+    def test_global_pack_never_claims_a_file_it_did_not_install(self):
+        kit=self.demo_kit()
+        ref=self.home/'.agents/references/demo-ref.md'; ref.parent.mkdir(parents=True); ref.write_text('# Demo reference\n')
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        stamp=json.loads((self.home/'.agents/bootstrap/packs/demo.json').read_text())
+        self.assertEqual(sorted(stamp['managed']),['skills/demo-skill/SKILL.md'])
+        self.run_bootstrap('--global-only','--pack','demo',kit=kit)
+        self.run_bootstrap('--remove-global-pack','demo',kit=kit)
+        self.assertEqual(ref.read_text(),'# Demo reference\n')
+        self.assertFalse((self.home/'.agents/skills/demo-skill').exists())
+
+    def test_global_pack_errors_name_the_fix(self):
+        kit=self.demo_kit()
+        out=self.run_bootstrap('--global-only','--pack','nosuch',kit=kit,ok=False)
+        self.assertIn('unknown pack: nosuch',out.stderr)
+        out=self.run_bootstrap('--global-only','--pack','herald',kit=kit,ok=False)
+        self.assertIn('herald has no global/ tree',out.stderr)
+        out=self.install('--pack','demo',kit=kit,ok=False)
+        self.assertIn('--global-only --pack demo',out.stderr)
+        out=self.run_bootstrap('--remove-global-pack','demo',kit=kit,ok=False)
+        self.assertIn('demo is not installed globally',out.stderr)
+        (kit/'assets/packs/demo/global-manifest.txt').write_text('file\t.agents/bootstrap/managed.json\tcopy\tbad\n')
+        p=kit/'assets/packs/demo/global/.agents/bootstrap/managed.json'; p.parent.mkdir(parents=True); p.write_text('{}')
+        out=self.run_bootstrap('--global-only','--pack','demo',kit=kit,ok=False)
+        self.assertIn('global pack path',out.stderr)
+        self.assertFalse((self.home/'.agents').exists())
+    CRAFT_SKILLS=('incremental-implementation','api-and-interface-design','frontend-ui-engineering','source-driven-development',
+                  'doubt-driven-development','debugging-and-error-recovery','browser-testing-with-devtools','code-review-and-quality',
+                  'code-simplification','security-and-hardening','performance-optimization','ci-cd-and-automation',
+                  'observability-and-instrumentation','shipping-and-launch','deprecation-and-migration','constraint-driven-development')
+    CRAFT_REFERENCES=('accessibility-checklist','definition-of-done','observability-checklist','orchestration-patterns',
+                      'performance-checklist','security-checklist','testing-patterns','craft-pack-notes')
+
+    def test_craft_global_pack(self):
+        self.run_bootstrap('--global-only')
+        core_before=self.core_view()
+        self.run_bootstrap('--global-only','--pack','craft')
+        skills=self.home/'.agents/skills'; refs=self.home/'.agents/references'
+        for name in self.CRAFT_SKILLS: self.assertTrue((skills/name/'SKILL.md').is_file(),name)
+        self.assertEqual(sorted(p.stem for p in refs.iterdir()),sorted(self.CRAFT_REFERENCES))
+        for name in ('review-gate','test-driven-development','using-agent-skills'): self.assertFalse((skills/name).exists(),name)
+        # A skill's ../../references/<file>.md link resolves from its installed directory.
+        self.assertTrue((skills/'code-review-and-quality'/'../../references/security-checklist.md').resolve().is_file())
+        self.assertFalse((self.home/'custom codex/bootstrap-packs').exists())
+        again=self.run_bootstrap('--global-only','--pack','craft')
+        self.assertIn('0 planned non-identical operations',again.stdout)
+        self.run_bootstrap('--remove-global-pack','craft')
+        self.assertFalse(refs.exists())
+        for name in self.CRAFT_SKILLS: self.assertFalse((skills/name).exists(),name)
+        self.assertEqual(self.core_view(),core_before)
 
 if __name__=='__main__': unittest.main()

@@ -107,7 +107,8 @@ def installed(kit, skills, codex, profiles=None, strict=True):
 def check(root):
     manifests = [(root/'assets/scaffold', root/'assets/scaffold/manifest.txt')]
     manifests += [(root/'assets/global', root/'assets/global/manifest.txt')]
-    manifests += [(p/'scaffold', p/'manifest.txt') for p in (root/'assets/packs').iterdir()]
+    manifests += [(p/'scaffold', p/'manifest.txt') for p in (root/'assets/packs').iterdir() if (p/'scaffold').is_dir()]
+    manifests += [(p/'global', p/'global-manifest.txt') for p in (root/'assets/packs').iterdir() if (p/'global').is_dir()]
     for base, manifest in manifests:
         seen = set()
         for line in manifest.read_text().splitlines():
@@ -167,12 +168,20 @@ def check(root):
             assert (root/path).exists(), f'inventory destination missing: {path}'
         if 'native_sha256' in row:
             assert sha(root/path) == row['native_sha256'], f'current inventory hash drift: {path}'
+    # A global pack's vendored files are third-party bytes kept identical to
+    # upstream (pack.yaml pack_paths lists its pack-authored ones): their prose
+    # may name Claude paths, which is not a migration leftover.
+    vendored = set()
+    for pack in (root/'assets/packs').iterdir():
+        if (pack/'global').is_dir():
+            authored = set(re.findall(r'^\s+- "([^"]+)"\s*$', (pack/'pack.yaml').read_text().split('\ncomponents:')[0], re.M))
+            vendored |= {p for p in (pack/'global').rglob('*') if p.is_file() and p.relative_to(pack/'global').as_posix() not in authored}
     for p in (root/'assets').rglob('*'):
         if not p.is_file() or p.name == 'LICENSE' or '__pycache__' in p.parts or p.suffix == '.pyc':
             continue
         text = p.read_text(errors='replace')
         assert not re.search(r'--dangerously-bypass-(?:approvals-and-sandbox|hook-trust)|bypassPermissions', text), p
-        assert not re.search(r'\.claude/(?:skills|agents|docs|tmp)', text), p
+        assert p in vendored or not re.search(r'\.claude/(?:skills|agents|docs|tmp)', text), p
     print(f'Native payload: {len(names)} skills, {len(agents)} agents; manifests, references, mirrors and safety scan passed.')
 
 

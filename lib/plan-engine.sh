@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Shared fail-closed manifest engine, adapted from source f89f7f3.
 # Each entry owns its source root, destination root and project/global policy.
+# ENTRY_OWNER names the global pack an entry belongs to (empty for core and
+# project entries); load_manifest takes it from ENTRY_OWNER_NEXT.
 is_protected_path() {
     local p="$1" base="${1##*/}"
     case "/$p/" in */.git/*|*/.beads/*) return 0;; esac
@@ -63,7 +65,7 @@ load_manifest() {
             *) die "unknown kind/action at manifest line $lineno: $kind/$action";;
         esac
         ENTRY_KIND+=("$kind"); ENTRY_PATH+=("$rel"); ENTRY_SRCROOT+=("$scaffold")
-        ENTRY_DESTROOT+=("$dest"); ENTRY_POLICY+=("$policy")
+        ENTRY_DESTROOT+=("$dest"); ENTRY_POLICY+=("$policy"); ENTRY_OWNER+=("${ENTRY_OWNER_NEXT:-}")
         count=$((count+1))
     done < "$manifest"
     [[ "$count" -gt 0 ]] || die "empty manifest: $manifest"
@@ -97,7 +99,8 @@ build_plan() {
                 if cmp -s -- "$src" "$tgt"; then state=identical
                 elif [[ "$policy" == global ]]; then
                     state=keep
-                    [[ "$UPDATE_GLOBAL" != 1 ]] || state=overwrite
+                    # UPDATE_CORE=0 (a global pack run) leaves --update-global to pack entries.
+                    if [[ "$UPDATE_GLOBAL" == 1 && ( -n "${ENTRY_OWNER[i]:-}" || "${UPDATE_CORE:-1}" == 1 ) ]]; then state=overwrite; fi
                 elif [[ "$policy" == durable ]]; then state=keep
                 elif [[ "$policy" == merge ]]; then state=overwrite
                 elif [[ "$FORCE" == 1 && "$policy" != pack ]]; then state=overwrite

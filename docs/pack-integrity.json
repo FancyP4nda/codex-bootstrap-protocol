@@ -10,5 +10,9 @@
   "web-design": {
     "sha256": "e19e6662ed79dbf1d46a1701b47364938c6c95b3c0cd10abeaef3f4bdf1d7714",
     "validation": "unverified: evidence fields remain null"
+  },
+  "craft": {
+    "sha256": "1b8feb33b1c8564d67f055693e27210e03e0d2b8336cfc876619f93899ce9dbb",
+    "validation": "vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null"
   }
 }

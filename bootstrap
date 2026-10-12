@@ -18,7 +18,8 @@ Usage:
   ./bootstrap --install-command [--update-path]
   codex-bootstrap [--interactive]
   codex-bootstrap <target> --prefix <PREFIX> [options]
-  codex-bootstrap --global-only [--update-global]
+  codex-bootstrap --global-only [--update-global] [--pack <global-pack>]
+  codex-bootstrap --remove-global-pack <global-pack> [--dry-run]
   codex-bootstrap --doctor
   codex-bootstrap --uninstall-command [--update-path]
 
@@ -26,7 +27,10 @@ Options:
   --interactive | --non-interactive  Wizard or deterministic automation.
   --dry-run                          Combined write-free preflight; no launch.
   --force                            Back up and overwrite base/core managed files.
-  --pack <falcon|herald|web-design>    Repeat for multiple packs.
+  --pack <falcon|herald|web-design>    Repeat for multiple packs. With --global-only,
+                                     a global pack (craft) for every project.
+  --remove-global-pack <name>        Remove a global pack's installed files that are
+                                     unchanged; locally modified ones are kept.
   --allow-unverified-pack             Acknowledge web-design's incomplete evidence.
   --local-core                       Self-contained project; skip global core.
   --update-global                    Back up differing global files; retire unchanged obsolete files.
@@ -55,9 +59,10 @@ TARGET_DIR="" BD_PREFIX="" FORCE=0 DRY_RUN=0 UPDATE_GLOBAL=0 GLOBAL_ONLY=0 LOCAL
 MODE=auto LAUNCH=ask PROMOTE=0 STATUS=0 NOTIFICATIONS=0 HOOKS=0 DOCS_MCP=0
 ALLOW_UNVERIFIED=0 COMMAND_MODE="" UPDATE_PATH=0 DOCTOR=0
 PACKS=()
-ENTRY_KIND=() ENTRY_PATH=() ENTRY_SRCROOT=() ENTRY_DESTROOT=() ENTRY_POLICY=()
+ENTRY_KIND=() ENTRY_PATH=() ENTRY_SRCROOT=() ENTRY_DESTROOT=() ENTRY_POLICY=() ENTRY_OWNER=()
 PLAN_STATE=() PLAN_FATAL=() OBSOLETE_ROOT=() OBSOLETE_REL=() OBSOLETE_STATE=()
-OBSOLETE_HASH=()
+OBSOLETE_HASH=() OBSOLETE_OWNER=() GLOBAL_PACKS=() REMOVE_PACK=""
+UPDATE_CORE=1
 STAGE="" RUN_ID="$(date -u +%Y%m%dT%H%M%S)-$$" NEW_PROJECT=0
 SOURCE_COMMIT=f89f7f3dffb1150fa7df30b180b397dd25a711f9
 source "$KIT_DIR/lib/plan-engine.sh"
@@ -74,6 +79,10 @@ parse_args() {
                 if [[ "$1" == --prefix ]]; then BD_PREFIX="$2"; else PACKS+=("$2"); fi
                 shift 2;;
             --prefix=*) BD_PREFIX="${1#*=}"; shift;;
+            --remove-global-pack)
+                [[ $# -ge 2 && -n "$2" && "$2" != -* ]] || die "$1 requires a value"
+                REMOVE_PACK="$2"; shift 2;;
+            --remove-global-pack=*) REMOVE_PACK="${1#*=}"; shift;;
             --pack=*) PACKS+=("${1#*=}"); shift;;
             --force) FORCE=1; shift;;
             --dry-run) DRY_RUN=1; shift;;
@@ -121,7 +130,7 @@ stage_candidate() {
 }
 append_file() {
     ENTRY_KIND+=(file); ENTRY_PATH+=("$1"); ENTRY_SRCROOT+=("$2")
-    ENTRY_DESTROOT+=("$3"); ENTRY_POLICY+=("${4:-merge}")
+    ENTRY_DESTROOT+=("$3"); ENTRY_POLICY+=("${4:-merge}"); ENTRY_OWNER+=("")
 }
 config_layer() {
     local dest="$1" namespace="$2" config hooks command existing global_hooks
@@ -312,50 +321,126 @@ validate_beads() {
     fi
 }
 global_obsolete() {
-    local root="$1" stamp="$2" prefix="$3" i state rel expected
+    local root="$1" stamp="$2" prefix="$3" owner="${4:-}" i state rel expected
     check_ancestors "$root" "$stamp"; helper check "$root/$stamp"
     [[ ! -f "$root/$stamp" ]] || check_ancestors "$root" "bootstrap-backups/$RUN_ID/$stamp"
+    # Core and each global pack share a root but keep separate stamps: an entry
+    # counts only toward the stamp of its owner.
     for i in "${!ENTRY_PATH[@]}"; do
-        [[ "${ENTRY_DESTROOT[i]}" != "$root" || "${ENTRY_KIND[i]}" != file ]] || printf '%s\n' "${ENTRY_PATH[i]}"
+        [[ "${ENTRY_DESTROOT[i]}" != "$root" || "${ENTRY_KIND[i]}" != file || "${ENTRY_OWNER[i]}" != "$owner" ]] || printf '%s\n' "${ENTRY_PATH[i]}"
     done | helper obsolete "$root/$stamp" "$root" > "$STAGE/obsolete-$prefix"
     while IFS=$'\t' read -r state rel expected; do
         [[ -n "$rel" ]] || continue
         validate_entry_path stamp "$rel"; check_ancestors "$root" "$rel"
         info "Global obsolete $state: $root/$rel"
-        if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 ]]; then
+        if [[ "$state" == remove && "$UPDATE_GLOBAL" == 1 && ( -n "$owner" || "$UPDATE_CORE" == 1 ) ]]; then
             check_ancestors "$root" "bootstrap-backups/$RUN_ID/$rel"
             OBSOLETE_ROOT+=("$root"); OBSOLETE_REL+=("$rel"); OBSOLETE_STATE+=("$state")
-            OBSOLETE_HASH+=("$expected")
+            OBSOLETE_HASH+=("$expected"); OBSOLETE_OWNER+=("$owner")
         fi
     done < "$STAGE/obsolete-$prefix"
 }
 record_layer() {
-    local root="$1" stamp="$2" i rel record_opts=()
+    local root="$1" stamp="$2" owner="${3:-}" i rel record_opts=()
     check_ancestors "$root" "$stamp"
     for i in "${!ENTRY_PATH[@]}"; do
-        [[ "${ENTRY_KIND[i]}" == file ]] || continue
+        [[ "${ENTRY_KIND[i]}" == file && "${ENTRY_OWNER[i]}" == "$owner" ]] || continue
         if [[ "${ENTRY_DESTROOT[i]}" == "$root" ]]; then rel="${ENTRY_PATH[i]}"
         elif [[ "$root" == "$TARGET_DIR" && "${ENTRY_DESTROOT[i]}" == "$root/.codex" ]]; then rel=".codex/${ENTRY_PATH[i]}"
         else continue; fi
         printf '%s\t%s\t%s\n' "$rel" "${PLAN_STATE[i]}" "$root/$rel"
     done > "$STAGE/record-rows"
     for i in "${!OBSOLETE_REL[@]}"; do
-        [[ "${OBSOLETE_ROOT[i]}" != "$root" || "${OBSOLETE_STATE[i]}" != remove ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
+        [[ "${OBSOLETE_ROOT[i]}" != "$root" || "${OBSOLETE_STATE[i]}" != remove || "${OBSOLETE_OWNER[i]}" != "$owner" ]] || printf '%s\tremove\t%s\n' "${OBSOLETE_REL[i]}" "$root/${OBSOLETE_REL[i]}" >> "$STAGE/record-rows"
     done
     if [[ "$root" == "$TARGET_DIR" ]]; then
         if [[ "$LOCAL_CORE" == 1 ]]; then record_opts+=(--core-mode local); else record_opts+=(--core-mode global); fi
     fi
-    if [[ "$root" == "$CODEX_USER_DIR" && ( "$GLOBAL_ONLY" == 1 || "$PROMOTE" == 1 ) || "$root" == "$TARGET_DIR" && "$PROMOTE" != 1 ]]; then
+    if [[ -z "$owner" ]] && [[ "$root" == "$CODEX_USER_DIR" && ( "$GLOBAL_ONLY" == 1 || "$PROMOTE" == 1 ) || "$root" == "$TARGET_DIR" && "$PROMOTE" != 1 ]]; then
         [[ "$STATUS" != 1 ]] || record_opts+=(--configuration-option status-line)
         [[ "$NOTIFICATIONS" != 1 ]] || record_opts+=(--configuration-option notifications)
         [[ "$HOOKS" != 1 ]] || record_opts+=(--configuration-option hooks)
         [[ "$DOCS_MCP" != 1 ]] || record_opts+=(--configuration-option docs-mcp)
     fi
+    # A pack owns only what it installed: an identical file already there stays the user's.
+    [[ -z "$owner" ]] || record_opts+=(--no-adopt)
     helper record "$root/$stamp" "$SOURCE_COMMIT" ${PACKS[@]+"${PACKS[@]}"} ${record_opts[@]+"${record_opts[@]}"} < "$STAGE/record-rows" > "$STAGE/stamp"
     mkdir -p -- "$(dirname -- "$root/$stamp")"
     [[ ! -f "$root/$stamp" ]] || backup_file "$root/$stamp" "$root" "$stamp"
     check_ancestors "$root" "$stamp"
     cp -p -- "$STAGE/stamp" "$root/$stamp"
+}
+pack_root() { # pack_root <name>: the kit's pack directory, or a clear failure.
+    [[ "$1" =~ ^[a-z0-9][a-z0-9-]*$ && -f "$KIT_DIR/assets/packs/$1/pack.yaml" ]] \
+        || die "unknown pack: $1 (available: $(cd -- "$KIT_DIR/assets/packs" && ls | tr '\n' ' '))"
+    printf '%s\n' "$KIT_DIR/assets/packs/$1"
+}
+pack_stamps() { # pack_stamps <name>: "<root>\t<stamp>" for each global root a pack may fill.
+    printf '%s\t%s\n' "$USER_ROOT/.agents" "bootstrap/packs/$1.json" "$CODEX_USER_DIR" "bootstrap-packs/$1.json"
+}
+load_global_pack() {
+    local name="$1" pack line rest rel
+    pack="$(pack_root "$name")"
+    [[ -f "$pack/global-manifest.txt" ]] || die "pack $name has no global/ tree; install it per project: codex-bootstrap <target> --pack $name"
+    : > "$STAGE/pack-$name-agents"; : > "$STAGE/pack-$name-codex"
+    # Rows name paths under global/; each first component is a global root.
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        line="${line%$'\r'}"
+        [[ -z "$line" || "$line" == \#* ]] && continue
+        rest="${line#*$'\t'}"; rel="${rest%%$'\t'*}"
+        case "$rel" in
+            .agents/skills/?*|.agents/references/?*) printf '%s\n' "${line/$'\t'.agents\//$'\t'}" >> "$STAGE/pack-$name-agents";;
+            .codex/agents/?*|.codex/skills/?*) printf '%s\n' "${line/$'\t'.codex\//$'\t'}" >> "$STAGE/pack-$name-codex";;
+            *) die "global pack path not allowed in $name: $rel (use .agents/skills, .agents/references, .codex/agents or .codex/skills)";;
+        esac
+    done < "$pack/global-manifest.txt"
+    ENTRY_OWNER_NEXT="$name"
+    [[ ! -s "$STAGE/pack-$name-agents" ]] || load_manifest "$STAGE/pack-$name-agents" "$pack/global/.agents" "$USER_ROOT/.agents" global
+    [[ ! -s "$STAGE/pack-$name-codex" ]] || load_manifest "$STAGE/pack-$name-codex" "$pack/global/.codex" "$CODEX_USER_DIR" global
+    ENTRY_OWNER_NEXT=""
+    [[ -s "$STAGE/pack-$name-agents" || -s "$STAGE/pack-$name-codex" ]] || die "empty global manifest: $pack/global-manifest.txt"
+}
+remove_global_pack() {
+    local name="$REMOVE_PACK" root stamp state rel expected dir found=0 i
+    local rm_root=() rm_rel=() rm_hash=() stamps=()
+    [[ -z "$TARGET_DIR" && ${#PACKS[@]} == 0 && "$GLOBAL_ONLY" != 1 ]] || die "--remove-global-pack takes only a pack name (and --dry-run)"
+    [[ "$name" =~ ^[a-z0-9][a-z0-9-]*$ ]] || die "invalid pack name: $name"
+    while IFS=$'\t' read -r root stamp; do
+        check_ancestors "$root" "$stamp"
+        [[ -f "$root/$stamp" ]] || continue
+        found=1; stamps+=("$root/$stamp")
+        helper check "$root/$stamp"
+        # With no current entries, every stamped file still present is listed.
+        helper obsolete "$root/$stamp" "$root" < /dev/null > "$STAGE/remove-pack"
+        while IFS=$'\t' read -r state rel expected; do
+            [[ -n "$rel" ]] || continue
+            validate_entry_path stamp "$rel"; check_ancestors "$root" "$rel"
+            if [[ "$state" == remove ]]; then
+                info "remove $root/$rel"
+                rm_root+=("$root"); rm_rel+=("$rel"); rm_hash+=("$expected")
+            else
+                info "keep $root/$rel: modified since install; delete it by hand if you no longer want it"
+            fi
+        done < "$STAGE/remove-pack"
+    done < <(pack_stamps "$name")
+    [[ "$found" == 1 ]] || die "pack $name is not installed globally: no stamp under $USER_ROOT/.agents/bootstrap/packs or $CODEX_USER_DIR/bootstrap-packs; nothing removed"
+    [[ "$DRY_RUN" != 1 ]] || { info "Dry run complete; nothing removed."; return; }
+    for i in "${!rm_rel[@]}"; do
+        root="${rm_root[i]}"; rel="${rm_rel[i]}"
+        check_ancestors "$root" "$rel"
+        if ! python3 -c 'import hashlib,pathlib,sys; p=pathlib.Path(sys.argv[1]); sys.exit(0 if p.is_file() and hashlib.sha256(p.read_bytes()).hexdigest()==sys.argv[2] else 1)' "$root/$rel" "${rm_hash[i]}"; then
+            info "keep $root/$rel: changed since the preview"
+            continue
+        fi
+        rm -f -- "$root/$rel"
+        dir="$(dirname -- "$root/$rel")"
+        while [[ "$dir" == "$root"/* ]] && rmdir -- "$dir" 2>/dev/null; do dir="$(dirname -- "$dir")"; done
+    done
+    for stamp in "${stamps[@]}"; do
+        rm -f -- "$stamp"
+        rmdir -- "$(dirname -- "$stamp")" 2>/dev/null || true
+    done
+    info "Global pack $name removed."
 }
 main() {
     parse_args "$@"
@@ -366,9 +451,19 @@ main() {
     [[ "$DOCTOR" != 1 ]] || { doctor; return; }
     prepare_stage
     [[ -z "$COMMAND_MODE" ]] || { command_setup; return; }
+    [[ -z "$REMOVE_PACK" ]] || { remove_global_pack; return; }
     need git "Git"
     [[ "$GLOBAL_ONLY" != 1 || "$LOCAL_CORE" != 1 ]] || die "--local-core and --global-only are mutually exclusive"
-    [[ "$GLOBAL_ONLY" != 1 || ${#PACKS[@]} == 0 ]] || die "packs require a project target"
+    if [[ "$GLOBAL_ONLY" == 1 ]]; then
+        # With --global-only, --pack names global packs; project packs need a target.
+        GLOBAL_PACKS=(${PACKS[@]+"${PACKS[@]}"}); PACKS=()
+        if [[ ${#GLOBAL_PACKS[@]} -gt 0 ]]; then
+            # A pack run installs missing core files but updates only the pack's.
+            UPDATE_CORE=0
+            [[ "$UPDATE_GLOBAL" != 1 ]] || info "--update-global applies to the named packs only; update the core with: codex-bootstrap --global-only --update-global"
+        fi
+        for pack in ${GLOBAL_PACKS[@]+"${GLOBAL_PACKS[@]}"}; do pack_root "$pack" >/dev/null; done
+    fi
     if [[ "$MODE" == auto ]]; then
         MODE=non-interactive
         if [[ "$DRY_RUN" != 1 && "$GLOBAL_ONLY" != 1 && -z "$TARGET_DIR" && -t 0 && -t 1 && -z "${CI:-}" ]]; then MODE=interactive; fi
@@ -408,7 +503,8 @@ main() {
             done
         fi
         for pack in ${PACKS[@]+"${PACKS[@]}"}; do
-            case "$pack" in falcon|herald|web-design) ;; *) die "unknown pack: $pack";; esac
+            pack_root "$pack" >/dev/null
+            [[ -f "$KIT_DIR/assets/packs/$pack/manifest.txt" ]] || die "$pack is a global pack for every project; install it with: codex-bootstrap --global-only --pack $pack"
             [[ "$pack" != web-design || "$ALLOW_UNVERIFIED" == 1 ]] || die "web-design is UNVERIFIED; acknowledge with --allow-unverified-pack"
             [[ "$pack" != web-design || "$DRY_RUN" == 1 ]] || need node "Node.js 22+ for web-design helpers"
             if [[ "$pack" == web-design && "$DRY_RUN" != 1 ]]; then
@@ -427,6 +523,7 @@ main() {
         if [[ "$HOOKS" != 1 || "$PROMOTE" != 1 && "$GLOBAL_ONLY" != 1 ]]; then
             retain_global_optional_helpers
         fi
+        for pack in ${GLOBAL_PACKS[@]+"${GLOBAL_PACKS[@]}"}; do load_global_pack "$pack"; done
     fi
     if [[ "$PROMOTE" == 1 || "$GLOBAL_ONLY" == 1 && ( "$STATUS" == 1 || "$NOTIFICATIONS" == 1 || "$HOOKS" == 1 || "$DOCS_MCP" == 1 ) ]]; then
         if [[ "$HOOKS" == 1 && -n "$TARGET_DIR" && -f "$TARGET_DIR/.codex/hooks.json" ]]; then
@@ -440,6 +537,11 @@ main() {
     if [[ "$LOCAL_CORE" != 1 ]]; then
         global_obsolete "$USER_ROOT/.agents" bootstrap/managed.json skills
         global_obsolete "$CODEX_USER_DIR" bootstrap-managed.json agents
+        for pack in ${GLOBAL_PACKS[@]+"${GLOBAL_PACKS[@]}"}; do
+            while IFS=$'\t' read -r root stamp; do
+                global_obsolete "$root" "$stamp" "pack-$pack-${stamp//\//-}" "$pack"
+            done < <(pack_stamps "$pack")
+        done
     fi
     local i msg
     # Preflight every prospective backup location before writing anything.
@@ -477,6 +579,16 @@ main() {
     if [[ "$LOCAL_CORE" != 1 ]]; then
         record_layer "$USER_ROOT/.agents" bootstrap/managed.json
         record_layer "$CODEX_USER_DIR" bootstrap-managed.json
+        for pack in ${GLOBAL_PACKS[@]+"${GLOBAL_PACKS[@]}"}; do
+            while IFS=$'\t' read -r root stamp; do
+                # A pack stamps only the roots it fills (or filled before).
+                for i in "${!ENTRY_OWNER[@]}"; do
+                    if [[ "${ENTRY_OWNER[i]}" == "$pack" && "${ENTRY_DESTROOT[i]}" == "$root" ]] || [[ -f "$root/$stamp" ]]; then
+                        record_layer "$root" "$stamp" "$pack"; break
+                    fi
+                done
+            done < <(pack_stamps "$pack")
+        done
     elif [[ "$PROMOTE" == 1 ]]; then
         # Explicit personal configuration promotion is tracked independently
         # even when the project deliberately skips global core installation.
