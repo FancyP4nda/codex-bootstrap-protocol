@@ -16,7 +16,7 @@ def digest(base, paths):
 
 
 integrity = {}
-for pack in ('falcon', 'herald', 'web-design'):
+for pack in ('falcon', 'herald', 'web-design', 'craft'):
     root = ROOT/'assets/packs'/pack
     metadata = root/'pack.yaml'
     text = metadata.read_text()
@@ -30,9 +30,12 @@ for pack in ('falcon', 'herald', 'web-design'):
             if count != 1:
                 raise ValueError(f'missing component digest: {skill}')
         metadata.write_text(text)
-    files = [Path('manifest.txt'), Path('pack.yaml')]
-    files += [p.relative_to(root) for p in (root/'scaffold').rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc']
-    integrity[pack] = {'sha256': digest(root, files),
-                       'validation': 'unverified: evidence fields remain null' if pack == 'web-design' else 'first-party native adaptation'}
+    # A global pack has global-manifest.txt and global/ in place of manifest.txt and scaffold/.
+    tree = 'global' if (root/'global').is_dir() else 'scaffold'
+    files = [Path('global-manifest.txt' if tree == 'global' else 'manifest.txt'), Path('pack.yaml')]
+    files += [p.relative_to(root) for p in (root/tree).rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc']
+    validation = {'web-design': 'unverified: evidence fields remain null',
+                  'craft': 'vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null'}
+    integrity[pack] = {'sha256': digest(root, files), 'validation': validation.get(pack, 'first-party native adaptation')}
 (ROOT/'docs/pack-integrity.json').write_text(json.dumps(integrity, indent=2)+'\n')
 print('Refreshed migration digests; no release stamp written.')

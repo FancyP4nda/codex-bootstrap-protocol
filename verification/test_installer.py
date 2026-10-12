@@ -392,5 +392,29 @@ class InstallerTests(unittest.TestCase):
         out=self.run_bootstrap('--global-only','--pack','demo',kit=kit,ok=False)
         self.assertIn('global pack path',out.stderr)
         self.assertFalse((self.home/'.agents').exists())
+    CRAFT_SKILLS=('incremental-implementation','api-and-interface-design','frontend-ui-engineering','source-driven-development',
+                  'doubt-driven-development','debugging-and-error-recovery','browser-testing-with-devtools','code-review-and-quality',
+                  'code-simplification','security-and-hardening','performance-optimization','ci-cd-and-automation',
+                  'observability-and-instrumentation','shipping-and-launch','deprecation-and-migration','constraint-driven-development')
+    CRAFT_REFERENCES=('accessibility-checklist','definition-of-done','observability-checklist','orchestration-patterns',
+                      'performance-checklist','security-checklist','testing-patterns','craft-pack-notes')
+
+    def test_craft_global_pack(self):
+        self.run_bootstrap('--global-only')
+        core_before=self.core_view()
+        self.run_bootstrap('--global-only','--pack','craft')
+        skills=self.home/'.agents/skills'; refs=self.home/'.agents/references'
+        for name in self.CRAFT_SKILLS: self.assertTrue((skills/name/'SKILL.md').is_file(),name)
+        self.assertEqual(sorted(p.stem for p in refs.iterdir()),sorted(self.CRAFT_REFERENCES))
+        for name in ('review-gate','test-driven-development','using-agent-skills'): self.assertFalse((skills/name).exists(),name)
+        # A skill's ../../references/<file>.md link resolves from its installed directory.
+        self.assertTrue((skills/'code-review-and-quality'/'../../references/security-checklist.md').resolve().is_file())
+        self.assertFalse((self.home/'custom codex/bootstrap-packs').exists())
+        again=self.run_bootstrap('--global-only','--pack','craft')
+        self.assertIn('0 planned non-identical operations',again.stdout)
+        self.run_bootstrap('--remove-global-pack','craft')
+        self.assertFalse(refs.exists())
+        for name in self.CRAFT_SKILLS: self.assertFalse((skills/name).exists(),name)
+        self.assertEqual(self.core_view(),core_before)
 
 if __name__=='__main__': unittest.main()
