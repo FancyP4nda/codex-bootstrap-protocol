@@ -6,6 +6,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import tomllib
 import unittest
 
 KIT = Path(__file__).resolve().parents[1]
@@ -56,7 +57,7 @@ class HerdrQaTests(unittest.TestCase):
 
     def instructions(self, argv):
         value = next(a for a in argv if a.startswith('developer_instructions='))
-        return json.loads(value.split('=', 1)[1])
+        return tomllib.loads(value)['developer_instructions']  # as codex parses -c values
 
     # --- shipped payloads ------------------------------------------------------
 
@@ -89,6 +90,9 @@ class HerdrQaTests(unittest.TestCase):
             'profile without model': (dict(), lambda: (self.codex_home/'qa.config.toml').write_text('model_reasoning_effort = "high"\n'), 'model'),
             'legacy table': (dict(), lambda: (self.codex_home/'config.toml').write_text('[profiles.qa]\nmodel = "x"\n'), 'profiles.qa'),
             'legacy selector': (dict(), lambda: (self.codex_home/'config.toml').write_text('profile = "qa"\n'), 'profile = "qa"'),
+            'legacy dotted key': (dict(), lambda: (self.codex_home/'config.toml').write_text('profiles.qa.model = "x"\n'), 'profiles.qa'),
+            'legacy inline table': (dict(), lambda: (self.codex_home/'config.toml').write_text('[profiles]\nqa = { model = "x" }\n'), 'profiles.qa'),
+            'stale reviewer': (dict(), lambda: (self.codex_home/'agents/reviewer.toml').write_text('name = "reviewer"\ndeveloper_instructions = "old"\n'), '--update-global'),
             'reviewer without instructions': (dict(), lambda: (self.codex_home/'agents/reviewer.toml').write_text('name = "reviewer"\n'), 'developer_instructions'),
         }
         for name, (provision, breakage, needle) in cases.items():
@@ -102,6 +106,8 @@ class HerdrQaTests(unittest.TestCase):
                 self.assertFalse(self.record.exists())
 
     def test_check_fails_without_codex_or_directory(self):
+        if shutil.which('codex', path='/usr/bin:/bin'):
+            self.skipTest('a system codex in /usr/bin or /bin cannot be hidden from this check')
         self.provision()
         (self.bin/'codex').unlink()
         result = self.qa('--check', self.project)
@@ -141,11 +147,20 @@ class HerdrQaTests(unittest.TestCase):
 
     def test_launch_without_inline_flag_and_relative_dir(self):
         self.provision()
-        result = subprocess.run([str(WRAPPER), self.project.name], cwd=self.root, env=self.env, capture_output=True, text=True, timeout=60)
+        decoy = self.root/'decoy'/self.project.name; decoy.mkdir(parents=True)
+        env = {**self.env, 'CDPATH': str(decoy.parent)}  # cd must not pick this over ./<dir>
+        result = subprocess.run([str(WRAPPER), self.project.name], cwd=self.root, env=env, capture_output=True, text=True, timeout=60)
         self.assertEqual(result.returncode, 0, result.stderr)
         argv = self.launched()['argv']
         self.assertNotIn('--no-alt-screen', argv)
         self.assertEqual(argv[argv.index('-C')+1], str(self.project))
+
+    def test_launch_keeps_non_ascii_instructions_valid_toml(self):
+        self.provision()
+        role = self.codex_home/'agents/reviewer.toml'
+        role.write_text(role.read_text().replace('You are a review subagent', 'You are a review subagent \U0001F50D \u00e9'))
+        self.assertEqual(self.qa(self.project).returncode, 0)
+        self.assertIn('\U0001F50D \u00e9', self.instructions(self.launched()['argv']))
 
     def test_launch_adds_team_manifest_and_protocol(self):
         self.provision()

@@ -126,7 +126,8 @@ def check(root):
         if base == root/'assets/scaffold':
             shipped.discard('.codex/config.toml')
         if base == root/'assets/global':
-            shipped -= {'skills-manifest.txt', 'agents-manifest.txt', '.codex/qa.config.toml'}
+            shipped -= {'skills-manifest.txt', 'agents-manifest.txt'}
+            shipped -= {p for p in shipped if re.fullmatch(r'\.codex/[^/]+\.config\.toml', p)}  # CODEX_HOME-only profiles
         assert shipped <= seen, (manifest, shipped-seen)
     names = []
     for p in (root/'assets').rglob('SKILL.md'):

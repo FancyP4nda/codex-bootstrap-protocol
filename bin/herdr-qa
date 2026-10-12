@@ -43,7 +43,7 @@ command -v python3 >/dev/null 2>&1 || { printf 'herdr-qa: python3 (3.11+) is not
 # Validates the setup the way the Claude kit's review-gate and herdr-team do,
 # then prints the developer_instructions value as a TOML string for codex -c.
 read -r -d '' VALIDATE <<'PY' || true
-import json, os, re, shutil, sys
+import json, os, shutil, sys
 from pathlib import Path
 mode, raw = sys.argv[1], sys.argv[2]
 try:
@@ -69,12 +69,14 @@ elif not os.path.isdir(project):
 codex = shutil.which('codex')
 if not codex:
     problems.append('codex is not on PATH; install the Codex CLI (npm install -g @openai/codex)')
-# Codex 0.162 refuses --profile next to a [profiles.qa] table or a profile = "qa" selector.
-try:
-    legacy = re.search(r'''^[ \t]*(\[[ \t]*profiles[ \t]*\.[ \t]*(qa|"qa"|'qa')[ \t]*[.\]]|profile[ \t]*=[ \t]*["']qa["'])''',
-                       config.read_text(errors='replace'), re.M)
-except OSError:
-    legacy = None
+# Codex 0.162 refuses --profile next to a profiles.qa table or a profile = "qa" selector, in any TOML spelling.
+legacy = False
+if config.is_file():
+    data, error = load(config)
+    if error:
+        problems.append(error)
+    else:
+        legacy = data.get('profile') == 'qa' or 'qa' in (data.get('profiles') if isinstance(data.get('profiles'), dict) else {})
 if legacy:
     problems.append(f'{config} holds a legacy [profiles.qa] table or profile = "qa", which codex refuses next to --profile qa; '
                     f'move those settings into {profile} and remove them from config.toml')
@@ -97,13 +99,15 @@ else:
         problems.append(error)
     elif not isinstance(data.get('developer_instructions'), str) or not data['developer_instructions'].strip():
         problems.append(f'{role} has no developer_instructions; {setup}')
+    elif 'VERDICT:' not in data['developer_instructions']:
+        # A role kept from an older kit (differing files are preserved) lacks the report shape callers parse.
+        problems.append(f'{role} predates the QA report shape (no VERDICT: line); '
+                        'run codex-bootstrap --global-only --update-global, which backs up the current file')
     else:
         instructions = data['developer_instructions'].strip()
 
 if problems:
-    for problem in problems[:-1]:
-        print(f'herdr-qa: {problem}', file=sys.stderr)
-    print(f'herdr-qa: not ready: {"; ".join(problems)}' if len(problems) > 1 else f'herdr-qa: {problems[0]}', file=sys.stderr)
+    print(f'herdr-qa: not ready: {"; ".join(problems)}', file=sys.stderr)
     sys.exit(1)
 if mode == 'check':
     print(f'herdr-qa: ready: codex {codex}; profile qa {profile} (model {facts["model"]}); reviewer {role}; project {project}')
@@ -115,15 +119,17 @@ if manifest:
     protocol = Path(os.environ.get('CLAUDE_CONFIG_DIR') or Path.home()/'.claude')/'skills/herdr-team/PROTOCOL.md'
     also = f' and the team protocol at {protocol}' if protocol.is_file() else ''
     text += f'\nYou are the QA member of a herdr team. Before you act on any request, read the team manifest at {manifest}{also}.'
-# A JSON string with ASCII escapes is also a valid TOML basic string.
-print(json.dumps(text))
+# The project, then the instructions as a TOML basic string: JSON escapes quotes, backslashes and
+# control characters the TOML way; non-ASCII stays literal (TOML rejects JSON's surrogate-pair escapes).
+print(project)
+print(json.dumps(text, ensure_ascii=False).replace('\x7f', '\\u007f'))
 PY
 
 if ((check)); then
     exec python3 -I -c "$VALIDATE" check "$dir"
 fi
-value="$(python3 -I -c "$VALIDATE" launch "$dir")" || exit 1
-project="$(cd -- "$dir" && pwd)"
+launch="$(python3 -I -c "$VALIDATE" launch "$dir")" || exit 1
+{ IFS= read -r project; IFS= read -r value; } <<< "$launch"
 args=(--profile qa --sandbox read-only -C "$project" -c "developer_instructions=$value")
 ((! inline)) || args+=(--no-alt-screen)
 cd -- "$project"

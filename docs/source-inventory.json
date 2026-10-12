@@ -1784,7 +1784,7 @@
       "destination": "bootstrap",
       "acceptance": "installer-regression-suite",
       "conversion": "selective engine reuse; native global config and wizard replace source runtime",
-      "native_sha256": "f1983267fb6ae5ea40aa7c7274166180b1de0b93d71e70555e94eda5a1d9848c"
+      "native_sha256": "f2f5a89b97ef70dffa03ae87ac712286a0487310df6594977c246f9e7e501333"
     },
     {
       "source": "Starting-workflow.md",
