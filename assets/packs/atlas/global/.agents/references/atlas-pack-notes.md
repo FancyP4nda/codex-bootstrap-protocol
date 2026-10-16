@@ -94,7 +94,10 @@ serve operations the pack does not support and are not vendored.
 - **Graphify**: `SKILL.md` and the three reference files carry the Claude pack's
   execution-safety edits (the preflight and runner, values passed as data, the
   supported surface, the modification notice) and, in `SKILL.md`, a Codex
-  adaptation of Part B: chunk list files (`.graphify_chunk_NN.files`), native
+  adaptation of Part B: JSON path lists (`.graphify_uncached.json` and the chunk
+  list files `.graphify_chunk_NN.files`, never one path per line, with every name
+  refused if it holds a control or line-separator character or resolves outside the
+  scan root), native
   subagents through `spawn_agent`, `wait_agent` and `close_agent` when
   `multi_agent` is on, a serial path (the session extracts each chunk in turn)
   when it is off, and a collection check that sets aside invalid chunk files and

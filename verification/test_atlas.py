@@ -13,6 +13,7 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 KIT = Path(__file__).resolve().parents[1]
 PACK = KIT/'assets/packs/atlas'
@@ -405,16 +406,20 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp(prefix='atlas-dispatch-'))
         self.addCleanup(shutil.rmtree, self.tmp, True)
         self.out = self.tmp/'graphify-out'
-        self.out.mkdir()
+        self.fresh_out()
 
-    def run_block(self, marker):
-        return subprocess.run(['python3', '-I', '-c', skill_blocks(marker)], cwd=self.tmp, capture_output=True, text=True)
+    def fresh_out(self):
+        self.out.mkdir(exist_ok=True)
+        (self.out/'.graphify_root').write_bytes(os.fsencode(self.tmp))  # the scan root Step 1 records
+
+    def run_block(self, marker, prefix=''):
+        return subprocess.run(['python3', '-I', '-c', prefix + skill_blocks(marker)], cwd=self.tmp, capture_output=True, text=True)
 
     def uncached(self, files):
-        (self.out/'.graphify_uncached.txt').write_text(''.join(f + '\n' for f in files))
+        (self.out/'.graphify_uncached.json').write_text(json.dumps(files))
 
     def chunk_files(self):
-        return {p.name: p.read_text().split() for p in sorted(self.out.glob('.graphify_chunk_*.files'))}
+        return {p.name: json.loads(p.read_text()) for p in sorted(self.out.glob('.graphify_chunk_*.files'))}
 
     def write_result(self, n, nodes=1):
         (self.out/f'.graphify_chunk_{n:02d}.json').write_text(json.dumps(
@@ -444,11 +449,85 @@ class GraphifyDispatchTests(unittest.TestCase):
 
     def test_chunk_write_clears_a_dead_run_first(self):
         self.write_result(7)
-        (self.out/'.graphify_chunk_07.files').write_text('old\n')
+        (self.out/'.graphify_chunk_07.files').write_text('["old"]')
         self.uncached(['a.md'])
         self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
         self.assertEqual(sorted(p.name for p in self.out.glob('.graphify_chunk_*')),
                          ['.graphify_chunk_01.files', '.graphify_chunk_total'])
+
+    # A repository file name is attacker-controlled. Every list that reaches a worker is a JSON array, and
+    # a name that a line-based reader would split, or that resolves outside the scan root, stops the run.
+    def assert_refused(self, marker, names, culprit=None, prefix=''):
+        run = self.run_block(marker, prefix)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('STOP', run.stdout)
+        self.assertIn(culprit or repr(names[0]), run.stdout)
+        self.assertEqual(list(self.out.glob('.graphify_chunk_*')), [])
+
+    def test_chunk_write_refuses_a_name_that_a_line_reader_would_split_into_an_outside_path(self):
+        name = 'docs/intro\n/etc/hostname\nnotes.md'
+        self.uncached(['docs/ok.md', name])
+        self.assert_refused('atlas-chunk-write', [name])
+
+    def test_chunk_write_refuses_every_control_and_line_separator_character(self):
+        for ch in ('\r', '\x00', '\x0b', '\x0c', '\x1c', '\x1b', '\x7f', '\x85', '\u2028', '\u2029'):
+            with self.subTest(ch=ch):
+                name = f'docs/a{ch}b.md'
+                self.uncached([name])
+                self.assert_refused('atlas-chunk-write', [name])
+
+    def test_chunk_write_refuses_a_path_outside_the_scan_root(self):
+        for name in ('/etc/hostname', '../outside.md', 'docs/../../outside.md'):
+            with self.subTest(name=name):
+                self.uncached(['docs/ok.md', name])
+                self.assert_refused('atlas-chunk-write', [name])
+
+    def test_chunk_write_refuses_a_symlink_that_leaves_the_scan_root(self):
+        outside = Path(tempfile.mkdtemp(prefix='atlas-outside-'))
+        self.addCleanup(shutil.rmtree, outside, True)
+        (outside/'secret.md').write_text('secret')
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/link.md').symlink_to(outside/'secret.md')
+        self.uncached(['docs/link.md'])
+        self.assert_refused('atlas-chunk-write', ['docs/link.md'])
+
+    def test_chunk_list_is_a_json_array_that_keeps_awkward_names_whole(self):
+        names = ['docs/with space.md', 'docs/quote"s.md', "docs/it's.md", 'docs/\u00e9t\u00e9.md', 'docs/back\\slash.md']
+        self.uncached(names)
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+        listed = json.loads((self.out/'.graphify_chunk_01.files').read_text())
+        self.assertEqual(sorted(listed), sorted(names))
+
+    CACHE_STUB = ("import sys, types\n"
+                  "pkg, cache = types.ModuleType('graphify'), types.ModuleType('graphify.cache')\n"
+                  "cache.check_semantic_cache = lambda files, root, prompt_file: ({}, {}, {}, list(files))\n"
+                  "sys.modules['graphify'], sys.modules['graphify.cache'] = pkg, cache\n")
+
+    def run_cache_check(self, files):
+        (self.out/'.graphify_detect.json').write_text(json.dumps({'files': {'document': files}}))
+        return self.run_block('atlas-cache-check', self.CACHE_STUB)
+
+    def test_cache_check_writes_the_uncached_list_as_json(self):
+        names = ['docs/a b.md', 'docs/c.md']
+        with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+            run = self.run_cache_check(names)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual(json.loads((self.out/'.graphify_uncached.json').read_text()), names)
+        self.assertFalse((self.out/'.graphify_uncached.txt').exists())
+
+    def test_cache_check_refuses_a_name_with_a_line_break_or_outside_the_root(self):
+        for name in ('docs/intro\n/etc/hostname\nnotes.md', '/etc/hostname'):
+            with self.subTest(name=name), mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+                run = self.run_cache_check(['docs/ok.md', name])
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn(repr(name), run.stdout)
+                self.assertFalse((self.out/'.graphify_uncached.json').exists())
+
+    def test_no_step_reads_a_path_list_line_by_line(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertEqual(text.count('.graphify_uncached.txt'), 1)  # only the unlink of a list an older run left
+        self.assertNotIn('splitlines', text.split('Step B0')[1].split('Step B3')[0])
+        self.assertIn("json.loads(Path('graphify-out/.graphify_uncached.json')", text)
 
     def collect(self):
         return self.run_block('atlas-chunk-collect')
@@ -547,7 +626,7 @@ class GraphifyDispatchTests(unittest.TestCase):
         for name, body in bad.items():
             with self.subTest(name):
                 shutil.rmtree(self.out)
-                self.out.mkdir()
+                self.fresh_out()
                 self.prepare(2)
                 self.write_result(1)
                 (self.out/'.graphify_chunk_02.json').write_text(json.dumps(body))
