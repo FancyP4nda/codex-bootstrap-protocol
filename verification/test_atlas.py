@@ -558,6 +558,29 @@ class GraphifyDispatchTests(unittest.TestCase):
                 self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text().split(), ['2'])
                 merge = subprocess.run(['python3', '-I', '-c', skill_blocks('atlas-chunk-merge')], cwd=self.tmp, capture_output=True, text=True)
                 self.assertEqual(merge.returncode, 0, merge.stderr)
+                merged = json.loads((self.out/'.graphify_semantic_new.json').read_text())
+                self.assertEqual([n['id'] for n in merged['nodes']], ['c1n0'])  # only the good chunk reaches the merge
+
+    def test_a_quarantined_result_is_cleared_by_the_serial_retry(self):
+        self.prepare(2)
+        self.write_result(1)
+        (self.out/'.graphify_chunk_02.json').write_text(json.dumps({'nodes': [{}], 'edges': []}))
+        self.assertEqual(self.collect().returncode, 3)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text().split(), ['2'])
+        self.write_result(2)  # the session extracts the chunk itself, as the skill says
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text(), '')
+        merge = subprocess.run(['python3', '-I', '-c', skill_blocks('atlas-chunk-merge')], cwd=self.tmp, capture_output=True, text=True)
+        self.assertEqual(merge.returncode, 0, merge.stderr)
+        merged = json.loads((self.out/'.graphify_semantic_new.json').read_text())
+        self.assertEqual(sorted(n['id'] for n in merged['nodes']), ['c1n0', 'c2n0'])  # the stale .invalid file is not merged
+
+    def test_collect_accepts_a_result_that_omits_hyperedges_and_token_counts(self):
+        self.prepare(1)
+        (self.out/'.graphify_chunk_01.json').write_text(json.dumps({'nodes': [{'id': 'a'}], 'edges': []}))
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
     def test_collect_accepts_a_full_result_with_edges_hyperedges_and_tokens(self):
         self.prepare(1)

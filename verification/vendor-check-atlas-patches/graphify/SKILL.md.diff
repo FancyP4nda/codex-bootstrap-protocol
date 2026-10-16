@@ -465,7 +465,7 @@
 -If more than half the chunks failed or are missing, stop and tell the user to re-run and ensure `subagent_type="general-purpose"` is used.
 -
 -Merge all chunk files into `.graphify_semantic_new.json`. **After each Agent call completes, read the real token counts from the Agent tool result's `usage` field and write them back into the chunk JSON before merging** — the chunk JSON itself always has placeholder zeros. Then run:
-+Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid JSON with `nodes` and `edges` (as `.graphify_chunk_NN.invalid`, so the merge skips it), prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
++Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid extraction JSON (as `.graphify_chunk_NN.invalid`, so the merge skips it): `nodes` with a string `id` each, `edges` with a string `source` and `target` each, `hyperedges` absent or a list of objects, token counts absent or integers. One bad entry sends its whole chunk to the serial retry, not just the entry, prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
  ```bash
 -$(cat graphify-out/.graphify_python) -c "
 +export GRAPHIFY_NO_AUTO_REFRESH=1
@@ -501,7 +501,7 @@
 +        continue
 +    try:
 +        ok = shaped(json.loads(path.read_text(encoding="utf-8")))
-+    except (ValueError, OSError):
++    except (ValueError, OSError, RecursionError):  # RecursionError: absurdly nested JSON
 +        ok = False
 +    if not ok:
 +        aside = path.with_suffix('.invalid')

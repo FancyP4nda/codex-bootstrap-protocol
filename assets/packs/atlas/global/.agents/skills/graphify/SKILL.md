@@ -359,7 +359,7 @@ See `references/extraction-spec.md` for the exact subagent prompt (JSON schema, 
 
 **Step B3 - Collect, cache, and merge**
 
-Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid JSON with `nodes` and `edges` (as `.graphify_chunk_NN.invalid`, so the merge skips it), prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
+Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid extraction JSON (as `.graphify_chunk_NN.invalid`, so the merge skips it): `nodes` with a string `id` each, `edges` with a string `source` and `target` each, `hyperedges` absent or a list of objects, token counts absent or integers. One bad entry sends its whole chunk to the serial retry, not just the entry, prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
 ```bash
 export GRAPHIFY_NO_AUTO_REFRESH=1
 export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
@@ -394,7 +394,7 @@ for n in range(1, total + 1):
         continue
     try:
         ok = shaped(json.loads(path.read_text(encoding="utf-8")))
-    except (ValueError, OSError):
+    except (ValueError, OSError, RecursionError):  # RecursionError: absurdly nested JSON
         ok = False
     if not ok:
         aside = path.with_suffix('.invalid')
