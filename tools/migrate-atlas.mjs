@@ -60,10 +60,15 @@ function slashInShell(line) {
   let out = '', quote = '', i = 0;
   while (i < line.length) {
     const c = line[i];
-    if (quote === "'") { if (c === "'") quote = ''; out += c; i++; continue; }
+    if (quote === "'") {
+      const m = c === '/' ? line.slice(i).match(SLASH_AT) : null;
+      if (m && !/[\w./$-]/.test(line[i - 1] ?? '')) { out += '$' + m[1]; i += m[0].length; continue; }
+      if (c === "'") quote = '';
+      out += c; i++; continue;
+    }
     if (c === '\\') { out += c + (line[i + 1] ?? ''); i += 2; continue; }
     if (c === '"') { quote = quote === '"' ? '' : '"'; out += c; i++; continue; }
-    if (c === "'") { quote = "'"; out += c; i++; continue; }
+    if (c === "'" && quote === '') { quote = "'"; out += c; i++; continue; }
     const m = c === '/' ? line.slice(i).match(SLASH_AT) : null;
     if (m && !/[\w./$-]/.test(line[i - 1] ?? '')) { out += '\\$' + m[1]; i += m[0].length; continue; }
     out += c; i++;
@@ -76,8 +81,10 @@ function toCodex(text, kind = 'md') {
   text = text.replace(/(atlas-check\.sh"?|doctor\.sh"?) claude\b/g, '$1 codex');
   text = text.replaceAll('.claude/docs/diagrams', 'docs/diagrams');
   text = text.replaceAll('claude-bootstrap', 'codex-bootstrap');
-  text = text.replace(/the Claude config(\s+)directory/g, 'the agents$1directory (`~/.agents`)')
-    .replace(/Claude config(\s+)directory/g, 'agents$1directory (`~/.agents`)')
+  // Backticks would be command substitution inside the double-quoted strings of a script.
+  const dir = kind === 'sh' ? '(~/.agents)' : '(`~/.agents`)';
+  text = text.replace(/the Claude config(\s+)directory/g, `the agents$1directory ${dir}`)
+    .replace(/Claude config(\s+)directory/g, `agents$1directory ${dir}`)
     .replaceAll('Claude Code', 'Codex');
   if (kind === 'sh') return text.split('\n').map(slashInShell).join('\n');
   return text.replace(SLASH, '$$$1');
@@ -155,8 +162,9 @@ const ADAPT = {
     text = exactly(text, '# <client> selects the config dir: claude is $CLAUDE_CONFIG_DIR, else\n# ~/.claude. The Codex mirror carries its own copy for codex (FR-047).',
       '# <client> selects the config dir: codex is ~/.agents. This copy takes no other\n# client; the Claude kit carries its own for claude (FR-047).', where);
     text = exactly(text, '"${ATLAS_CLIENT:-claude}"', '"${ATLAS_CLIENT:-codex}"', where);
+    // A relative HOME would resolve the runner against the repository (the untrusted area).
     return exactly(text, 'claude) ATLAS_CLIENT=claude; ATLAS_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}" ;;',
-      'codex) ATLAS_CLIENT=codex; ATLAS_CONFIG_DIR="$HOME/.agents" ;;', where);
+      'codex)\n            ATLAS_CLIENT=codex\n            ATLAS_CONFIG_DIR="$HOME/.agents"\n            case "$ATLAS_CONFIG_DIR" in\n                /*) ;;\n                *) printf \'%s\\n\' "atlas-check.sh: HOME is not an absolute path; set HOME to one." >&2; return 2 ;;\n            esac\n            ;;', where);
   },
   'atlas-doctor/scripts/doctor.sh': (text, where) => {
     text = exactly(text, `#   rea-mcp         rea doctor --client claude_code (REA's name for Claude
@@ -197,7 +205,7 @@ const ADAPT = {
       '#                   settings.local.json (trace-pretooluse), or in\n#                   .codex/hooks.json (trace-codex-hooks); a graphify block in post-commit or', where);
     text = exactly(text, '# The largest .claude/settings*.json the PreToolUse scan reads (bytes).',
       '# The largest hook settings file the PreToolUse scan reads (bytes).', where);
-    text = between(text, '_doctor_migration() {', '# --- Traces (FR-043)', DOCTOR_CONFIG_AND_MIGRATION, where);
+    text = between(text, '# --- Migration (FR-042)', '# --- Traces (FR-043)', DOCTOR_CONFIG_AND_MIGRATION, where);
     text = exactly(text, '_doctor_traces() {\n    local f found hooks name st', DOCTOR_HOOK_TRACES + '_doctor_traces() {\n    local f found hooks name st', where);
     text = between(text, '    for f in settings.json settings.local.json; do', '\n    if [ -z "$_DOCTOR_GIT" ]; then',
       '    _doctor_hook_traces trace-pretooluse "claude uninstall --project" "${_DOCTOR_TOP}/.claude/settings.json" "${_DOCTOR_TOP}/.claude/settings.local.json"\n    _doctor_hook_traces trace-codex-hooks "codex uninstall" "${_DOCTOR_TOP}/.codex/hooks.json"\n', where);
@@ -211,7 +219,11 @@ const ADAPT = {
         return 2
     fi
     ATLAS_CLIENT=codex
-    ATLAS_CONFIG_DIR="$HOME/.agents"`, where);
+    ATLAS_CONFIG_DIR="$HOME/.agents"
+    case "$ATLAS_CONFIG_DIR" in
+        /*) ;;
+        *) printf 'doctor.sh: HOME is not an absolute path; set HOME to one.\\n' >&2; return 2 ;;
+    esac`, where);
     return exactly(text, '    _doctor_rea\n    _doctor_migration\n', '    _doctor_rea\n    _doctor_codex_config\n    _doctor_migration\n', where);
   },
   'atlas-doctor/SKILL.md': (text, where) => {

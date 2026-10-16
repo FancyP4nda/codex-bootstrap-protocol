@@ -152,7 +152,9 @@ def check(root):
     for skill in sorted(p for p in atlas.iterdir() if p.is_dir()):
         policy = skill/'agents/openai.yaml'
         assert policy.is_file() and re.search(r'^policy:\n  allow_implicit_invocation: false$', policy.read_text(), re.M), f'atlas skill without a user-only policy: {skill.name}'
-        header = re.match(r'---\n([\s\S]*?)\n---\n', (skill/'SKILL.md').read_text()).group(1)
+        match = re.match(r'---\n([\s\S]*?)\n---\n', (skill/'SKILL.md').read_text())
+        assert match, f'atlas skill without frontmatter: {skill.name}'
+        header = match.group(1)
         assert re.findall(r'^([A-Za-z][\w-]*):', header, re.M) == ['name', 'description'], f'atlas frontmatter keeps only name and description: {skill.name}'
     agents = []
     for p in (root/'assets').rglob('*.toml'):

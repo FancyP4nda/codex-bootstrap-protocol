@@ -1,6 +1,18 @@
+# --- Codex config (decision brief D-5, D-6) ---------------------------------
+# The config.toml in CODEX_HOME: [features] multi_agent = true and an
+# [mcp_servers.rea] entry. Read with bash builtins; the file is never edited.
 _doctor_codex_config() {
     local cfg="${CODEX_HOME:-$HOME/.codex}/config.toml" l table="" key val multi="" rea="" shown
     shown="$(_atlas_printable "$cfg")"
+    case "$cfg" in
+        /*) ;;
+        *)
+            # A relative CODEX_HOME would read the repository's config.toml.
+            _doctor_warn "multi_agent: CODEX_HOME is not an absolute path, so config.toml was not read." "Set CODEX_HOME to an absolute path, then run again."
+            _doctor_warn "rea-config: CODEX_HOME is not an absolute path, so config.toml was not read." "Set CODEX_HOME to an absolute path, then run again."
+            return
+            ;;
+    esac
     if [ -f "$cfg" ]; then
         while IFS= read -r l || [ -n "$l" ]; do
             _doctor_strip "$l"

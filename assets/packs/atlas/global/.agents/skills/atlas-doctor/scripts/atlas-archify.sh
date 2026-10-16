@@ -208,7 +208,7 @@ PATH="${_AAPATH:-/usr/bin:/bin}"
 export PATH
 
 _unsupported() {
-    printf '%s\n' "Not available in the atlas pack: $1. The pack supports drawing and checking diagrams; to use $1, run upstream Archify by hand outside the kit (see \"Running Archify by hand\" in references/atlas-pack-notes.md in the agents directory (`~/.agents`))."
+    printf '%s\n' "Not available in the atlas pack: $1. The pack supports drawing and checking diagrams; to use $1, run upstream Archify by hand outside the kit (see \"Running Archify by hand\" in references/atlas-pack-notes.md in the agents directory (~/.agents))."
     exit 1
 }
 

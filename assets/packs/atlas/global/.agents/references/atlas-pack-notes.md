@@ -98,14 +98,14 @@ serve operations the pack does not support and are not vendored.
   `verification/vendor-check-atlas-patches/graphify/SKILL.md.diff` in this
   kit; the reference diffs are the Claude kit's own.
 - Fidelity check (needs the network): `python3 verification/vendor-check-atlas.py`
-  re-fetches both pins and proves the vendored trees equal upstream apart from
-  those patches.
+  proves the recorded patches reverse-apply to the pinned upstream files; with
+  `--network` it also re-fetches both pins and compares every other vendored file.
 
 ## Derivation
 
 `node tools/migrate-atlas.mjs <claude-kit-checkout>` rebuilds
 `global/.agents/skills` from the Claude kit's atlas pack and writes
-`source-map.json` (the source commit and every derived file's hash). The
+`docs/atlas-source-map.json` (the source commit and every derived file's hash). The
 transform:
 
 - `${CLAUDE_CONFIG_DIR:-$HOME/.claude}` becomes `$HOME/.agents`;

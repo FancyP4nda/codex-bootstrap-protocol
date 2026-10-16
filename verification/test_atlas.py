@@ -82,8 +82,42 @@ class PackShape(unittest.TestCase):
                         self.assertNotRegex(text, r'\.claude\b')
                     self.assertNotIn('claude-bootstrap', text)
                     self.assertNotIn('Claude Code', text)
-                    if path.name == 'SKILL.md':
-                        self.assertIsNone(slash.search(text), 'a /command form instead of $command')
+                    self.assertIsNone(slash.search(text), 'a /command form instead of $command')
+
+    def pack_scripts(self):
+        return [p for p in SKILLS.rglob('*.sh') if 'archify' not in p.relative_to(SKILLS).parts[:1]]
+
+    def test_every_shipped_script_parses(self):
+        for path in self.pack_scripts():
+            with self.subTest(script=path.relative_to(SKILLS).as_posix()):
+                shell = 'sh' if path.read_text().startswith('#!/bin/sh') else 'bash'
+                run = subprocess.run([shell, '-n', str(path)], capture_output=True, text=True)
+                self.assertEqual(run.returncode, 0, run.stderr)
+
+    def test_derived_scripts_have_no_command_substitution_from_the_text_transform(self):
+        # A backtick in a double-quoted string would run $HOME/.agents; a /command form would be unconverted.
+        slash = re.compile(r'(?<![\w./$-])/(' + '|'.join(ROSTER) + r')\b')
+        for path in self.pack_scripts():
+            code = [line for line in path.read_text().splitlines() if not line.lstrip().startswith('#')]
+            text = '\n'.join(code)
+            with self.subTest(script=path.relative_to(SKILLS).as_posix()):
+                self.assertNotIn('(`~/.agents`)', text)
+                self.assertIsNone(slash.search(text))
+
+    def test_unsupported_operation_line_runs_nothing(self):
+        # The wrapper's refusal text names the agents directory; it must print, not execute, it.
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)/'home'
+            shutil.copytree(SKILLS, home/'.agents/skills')
+            env = {'PATH': HERMETIC_PATH, 'HOME': str(home)}
+            for script, args in (('atlas-doctor/scripts/atlas-archify.sh', ['brands', 'capture']),
+                                 ('graphify/atlas-graphify.sh', ['hook', 'install'])):
+                with self.subTest(script=script):
+                    run = subprocess.run(['/bin/sh', str(home/'.agents/skills'/script), *args], cwd=tmp, env=env,
+                                         capture_output=True, text=True)
+                    self.assertEqual(run.stderr, '')
+                    self.assertIn('Not available in the atlas pack', run.stdout)
+                    self.assertIn('(~/.agents)', run.stdout)
 
     def test_graphify_skill_is_the_agents_root_variant_with_codex_paths(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()
@@ -217,6 +251,47 @@ class DoctorTests(unittest.TestCase):
             with self.subTest(config=config):
                 out = self.doctor(config=config)
                 self.assertIn('[ok] multi_agent', self.lines(out), out.stdout)
+
+    def test_crlf_inline_table_and_lookalike_tables(self):
+        self.assertIn('[ok] multi_agent', self.lines(self.doctor(config='[features]\r\nmulti_agent = true\r\n')))
+        self.assertIn('[ok] multi_agent', self.lines(self.doctor(config='features = { x = 1, multi_agent = true }\n')))
+        out = self.doctor(config='features = { multi_agent = false }\n')
+        self.assertTrue(any(line.startswith('[warn] multi_agent') for line in self.lines(out)))
+        for config in ('# [mcp_servers.rea]\n', '[mcp_servers.reactor]\ncommand = "x"\n'):
+            out = self.doctor(config=config)
+            self.assertTrue(any(line.startswith('[warn] rea-config') for line in self.lines(out)), config)
+        self.assertIn('[ok] rea-config', self.lines(self.doctor(config='[mcp_servers]\nrea = { command = "rea" }\n')))
+        self.assertIn('[ok] rea-config', self.lines(self.doctor(config='mcp_servers.rea.command = "rea"\n')))
+
+    def test_codex_home_unset_uses_home_dot_codex_and_a_set_one_wins(self):
+        (self.codex/'config.toml').write_text('[features]\nmulti_agent = true\n')
+        script = self.home/'.agents/skills/atlas-doctor/scripts/doctor.sh'
+        env = {'PATH': HERMETIC_PATH, 'HOME': str(self.home), 'LC_ALL': 'C'}
+        out = subprocess.run(['bash', str(script), 'codex'], cwd=self.work, env=env, capture_output=True, text=True)
+        self.assertIn('[ok] multi_agent', out.stdout.splitlines())
+        other = self.tmp/'other-codex'
+        other.mkdir()
+        out = subprocess.run(['bash', str(script), 'codex'], cwd=self.work, env={**env, 'CODEX_HOME': str(other)}, capture_output=True, text=True)
+        self.assertTrue(any(line.startswith('[warn] multi_agent') for line in out.stdout.splitlines()), out.stdout)
+
+    def test_relative_home_or_codex_home_is_refused_not_trusted(self):
+        # Both would resolve against the working directory, which is the untrusted repository.
+        script = self.home/'.agents/skills/atlas-doctor/scripts/doctor.sh'
+        out = subprocess.run(['bash', str(script), 'codex'], cwd=self.work, env={'PATH': HERMETIC_PATH, 'HOME': 'relative-home'},
+                             capture_output=True, text=True)
+        self.assertEqual(out.returncode, 2)
+        self.assertIn('HOME is not an absolute path', out.stderr)
+        (self.work/'rel').mkdir()
+        (self.work/'rel/config.toml').write_text('[features]\nmulti_agent = true\n[mcp_servers.rea]\n')
+        out = self.doctor_with({'CODEX_HOME': 'rel'})
+        lines = out.stdout.splitlines()
+        self.assertTrue(any(line.startswith('[warn] multi_agent: CODEX_HOME is not an absolute path') for line in lines), out.stdout)
+        self.assertNotIn('[ok] multi_agent', lines)
+
+    def doctor_with(self, extra):
+        env = {'PATH': HERMETIC_PATH, 'HOME': str(self.home), 'LC_ALL': 'C', **extra}
+        script = self.home/'.agents/skills/atlas-doctor/scripts/doctor.sh'
+        return subprocess.run(['bash', str(script), 'codex'], cwd=self.work, env=env, capture_output=True, text=True, timeout=120)
 
     def test_rea_entry_in_config_toml(self):
         out = self.doctor(config='[mcp_servers.rea]\ncommand = "rea"\n')

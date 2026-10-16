@@ -6,7 +6,7 @@
 # Global-only: no scaffold/. `codex-bootstrap --global-only --pack atlas`
 # installs global/.agents/ into ~/.agents (skills and the references the
 # Commands point to); `--remove-global-pack atlas` removes it. Opt-in: it adds
-# 18 skills. Every skill is user-only: each has an agents/openai.yaml with
+# 15 skills (17 with T048's three). Every skill is user-only: each has an agents/openai.yaml with
 # policy.allow_implicit_invocation: false (D-2), and its SKILL.md frontmatter
 # keeps only name and description.
 #

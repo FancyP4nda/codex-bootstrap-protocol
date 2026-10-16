@@ -265,7 +265,7 @@ fi
 # but the five answers with the unsupported-operation line, naming it (a
 # second word for export, hook, claude and codex), and nothing runs.
 _unsupported() {
-    printf '%s\n' "Not available in the atlas pack: $1. The pack supports building, updating and querying the graph; to use $1, run upstream Graphify by hand outside the kit (see \"Running Graphify by hand\" in references/atlas-pack-notes.md in the agents directory (`~/.agents`))."
+    printf '%s\n' "Not available in the atlas pack: $1. The pack supports building, updating and querying the graph; to use $1, run upstream Graphify by hand outside the kit (see \"Running Graphify by hand\" in references/atlas-pack-notes.md in the agents directory (~/.agents))."
     exit 1
 }
 case "${1:-}" in

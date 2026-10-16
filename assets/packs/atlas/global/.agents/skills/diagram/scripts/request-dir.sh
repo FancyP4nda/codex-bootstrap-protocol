@@ -59,7 +59,7 @@ case "$slug" in
 esac
 [ "${#slug}" -le 40 ] || refuse "$SLUG_RULE" 2
 
-NO_PATH='the Graphify runner printed no PATH; run /atlas-doctor; nothing written.'
+NO_PATH='the Graphify runner printed no PATH; run $atlas-doctor; nothing written.'
 
 # cut_path: the runner's one line (the cut PATH, or its refusal), then its
 # exit status as "rc=<n>" on a line of its own, since a pipe drops it and

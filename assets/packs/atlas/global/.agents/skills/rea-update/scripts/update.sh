@@ -58,7 +58,7 @@ LINES_MAX=200
 LINE_MAX=500
 ESC=$(printf '\033')
 BEL=$(printf '\007')
-NO_PATH='rea-update: the Graphify runner printed no PATH; run /atlas-doctor; nothing updated.'
+NO_PATH='rea-update: the Graphify runner printed no PATH; run $atlas-doctor; nothing updated.'
 
 # cut_path: the runner's one line (the cut PATH, or its refusal), then its
 # exit status as "rc=<n>" on a line of its own, since a pipe drops it and
@@ -115,7 +115,7 @@ main() {
     case "$REA_BIN" in
         /*) ;;
         *)
-            printf '%s\n' 'rea-update: rea not found on PATH outside the repository; run /atlas-doctor; nothing updated.'
+            printf '%s\n' 'rea-update: rea not found on PATH outside the repository; run $atlas-doctor; nothing updated.'
             exit 1
             ;;
     esac
@@ -161,7 +161,7 @@ main() {
         exit 1
     fi
     if [ "$before" = 'an unreadable version' ] || [ "$after" = 'an unreadable version' ]; then
-        printf '[unknown] rea update exited 0, but REA reports %s (it was %s); run /atlas-doctor.\n' "$after" "$before"
+        printf '[unknown] rea update exited 0, but REA reports %s (it was %s); run $atlas-doctor.\n' "$after" "$before"
         exit 1
     fi
     if [ "$before" = "$after" ]; then

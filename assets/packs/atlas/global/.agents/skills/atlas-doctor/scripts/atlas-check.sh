@@ -950,11 +950,11 @@ _atlas_is_code() {
 _atlas_out_dir() {
     _AO="${1%/}/graphify-out"
     if [ -L "$_AO" ]; then
-        printf '%s is a symlink; remove it, then run /map-repo again.\n' "$(_atlas_printable "$_AO")"
+        printf '%s is a symlink; remove it, then run $map-repo again.\n' "$(_atlas_printable "$_AO")"
         return 1
     fi
     if [ -e "$_AO" ] && [ ! -d "$_AO" ]; then
-        printf '%s is not a directory; remove it, then run /map-repo again.\n' "$(_atlas_printable "$_AO")"
+        printf '%s is not a directory; remove it, then run $map-repo again.\n' "$(_atlas_printable "$_AO")"
         return 1
     fi
 }
@@ -1154,7 +1154,7 @@ _atlas_write_file() {
         return 1
     fi
     if [ -e "$1" ] && [ ! -f "$1" ]; then
-        printf '%s is not a regular file; remove it, then run /map-repo again.\n' "$(_atlas_printable "$1")"
+        printf '%s is not a regular file; remove it, then run $map-repo again.\n' "$(_atlas_printable "$1")"
         return 1
     fi
     rm -f -- "$tmp" 2>/dev/null
@@ -1431,7 +1431,7 @@ _atlas_prov_state() {
         return 0
     fi
     if ! _atlas_regular "$_AO/graph.json"; then
-        printf '%s is not a regular file; remove it, then run /map-repo again.\n' "$(_atlas_printable "$_AO/graph.json")"
+        printf '%s is not a regular file; remove it, then run $map-repo again.\n' "$(_atlas_printable "$_AO/graph.json")"
         return 1
     fi
     _atlas_read_record "$_AO" || st=$?
@@ -1576,7 +1576,14 @@ _atlas_main_rea() {
 
 atlas_check_main() {
     case "${1:-}" in
-        codex) ATLAS_CLIENT=codex; ATLAS_CONFIG_DIR="$HOME/.agents" ;;
+        codex)
+            ATLAS_CLIENT=codex
+            ATLAS_CONFIG_DIR="$HOME/.agents"
+            case "$ATLAS_CONFIG_DIR" in
+                /*) ;;
+                *) printf '%s\n' "atlas-check.sh: HOME is not an absolute path; set HOME to one." >&2; return 2 ;;
+            esac
+            ;;
         *) printf '%s\n' "$ATLAS_USAGE_CHECK" "$ATLAS_USAGE_SCRATCH" "$ATLAS_USAGE_PROVENANCE" "$ATLAS_USAGE_REA" >&2; return 2 ;;
     esac
     case "${2:-}" in

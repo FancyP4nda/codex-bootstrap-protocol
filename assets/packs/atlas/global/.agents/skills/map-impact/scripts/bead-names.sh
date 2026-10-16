@@ -204,7 +204,7 @@ else:
         print(kind, name)
 '
 
-NO_PATH='map-impact: the Graphify runner printed no PATH; run /atlas-doctor.'
+NO_PATH='map-impact: the Graphify runner printed no PATH; run $atlas-doctor.'
 
 # cut_path: the runner's one line (the cut PATH, or its refusal), then its
 # exit status as "rc=<n>" on a line of its own, since a pipe drops it and

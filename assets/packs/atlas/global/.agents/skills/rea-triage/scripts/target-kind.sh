@@ -37,7 +37,7 @@ case "$target" in
     -*) refuse 'a target cannot start with "-"; give its path (./-name) instead.' 2 ;;
 esac
 
-NO_PATH='the Graphify runner printed no PATH; run /atlas-doctor; nothing read.'
+NO_PATH='the Graphify runner printed no PATH; run $atlas-doctor; nothing read.'
 
 # cut_path: the runner's one line (the cut PATH, or its refusal), then its
 # exit status as "rc=<n>" on a line of its own, since a pipe drops it and
