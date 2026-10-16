@@ -328,6 +328,17 @@ for (const file of walk(sourceSkills)) {
     fail(`unexpected file in a Command: ${rel}`);
   }
 }
+// The Graphify chunk reader exists only here: a Claude worker has a file-reading
+// tool, a standard Codex session has none. It is native to this kit, not derived
+// from the Claude pack, so its record names this repository's file as the source.
+{
+  const native = path.join(import.meta.dirname, 'atlas-codex/atlas-read-chunk.py');
+  const bytes = fs.readFileSync(native);
+  const dest = 'global/.agents/skills/graphify/atlas-read-chunk.py';
+  fs.writeFileSync(path.join(outDir, dest), bytes, {mode: 0o755});
+  files.push({source: path.relative(root, native), source_sha256: sha(bytes), destination: dest,
+    destination_sha256: sha(bytes), transform: 'kit-native'});
+}
 for (const name of [...ROSTER.filter(n => present.includes(n)), ...VENDORED]) {
   const skill = fs.readFileSync(path.join(outDir, 'global/.agents/skills', name, 'SKILL.md'), 'utf8');
   const yamlPath = path.join(outDir, 'global/.agents/skills', name, 'agents/openai.yaml');

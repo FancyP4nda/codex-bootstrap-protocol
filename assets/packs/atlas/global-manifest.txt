@@ -177,6 +177,7 @@ file	.agents/skills/graphify/SKILL.md	copy	Managed Codex asset.
 file	.agents/skills/graphify/agents/openai.yaml	copy	Managed Codex asset.
 file	.agents/skills/graphify/atlas-graphify.sh	copy	Managed Codex asset.
 file	.agents/skills/graphify/atlas-preflight.sh	copy	Managed Codex asset.
+file	.agents/skills/graphify/atlas-read-chunk.py	copy	Managed Codex asset.
 file	.agents/skills/graphify/references/extraction-spec.md	copy	Managed Codex asset.
 file	.agents/skills/graphify/references/query.md	copy	Managed Codex asset.
 file	.agents/skills/graphify/references/update.md	copy	Managed Codex asset.

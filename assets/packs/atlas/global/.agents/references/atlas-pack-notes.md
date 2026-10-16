@@ -102,7 +102,11 @@ serve operations the pack does not support and are not vendored.
   subagents through `spawn_agent`, `wait_agent` and `close_agent` when
   `multi_agent` is on, a serial path (the session extracts each chunk in turn)
   when it is off, and a collection check that sets aside invalid chunk files and
-  retries failed chunks serially. Upstream's Part B names a Task tool and
+  retries failed chunks serially. Workers read a chunk's files through one
+  fixed command, `graphify/atlas-read-chunk.py <list> <index>`, which reads the
+  list as data, checks the entry against the scan root again and prints the
+  file, so no file name reaches a shell and no file-reading tool is needed.
+  Upstream's Part B names a Task tool and
   agent types that Codex does not have. The recorded diff of `SKILL.md`
   against upstream's `skill-agents.md` is
   `verification/vendor-check-atlas-patches/graphify/SKILL.md.diff` in this
@@ -196,8 +200,9 @@ the install record and escapes later refresh and `--remove-global-pack`.
    nothing to remove there.
 
 The installer dies on a symlink anywhere on a path it writes to, where the Claude
-kit's writes through; `$atlas-doctor` reports an `archify` symlink
-(`migration-archify-link`).
+kit's writes through; `$atlas-doctor` reports an `archify` or `graphify`
+symlink (`migration-archify-link`, `migration-graphify-link`) and tells the
+user to move or remove the link, not its target.
 
 ## Constraints-file regeneration
 

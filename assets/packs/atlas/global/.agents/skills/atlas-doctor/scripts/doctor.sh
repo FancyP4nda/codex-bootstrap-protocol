@@ -342,14 +342,17 @@ _doctor_stamped() {
 }
 
 _doctor_migration() {
-    local link="${ATLAS_CONFIG_DIR}/skills/archify" f name dir retired
+    local link f name dir retired
     retired="${ATLAS_CONFIG_DIR}/retired"
-    if [ -L "$link" ]; then
-        _doctor_warn "migration-archify-link: $(_atlas_printable "$link") is a symlink to $(_doctor_target "$link"); pack files may have been written there." \
-            "Remove the link, not its target: rm $(_doctor_q "$link"); then reinstall the atlas pack (codex-bootstrap --global-only --pack atlas) and check $(_doctor_q "$(_doctor_target "$link")") for pack files."
-    else
-        printf '[ok] migration-archify-link\n'
-    fi
+    for name in archify graphify; do
+        link="${ATLAS_CONFIG_DIR}/skills/${name}"
+        if [ -L "$link" ]; then
+            _doctor_warn "migration-${name}-link: $(_atlas_printable "$link") is a symlink to $(_doctor_target "$link"); the installer refuses to install through a link." \
+                "Move or remove the link, not its target: rm $(_doctor_q "$link"); then reinstall the atlas pack (codex-bootstrap --global-only --pack atlas) and check $(_doctor_q "$(_doctor_target "$link")") for pack files."
+        else
+            printf '[ok] migration-%s-link\n' "$name"
+        fi
+    done
     f="${ATLAS_CONFIG_DIR}/skills/graphify/.graphify_version"
     if [ -e "$f" ] || [ -L "$f" ]; then
         _doctor_warn "migration-stamp-agents: $(_atlas_printable "$f") exists; a bare graphify command can then overwrite the pack's Graphify skill." \

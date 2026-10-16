@@ -41,7 +41,7 @@ PATCHED = {
 ARCHIFY_LEFT_OUT = {'archify/package-lock.json', 'archify/scripts/generate-brand-marks.mjs', 'archify/scripts/generate-validators.mjs'}
 GRAPHIFY_LICENSES = ('LICENSE', 'LICENSE-MIT', 'NOTICE')
 GRAPHIFY_REFERENCES = ('extraction-spec.md', 'query.md', 'update.md')
-PACK_AUTHORED = {'archify/agents/openai.yaml', 'graphify/agents/openai.yaml', 'graphify/atlas-preflight.sh', 'graphify/atlas-graphify.sh'}
+PACK_AUTHORED = {'archify/agents/openai.yaml', 'graphify/agents/openai.yaml', 'graphify/atlas-preflight.sh', 'graphify/atlas-graphify.sh', 'graphify/atlas-read-chunk.py'}
 
 
 def sha(data):

@@ -54,6 +54,7 @@ pack:
     - ".agents/references/atlas-pack-notes.md"
     - ".agents/skills/graphify/atlas-preflight.sh"
     - ".agents/skills/graphify/atlas-graphify.sh"
+    - ".agents/skills/graphify/atlas-read-chunk.py"
     - ".agents/skills/atlas-doctor/"
     - ".agents/skills/map-repo/"
     - ".agents/skills/map-ask/"
