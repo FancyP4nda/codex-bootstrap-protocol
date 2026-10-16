@@ -531,6 +531,44 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertEqual(text.count('apply_patch'), 2)  # the spawn message and the serial path
         self.assertEqual(text.count('untrusted data'), 2)
 
+    def test_collect_quarantines_results_whose_entries_would_crash_the_merge(self):
+        bad = {
+            'node without id': {'nodes': [{}], 'edges': []},
+            'node that is not an object': {'nodes': ['a'], 'edges': []},
+            'node id not a string': {'nodes': [{'id': 3}], 'edges': []},
+            'edge without target': {'nodes': [], 'edges': [{'source': 'a'}]},
+            'edge that is not an object': {'nodes': [], 'edges': [None]},
+            'hyperedges null': {'nodes': [], 'edges': [], 'hyperedges': None},
+            'hyperedge not an object': {'nodes': [], 'edges': [], 'hyperedges': [1]},
+            'input_tokens null': {'nodes': [], 'edges': [], 'input_tokens': None},
+            'output_tokens a string': {'nodes': [], 'edges': [], 'output_tokens': '5'},
+            'tokens a boolean': {'nodes': [], 'edges': [], 'input_tokens': True},
+        }
+        for name, body in bad.items():
+            with self.subTest(name):
+                shutil.rmtree(self.out)
+                self.out.mkdir()
+                self.prepare(2)
+                self.write_result(1)
+                (self.out/'.graphify_chunk_02.json').write_text(json.dumps(body))
+                run = self.collect()
+                self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+                self.assertIn('chunk 2', run.stdout)
+                self.assertTrue((self.out/'.graphify_chunk_02.invalid').exists())
+                self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text().split(), ['2'])
+                merge = subprocess.run(['python3', '-I', '-c', skill_blocks('atlas-chunk-merge')], cwd=self.tmp, capture_output=True, text=True)
+                self.assertEqual(merge.returncode, 0, merge.stderr)
+
+    def test_collect_accepts_a_full_result_with_edges_hyperedges_and_tokens(self):
+        self.prepare(1)
+        (self.out/'.graphify_chunk_01.json').write_text(json.dumps({
+            'nodes': [{'id': 'a', 'label': 'A'}, {'id': 'b'}],
+            'edges': [{'source': 'a', 'target': 'b', 'relation': 'uses'}],
+            'hyperedges': [{'id': 'h', 'nodes': ['a', 'b']}],
+            'input_tokens': 0, 'output_tokens': 0}))
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
     def test_collect_stops_when_more_than_half_failed(self):
         self.prepare(4)
         self.write_result(1)

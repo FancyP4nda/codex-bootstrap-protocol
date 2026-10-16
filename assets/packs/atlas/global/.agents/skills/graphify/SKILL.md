@@ -372,6 +372,20 @@ out = Path('graphify-out')
 totalfile = out/'.graphify_chunk_total'  # absent when every file was cached and Steps B1 and B2 were skipped
 total = int(totalfile.read_text(encoding="utf-8").strip()) if totalfile.is_file() else 0
 failed = []
+
+
+def shaped(d):
+    """True when the merge and Part C can consume this result: the shapes the extraction spec describes."""
+    def count(v):  # a token count; a boolean is not one
+        return isinstance(v, int) and not isinstance(v, bool)
+    return (isinstance(d, dict)
+            and isinstance(d.get('nodes'), list) and isinstance(d.get('edges'), list)
+            and all(isinstance(n, dict) and isinstance(n.get('id'), str) for n in d['nodes'])
+            and all(isinstance(e, dict) and isinstance(e.get('source'), str) and isinstance(e.get('target'), str) for e in d['edges'])
+            and isinstance(d.get('hyperedges', []), list) and all(isinstance(h, dict) for h in d.get('hyperedges', []))
+            and all(count(d.get(k, 0)) for k in ('input_tokens', 'output_tokens')))
+
+
 for n in range(1, total + 1):
     path = out/f'.graphify_chunk_{n:02d}.json'
     if not path.is_file():
@@ -379,13 +393,12 @@ for n in range(1, total + 1):
         failed.append(n)
         continue
     try:
-        data = json.loads(path.read_text(encoding="utf-8"))
-        ok = isinstance(data, dict) and isinstance(data.get('nodes'), list) and isinstance(data.get('edges'), list)
+        ok = shaped(json.loads(path.read_text(encoding="utf-8")))
     except (ValueError, OSError):
         ok = False
     if not ok:
         aside = path.with_suffix('.invalid')
-        print(f'WARNING: chunk {n} is not valid extraction JSON with nodes and edges; set aside as {aside.name}')
+        print(f'WARNING: chunk {n} is not valid extraction JSON (nodes, edges, hyperedges and token counts of the shapes the extraction spec describes); set aside as {aside.name}')
         path.rename(aside)  # the merge globs *.json, so it skips this one
         failed.append(n)
 (out/'.graphify_chunk_failed.txt').write_text(''.join(f'{n}\n' for n in failed), encoding="utf-8")

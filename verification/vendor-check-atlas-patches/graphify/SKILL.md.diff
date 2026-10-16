@@ -452,7 +452,7 @@
  ```
  
  Subagent prompt template:
-@@ -287,17 +359,52 @@
+@@ -287,17 +359,65 @@
  
  **Step B3 - Collect, cache, and merge**
  
@@ -479,6 +479,20 @@
 +totalfile = out/'.graphify_chunk_total'  # absent when every file was cached and Steps B1 and B2 were skipped
 +total = int(totalfile.read_text(encoding="utf-8").strip()) if totalfile.is_file() else 0
 +failed = []
++
++
++def shaped(d):
++    """True when the merge and Part C can consume this result: the shapes the extraction spec describes."""
++    def count(v):  # a token count; a boolean is not one
++        return isinstance(v, int) and not isinstance(v, bool)
++    return (isinstance(d, dict)
++            and isinstance(d.get('nodes'), list) and isinstance(d.get('edges'), list)
++            and all(isinstance(n, dict) and isinstance(n.get('id'), str) for n in d['nodes'])
++            and all(isinstance(e, dict) and isinstance(e.get('source'), str) and isinstance(e.get('target'), str) for e in d['edges'])
++            and isinstance(d.get('hyperedges', []), list) and all(isinstance(h, dict) for h in d.get('hyperedges', []))
++            and all(count(d.get(k, 0)) for k in ('input_tokens', 'output_tokens')))
++
++
 +for n in range(1, total + 1):
 +    path = out/f'.graphify_chunk_{n:02d}.json'
 +    if not path.is_file():
@@ -486,13 +500,12 @@
 +        failed.append(n)
 +        continue
 +    try:
-+        data = json.loads(path.read_text(encoding="utf-8"))
-+        ok = isinstance(data, dict) and isinstance(data.get('nodes'), list) and isinstance(data.get('edges'), list)
++        ok = shaped(json.loads(path.read_text(encoding="utf-8")))
 +    except (ValueError, OSError):
 +        ok = False
 +    if not ok:
 +        aside = path.with_suffix('.invalid')
-+        print(f'WARNING: chunk {n} is not valid extraction JSON with nodes and edges; set aside as {aside.name}')
++        print(f'WARNING: chunk {n} is not valid extraction JSON (nodes, edges, hyperedges and token counts of the shapes the extraction spec describes); set aside as {aside.name}')
 +        path.rename(aside)  # the merge globs *.json, so it skips this one
 +        failed.append(n)
 +(out/'.graphify_chunk_failed.txt').write_text(''.join(f'{n}\n' for n in failed), encoding="utf-8")
@@ -515,7 +528,7 @@
  import json, glob
  from pathlib import Path
  
-@@ -305,7 +412,7 @@
+@@ -305,7 +425,7 @@
  all_nodes, all_edges, all_hyperedges = [], [], []
  total_in, total_out = 0, 0
  for c in chunks:
@@ -524,7 +537,7 @@
      all_nodes += d.get('nodes', [])
      all_edges += d.get('edges', [])
      all_hyperedges += d.get('hyperedges', [])
-@@ -314,33 +421,48 @@
+@@ -314,33 +434,48 @@
  Path('graphify-out/.graphify_semantic_new.json').write_text(json.dumps({
      'nodes': all_nodes, 'edges': all_edges, 'hyperedges': all_hyperedges,
      'input_tokens': total_in, 'output_tokens': total_out,
@@ -583,7 +596,7 @@
  
  all_nodes = cached['nodes'] + new.get('nodes', [])
  all_edges = cached['edges'] + new.get('edges', [])
-@@ -359,21 +481,31 @@
+@@ -359,21 +494,31 @@
      'input_tokens': new.get('input_tokens', 0),
      'output_tokens': new.get('output_tokens', 0),
  }
@@ -622,7 +635,7 @@
  
  # Merge: AST nodes first, semantic nodes deduplicated by id
  seen = {n['id'] for n in ast['nodes']}
-@@ -392,20 +524,33 @@
+@@ -392,20 +537,33 @@
      'input_tokens': sem.get('input_tokens', 0),
      'output_tokens': sem.get('output_tokens', 0),
  }
@@ -661,7 +674,7 @@
  import sys, json
  from graphify.build import build_from_json
  from graphify.cluster import cluster, score_all
-@@ -414,18 +559,56 @@
+@@ -414,18 +572,56 @@
  from graphify.export import to_json
  from pathlib import Path
  
@@ -724,7 +737,7 @@
  communities = cluster(G)
  cohesion = score_all(G, communities)
  tokens = {'input': extraction.get('input_tokens', 0), 'output': extraction.get('output_tokens', 0)}
-@@ -439,13 +622,20 @@
+@@ -439,13 +635,20 @@
  # nothing) when the new graph is smaller than the existing graph.json. Only write
  # GRAPH_REPORT.md + the analysis sidecar when the graph was actually written, so
  # they never describe a graph that graph.json doesn't contain (#1392).
@@ -748,7 +761,7 @@
  analysis = {
      'communities': {str(k): v for k, v in communities.items()},
      'cohesion': {str(k): v for k, v in cohesion.items()},
-@@ -453,27 +643,40 @@
+@@ -453,27 +656,40 @@
      'surprises': surprises,
      'questions': questions,
  }
@@ -795,7 +808,7 @@
  print(format_diagnostic_report(summary))
  flags = [f'{summary[k]} {label}' for k, label in (
      ('dangling_endpoint_edges', 'dangling-endpoint edges'),
-@@ -483,10 +686,10 @@
+@@ -483,10 +699,10 @@
      ('undirected_same_endpoint_collapsed_edges', 'collapsed (undirected) edges'),
  ) if summary.get(k, 0)]
  print('GRAPH HEALTH WARNING: ' + '; '.join(flags) + ' - graph may be incomplete/corrupt.' if flags else 'Graph health: OK (no dangling/missing/collapsed edges).')
@@ -808,7 +821,7 @@
  
  ### Step 5 - Label communities
  
-@@ -495,7 +698,22 @@
+@@ -495,7 +711,22 @@
  Then regenerate the report and save the labels for the visualizer:
  
  ```bash
@@ -832,7 +845,7 @@
  import sys, json
  from graphify.build import build_from_json
  from graphify.cluster import score_all
-@@ -504,25 +722,25 @@
+@@ -504,25 +735,25 @@
  from graphify.export import to_json
  from pathlib import Path
  
@@ -867,7 +880,7 @@
  # Re-export so graph.json nodes carry the curated community_name (#2490).
  # Same extraction as Step 4, so the #479 shrink-guard passes on node count;
  # if it still refuses, surface the guard message - do not force past it.
-@@ -531,50 +749,63 @@
+@@ -531,50 +762,63 @@
      print('ERROR: refused to shrink graphify-out/graph.json (existing graph has more nodes; #479).')
      print('If this shrink is intentional (you deleted files), re-run a full build with --force.')
  print('Report updated with community labels')
@@ -950,7 +963,7 @@
  # In --update mode, 'all_files' carries the full corpus; 'files' is the changed
  # subset. Full-rebuild mode populates only 'files', so the fallback handles that.
  # root= relativizes the manifest keys to the scan root (same base as the build),
-@@ -590,7 +821,7 @@
+@@ -590,7 +834,7 @@
  # types are gated on output.
  from graphify.cli import _stamped_manifest_files
  _corpus = detect.get('all_files') or detect['files']
@@ -959,7 +972,7 @@
  # Files dispatched this run (the changed subset) but NOT stamped above still carry
  # a stale semantic_hash from a prior run; clear it so detect_incremental re-queues
  # them instead of reading them as unchanged (#1948).
-@@ -602,7 +833,7 @@
+@@ -602,7 +846,7 @@
  # files newly excluded since last run are dropped rather than masquerading as
  # deletions; untouched files' prior rows are still preserved (#1908).
  _scan = {f for fl in _corpus.values() for f in fl}
@@ -968,7 +981,7 @@
  
  # Update cumulative cost tracker
  input_tok = extract.get('input_tokens', 0)
-@@ -610,7 +841,7 @@
+@@ -610,7 +854,7 @@
  
  cost_path = Path('graphify-out/cost.json')
  if cost_path.exists():
@@ -977,7 +990,7 @@
  else:
      cost = {'runs': [], 'total_input_tokens': 0, 'total_output_tokens': 0}
  
-@@ -622,26 +853,25 @@
+@@ -622,26 +866,25 @@
  })
  cost['total_input_tokens'] += input_tok
  cost['total_output_tokens'] += output_tok
@@ -1009,7 +1022,7 @@
  ```
  
  If graphify saved you time, consider supporting it: https://github.com/sponsors/safishamsi
-@@ -669,25 +899,22 @@
+@@ -669,25 +912,22 @@
  
  ## Interpreter guard for subcommands
  
@@ -1046,7 +1059,7 @@
  
  ---
  
-@@ -696,22 +923,28 @@
+@@ -696,22 +936,28 @@
  When `graphify-out/graph.json` already exists and the user asks a question about the corpus, answer from the graph rather than rebuilding it:
  
  ```bash
