@@ -263,11 +263,15 @@ function convertCommandFile(rel, text) {
 const delta = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, 'atlas-graphify-agents-delta.json'), 'utf8'));
 function graphifySkill(text) {
   const where = 'graphify/SKILL.md';
-  // Upstream's skill-agents.md (the agents-root variant) differs from skill.md,
-  // which the Claude kit vendors, in the subagent dispatch block and one list in
-  // Step B2's pointer; the closing hook pointers differ too, but the Claude
-  // patch replaces those. The pin is the same: b4e6307.
-  text = exactly(text, delta.from, delta.to, where);
+  // Part B of the Claude kit's skill tells the session to dispatch with the Agent
+  // tool (subagent_type, usage counts), which Codex lacks. The delta file holds
+  // the Codex adaptation: chunk list files, native subagents (spawn_agent,
+  // wait_agent, close_agent) when multi_agent is on, a serial path when it is
+  // off, and a collection check. It supersedes upstream's skill-agents.md Part B
+  // wording, which names a Task tool Codex does not have either. Each replacement
+  // must match once, so a change in the Claude source stops the converter. The
+  // pin is the same: b4e6307.
+  for (const r of delta.replacements) text = exactly(text, r.from, r.to, `${where}: ${r.label}`);
   text = exactly(text, 'confidence rubric, frontmatter, hyperedge', 'confidence rubric, hyperedge', where);
   text = toCodex(text);
   if (text.split('Modified by the codex-bootstrap atlas pack').length !== 2) fail(`${where}: modification notice`);

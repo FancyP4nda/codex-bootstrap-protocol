@@ -93,7 +93,13 @@ serve operations the pack does not support and are not vendored.
   browser network switches the wrapper sets.
 - **Graphify**: `SKILL.md` and the three reference files carry the Claude pack's
   execution-safety edits (the preflight and runner, values passed as data, the
-  supported surface, the modification notice). The recorded diff of `SKILL.md`
+  supported surface, the modification notice) and, in `SKILL.md`, a Codex
+  adaptation of Part B: chunk list files (`.graphify_chunk_NN.files`), native
+  subagents through `spawn_agent`, `wait_agent` and `close_agent` when
+  `multi_agent` is on, a serial path (the session extracts each chunk in turn)
+  when it is off, and a collection check that sets aside invalid chunk files and
+  retries failed chunks serially. Upstream's Part B names a Task tool and
+  agent types that Codex does not have. The recorded diff of `SKILL.md`
   against upstream's `skill-agents.md` is
   `verification/vendor-check-atlas-patches/graphify/SKILL.md.diff` in this
   kit; the reference diffs are the Claude kit's own.
@@ -116,7 +122,9 @@ transform:
   `codex-bootstrap`, `Claude Code` becomes `Codex`;
 - `SKILL.md` frontmatter keeps `name` and `description`, and each skill gets
   `agents/openai.yaml`;
-- Graphify's `SKILL.md` takes upstream's agents-variant dispatch text.
+- Graphify's `SKILL.md` takes the Codex dispatch text in
+  `tools/atlas-graphify-agents-delta.json` (a list of exact replacements; the
+  converter fails when one no longer matches the Claude source).
 
 A Command-text fix is made in the Claude kit and re-derived here with the
 converter, then `node tools/sync-assets.mjs` and
@@ -198,8 +206,10 @@ regeneration"), then re-derive it here.
 
 A re-pin happens in the Claude kit first: new commit, new patches, new
 verification. Then, here: run the converter, check that `graphify/skill-agents.md`
-at the new commit still differs from `skill.md` only where
-`tools/atlas-graphify-agents-delta.json` expects (the converter fails otherwise),
+at the new commit is the file the recorded diff expects, that every
+replacement in `tools/atlas-graphify-agents-delta.json` still matches the Claude
+source (the converter fails otherwise) and that the Codex tools it names
+(`spawn_agent`, `wait_agent`, `close_agent`) still exist,
 re-record `verification/vendor-check-atlas-patches/graphify/SKILL.md.diff`, run
 `python3 verification/vendor-check-atlas.py`, then sync, refresh the digests and
 run the suites.
@@ -219,6 +229,7 @@ The pack is pre-airlock like `craft` and `web-design`: every evidence field in
   after the first real install.
 - This kit's pack validator has no External Prerequisite field; `pack.yaml` is
   not schema-valid until it does (filed as a bead).
-- Graphify's Codex fallback (extract inline when the host cannot dispatch
-  subagents) without `multi_agent` is accepted as upstream wrote it
-  (decision brief, open item 4).
+- Graphify's Part B is verified by running its chunk, collection and merge
+  blocks against fixture chunk files (`GraphifyDispatchTests`); a real Codex
+  session spawning subagents from it is not exercised (operator step, with
+  A-011).

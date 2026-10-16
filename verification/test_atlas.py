@@ -121,7 +121,6 @@ class PackShape(unittest.TestCase):
 
     def test_graphify_skill_is_the_agents_root_variant_with_codex_paths(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()
-        self.assertIn('Uses the `Task` tool for parallel subagent dispatch.', text)
         self.assertNotIn('Call the Agent tool multiple times', text)
         self.assertNotIn('CLAUDE_CONFIG_DIR', text)
         self.assertIn('$HOME/.agents/skills/graphify/atlas-graphify.sh', text)
@@ -384,6 +383,135 @@ class DoctorTests(unittest.TestCase):
         text = (SKILLS/'atlas-doctor/SKILL.md').read_text()
         self.assertIn('"$HOME/.agents/skills/atlas-doctor/scripts/doctor.sh" codex', text)
         self.assertIn('multi_agent', text)
+
+
+def skill_blocks(marker):
+    """Python bodies of the heredoc blocks in graphify/SKILL.md whose first line is `# <marker>`."""
+    text = (SKILLS/'graphify/SKILL.md').read_text()
+    bodies = [m.group(1) for m in re.finditer(r"<<'GRAPHIFY_PY'\n([\s\S]*?)\nGRAPHIFY_PY\n", text)]
+    found = [b for b in bodies if b.startswith('# ' + marker + '\n')]
+    assert len(found) == 1, f'{marker}: {len(found)} blocks'
+    return found[0]
+
+
+class GraphifyDispatchTests(unittest.TestCase):
+    """Part B of the Graphify skill is Codex-native: chunk files, native subagents, a serial fallback.
+
+    The blocks the skill tells the session to run are executed here against a fixture graphify-out/,
+    standing in for the native subagents (or the session itself) by writing the chunk results.
+    """
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix='atlas-dispatch-'))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.out = self.tmp/'graphify-out'
+        self.out.mkdir()
+
+    def run_block(self, marker):
+        return subprocess.run(['python3', '-I', '-c', skill_blocks(marker)], cwd=self.tmp, capture_output=True, text=True)
+
+    def uncached(self, files):
+        (self.out/'.graphify_uncached.txt').write_text(''.join(f + '\n' for f in files))
+
+    def chunk_files(self):
+        return {p.name: p.read_text().split() for p in sorted(self.out.glob('.graphify_chunk_*.files'))}
+
+    def write_result(self, n, nodes=1):
+        (self.out/f'.graphify_chunk_{n:02d}.json').write_text(json.dumps(
+            {'nodes': [{'id': f'c{n}n{i}'} for i in range(nodes)], 'edges': [], 'hyperedges': [], 'input_tokens': 0, 'output_tokens': 0}))
+
+    def test_no_claude_dispatch_text_is_left_in_graphify_skill(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        for gone in ('Task(', 'Task` tool', 'subagent_type', 'Agent tool', 'Agent call', 'Explore', 'general-purpose'):
+            self.assertNotIn(gone, text)
+        for named in ('spawn_agent', 'wait_agent', 'close_agent', 'multi_agent', '.graphify_chunk_NN.files'):
+            self.assertIn(named, text)
+        self.assertRegex(text, r'(?i)serial')
+
+    def test_chunk_write_gives_every_chunk_its_own_file_list(self):
+        files = [f'docs/d{d}/f{i:02d}.md' for d in range(3) for i in range(20)] + ['img/a.png', 'img/b.jpg']
+        self.uncached(files)
+        run = self.run_block('atlas-chunk-write')
+        self.assertEqual(run.returncode, 0, run.stderr)
+        chunks = self.chunk_files()
+        self.assertEqual(sorted(sum(chunks.values(), [])), sorted(files))
+        self.assertEqual((self.out/'.graphify_chunk_total').read_text().strip(), str(len(chunks)))
+        self.assertTrue(all(len(v) <= 25 for v in chunks.values()))
+        self.assertIn(['img/a.png'], chunks.values())
+        self.assertIn(['img/b.jpg'], chunks.values())
+        # Files of one directory sit together: 60 documents in three directories need three chunks, not scattered ones.
+        self.assertEqual(len(chunks), 3 + 2)
+
+    def test_chunk_write_clears_a_dead_run_first(self):
+        self.write_result(7)
+        (self.out/'.graphify_chunk_07.files').write_text('old\n')
+        self.uncached(['a.md'])
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+        self.assertEqual(sorted(p.name for p in self.out.glob('.graphify_chunk_*')),
+                         ['.graphify_chunk_01.files', '.graphify_chunk_total'])
+
+    def collect(self):
+        return self.run_block('atlas-chunk-collect')
+
+    def prepare(self, total):
+        self.uncached([f'a/{i:02d}.md' for i in range(total * 22)])
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+        self.assertEqual((self.out/'.graphify_chunk_total').read_text().strip(), str(total))
+
+    def test_collect_accepts_a_full_set(self):
+        self.prepare(3)
+        for n in (1, 2, 3):
+            self.write_result(n)
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text(), '')
+
+    def test_collect_names_a_missing_chunk_and_the_serial_retry_clears_it(self):
+        self.prepare(4)
+        for n in (1, 2, 4):
+            self.write_result(n)
+        run = self.collect()
+        self.assertEqual(run.returncode, 3, run.stdout + run.stderr)
+        self.assertIn('chunk 3 missing', run.stdout)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text().split(), ['3'])
+        self.write_result(3)  # the session extracts the chunk itself, as the skill says
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text(), '')
+
+    def test_collect_sets_an_invalid_chunk_aside_so_the_merge_skips_it(self):
+        self.prepare(3)
+        self.write_result(1)
+        self.write_result(3)
+        (self.out/'.graphify_chunk_02.json').write_text('{"nodes": [')
+        run = self.collect()
+        self.assertEqual(run.returncode, 3, run.stdout)
+        self.assertIn('chunk 2', run.stdout)
+        self.assertFalse((self.out/'.graphify_chunk_02.json').exists())
+        self.assertTrue((self.out/'.graphify_chunk_02.invalid').exists())
+        merge = subprocess.run(['python3', '-I', '-c', skill_blocks('atlas-chunk-merge')], cwd=self.tmp, capture_output=True, text=True)
+        self.assertEqual(merge.returncode, 0, merge.stderr)
+        merged = json.loads((self.out/'.graphify_semantic_new.json').read_text())
+        self.assertEqual(sorted(n['id'] for n in merged['nodes']), ['c1n0', 'c3n0'])
+
+    def test_collect_rejects_json_without_nodes_and_edges(self):
+        self.prepare(2)
+        self.write_result(1)
+        (self.out/'.graphify_chunk_02.json').write_text('[]')
+        run = self.collect()
+        self.assertEqual(run.returncode, 3)
+        self.assertTrue((self.out/'.graphify_chunk_02.invalid').exists())
+
+    def test_collect_stops_when_more_than_half_failed(self):
+        self.prepare(4)
+        self.write_result(1)
+        self.write_result(2)
+        self.assertEqual(self.collect().returncode, 3)  # exactly half is not more than half
+        (self.out/'.graphify_chunk_02.json').unlink()
+        run = self.collect()
+        self.assertEqual(run.returncode, 4, run.stdout)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text().split(), ['2', '3', '4'])
+
 
 
 if __name__ == '__main__':

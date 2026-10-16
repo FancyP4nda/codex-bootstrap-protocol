@@ -241,7 +241,7 @@ Path('graphify-out/.graphify_semantic.json').write_text(json.dumps({'nodes':[],'
 GRAPHIFY_PY
 ```
 
-**MANDATORY: You MUST use the Agent tool here. Reading files yourself one-by-one is forbidden - it is 5-10x slower. If you do not use the Agent tool you are doing this wrong.**
+**MANDATORY: semantic extraction is never skipped, and reading the files one by one in this turn is not a substitute for Step B2. With native subagents (the `spawn_agent` tool is in your tool list), dispatch them as Step B2 says; without them, extract each chunk yourself in turn (Step B2, serial path). Either way every chunk ends as one `.graphify_chunk_NN.json` file. Never ask for an API key.**
 
 Before dispatching subagents, print a timing estimate:
 - Load `total_words` and file counts from `graphify-out/.graphify_detect.json`
@@ -300,20 +300,51 @@ Only dispatch subagents for files listed in `graphify-out/.graphify_uncached.txt
 
 **Step B1 - Split into chunks**
 
-Load files from `graphify-out/.graphify_uncached.txt`. Split into chunks of 20-25 files each. Each image gets its own chunk (vision needs separate context). When splitting, group files from the same directory together so related artifacts land in the same chunk and cross-file relationships are more likely to be extracted.
-
-**Step B2 - Dispatch ALL subagents in a single message**
-
-> Uses the `Task` tool for parallel subagent dispatch.
-> Call `Task` once per chunk — ALL in the same response so they run in parallel.
-
-Pass the extraction prompt as the task description:
-
+Load files from `graphify-out/.graphify_uncached.txt` and split them into chunks of 20-25 files each; each image gets its own chunk (vision needs separate context), and files of one directory stay together so related artifacts land in the same chunk. Write every chunk to its own list file, `graphify-out/.graphify_chunk_NN.files` (one path per line, NN from 01), and the chunk count to `graphify-out/.graphify_chunk_total`. This block does the split (it also removes the leftovers of an interrupted run):
+```bash
+export GRAPHIFY_NO_AUTO_REFRESH=1
+export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
+PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
+"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
+# atlas-chunk-write
+from pathlib import Path
+out = Path('graphify-out')
+files = [l for l in (out/'.graphify_uncached.txt').read_text(encoding="utf-8").splitlines() if l]
+IMAGES = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'}
+for stale in out.glob('.graphify_chunk_*'):
+    stale.unlink()
+chunks, batch = [], []
+for f in sorted(files):  # sorted, so files of one directory sit together
+    if Path(f).suffix.lower() in IMAGES:
+        chunks.append([f])  # an image gets its own chunk: vision needs a separate context
+        continue
+    batch.append(f)
+    if len(batch) == 22:
+        chunks.append(batch)
+        batch = []
+if batch:
+    chunks.append(batch)
+for n, chunk in enumerate(chunks, 1):
+    (out/f'.graphify_chunk_{n:02d}.files').write_text('\n'.join(chunk) + '\n', encoding="utf-8")
+(out/'.graphify_chunk_total').write_text(f'{len(chunks)}\n', encoding="utf-8")
+print(f'{len(files)} files in {len(chunks)} chunks')
+GRAPHIFY_PY
 ```
-Task(description="Your task is to perform the following. Follow the instructions below exactly.\n\n<agent-instructions>\n[extraction prompt, with FILE_LIST, CHUNK_NUM, TOTAL_CHUNKS, DEEP_MODE substituted]\n</agent-instructions>\n\nExecute this now. Output ONLY the structured JSON response.")
-```
 
-Each subagent writes its result to its own `graphify-out/.graphify_chunk_NN.json`. Collect results as each `Task` completes and parse each as JSON.
+The chunk files are the only hand-off between this step, the workers of Step B2 and Step B3.
+
+**Step B2 - Extract every chunk (native subagents, or this session in turn)**
+
+Every chunk gets exactly one result file, `graphify-out/.graphify_chunk_NN.json`, written to its CHUNK_PATH (derived below). Whoever extracts a chunk, a native subagent or this session, reads the paths in that chunk's `.graphify_chunk_NN.files` file and follows the extraction prompt in `references/extraction-spec.md`. Step B3 reads nothing but those files.
+
+**Native subagents** (Codex `[features] multi_agent = true`; the `spawn_agent` tool is in your tool list, and `$atlas-doctor` reports the setting):
+1. Call `spawn_agent` once per chunk, every call in the same turn, so the chunks run in parallel. The message of each call is the extraction prompt below followed by: "Write the result to CHUNK_PATH and reply with that path only." A spawned agent inherits this session's model and sandbox, so it can write under `graphify-out/` when this session can.
+2. Keep the agent id each call returns. When a call is refused because too many agents are running, collect the running ones first (step 3), then spawn the rest.
+3. Call `wait_agent` on the ids, and again after a timeout, until every agent has finished. Then call `close_agent` on each. The reply text is not the result: the chunk file on disk is, and Step B3 checks it.
+
+**Serial path** (the `spawn_agent` tool is not available: `multi_agent` is off, or the client has no subagents): this session extracts each chunk in turn. For N from 1 to the chunk count, read the paths in `.graphify_chunk_NN.files`, read those files, produce the JSON the extraction prompt describes, and write it to that chunk's CHUNK_PATH before starting the next chunk. Run Part A's AST pass first; there is nothing to run in parallel with. Step B3 is the same.
+
+Codex has no agent types to choose from, so there is nothing to select. The extraction prompt follows.
 
 CHUNK_PATH must be an **absolute** path — derive it before dispatching:
 ```bash
@@ -328,20 +359,51 @@ See `references/extraction-spec.md` for the exact subagent prompt (JSON schema, 
 
 **Step B3 - Collect, cache, and merge**
 
-Wait for all subagents. For each result:
-- Check that `graphify-out/.graphify_chunk_NN.json` exists on disk — this is the success signal
-- If the file exists and contains valid JSON with `nodes` and `edges`, include it and save to cache
-- If the file is missing, the subagent was likely dispatched as read-only (Explore type) — print a warning: "chunk N missing from disk — subagent may have been read-only. Re-run with general-purpose agent." Do not silently skip.
-- If a subagent failed or returned invalid JSON, print a warning and skip that chunk - do not abort
-
-If more than half the chunks failed or are missing, stop and tell the user to re-run and ensure `subagent_type="general-purpose"` is used.
-
-Merge all chunk files into `.graphify_semantic_new.json`. **After each Agent call completes, read the real token counts from the Agent tool result's `usage` field and write them back into the chunk JSON before merging** — the chunk JSON itself always has placeholder zeros. Then run:
+Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid JSON with `nodes` and `edges` (as `.graphify_chunk_NN.invalid`, so the merge skips it), prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
 ```bash
 export GRAPHIFY_NO_AUTO_REFRESH=1
 export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
 PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
 "$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
+# atlas-chunk-collect
+import json, sys
+from pathlib import Path
+out = Path('graphify-out')
+total = int((out/'.graphify_chunk_total').read_text(encoding="utf-8").strip())
+failed = []
+for n in range(1, total + 1):
+    path = out/f'.graphify_chunk_{n:02d}.json'
+    if not path.is_file():
+        print(f'WARNING: chunk {n} missing from disk: nothing was written to {path}')
+        failed.append(n)
+        continue
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        ok = isinstance(data, dict) and isinstance(data.get('nodes'), list) and isinstance(data.get('edges'), list)
+    except (ValueError, OSError):
+        ok = False
+    if not ok:
+        aside = path.with_suffix('.invalid')
+        print(f'WARNING: chunk {n} is not valid extraction JSON with nodes and edges; set aside as {aside.name}')
+        path.rename(aside)  # the merge globs *.json, so it skips this one
+        failed.append(n)
+(out/'.graphify_chunk_failed.txt').write_text(''.join(f'{n}\n' for n in failed), encoding="utf-8")
+if len(failed) * 2 > total:
+    print(f'STOP: {len(failed)} of {total} chunks failed or are missing')
+    sys.exit(4)
+sys.exit(3 if failed else 0)
+GRAPHIFY_PY
+```
+
+After exit 3 or 4, extract each listed chunk yourself, in turn, as in the serial path of Step B2 (the native agent may have died or lacked write access), and run the collection check again. If it still exits 4, stop and tell the user to re-run, and to check that `[features] multi_agent = true` is on and that the sandbox lets agents write under `graphify-out/`. If it exits 3, keep each warning in the output and go on without those chunks; do not abort. Do not silently skip a chunk.
+
+Merge all chunk files into `.graphify_semantic_new.json`. Codex reports no token counts per agent, so the chunk JSON's `input_tokens` and `output_tokens` stay 0; do not invent numbers. Then run:
+```bash
+export GRAPHIFY_NO_AUTO_REFRESH=1
+export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
+PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
+"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
+# atlas-chunk-merge
 import json, glob
 from pathlib import Path
 

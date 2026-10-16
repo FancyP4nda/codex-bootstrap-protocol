@@ -85,10 +85,10 @@
  If no path was given, use `.` (current directory). Do not ask the user for a path.
  
 -If the path argument starts with `https://github.com/` or `http://github.com/`, treat it as a GitHub URL - run Step 0 before anything else, then continue with the resolved local path.
+-
+-Follow these steps in order. Do not skip steps.
 +If the path argument is one or more GitHub URLs, or several local paths to merge into one graph, answer with this line and stop:
  
--Follow these steps in order. Do not skip steps.
--
 -### Step 0 - GitHub repos and multi-path merge (only if a URL or several paths)
 +Not available in the atlas pack: GitHub clone and multi-repo merge. The pack supports building, updating and querying the graph; to use GitHub clone and multi-repo merge, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
  
@@ -205,11 +205,9 @@
 -- Otherwise: proceed directly to Step 2.5 if video files were detected, or Step 3 if not.
 +  - Otherwise rank by count, show the top 5 with file counts, then ask which subfolder to run on. Wait for the user's answer before proceeding. When the user picks one, the scan root changes: run the block under **Narrow to a subfolder** below, which runs the preflight for that subfolder and repeats detection before Step 3.
 +- Otherwise: proceed directly to Step 3.
- 
--### Step 2.5 - Video and audio (only if video files detected)
++
 +**Narrow to a subfolder** (only when the user picked one above). Before the block, write the subfolder's name as listed (its path relative to the scan root) to `graphify-out/.graphify_values/subfolder` with your file tool: it is a name from the repository, so it never goes in a heredoc. The block runs the preflight with that subfolder as the new scan root, which records it in `graphify-out/.graphify_root`, then runs detection again on it, so Step 3 reads only the subfolder's files. If it printed a refusal, show it to the user exactly as printed and stop; otherwise present its summary as above and act on it again.
- 
--Skip this step entirely if `detect` returned zero `video` files. When the corpus has video or audio, see `references/transcribe.md` to transcribe them to text first, then treat the transcripts as doc files in Step 3.
++
 +```bash
 +export GRAPHIFY_NO_AUTO_REFRESH=1
 +export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
@@ -239,9 +237,11 @@
 +print(f'Detected {result["total_files"]} files')
 +GRAPHIFY_PY
 +```
-+
+ 
+-### Step 2.5 - Video and audio (only if video files detected)
 +If detection found video or audio files, tell the user:
-+
+ 
+-Skip this step entirely if `detect` returned zero `video` files. When the corpus has video or audio, see `references/transcribe.md` to transcribe them to text first, then treat the transcripts as doc files in Step 3.
 +Not available in the atlas pack: video and audio transcription. The pack supports building, updating and querying the graph; to use video and audio transcription, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
  
  ### Step 3 - Extract entities and relationships
@@ -304,7 +304,7 @@
  ```
  
  #### Part B - Semantic extraction (parallel subagents)
-@@ -206,11 +231,14 @@
+@@ -206,14 +231,17 @@
  **Fast path:** If detection found zero docs, papers, and images (code-only corpus), skip Part B entirely and go straight to Part C. AST handles code - there is nothing for semantic subagents to do. **First write an empty semantic file** so Part C's merge has its input (it reads `.graphify_semantic.json` unconditionally; without this a code-only run hits `FileNotFoundError`):
  
  ```bash
@@ -320,8 +320,12 @@
 +GRAPHIFY_PY
  ```
  
- **MANDATORY: You MUST use the Agent tool here. Reading files yourself one-by-one is forbidden - it is 5-10x slower. If you do not use the Agent tool you are doing this wrong.**
-@@ -225,35 +253,47 @@
+-**MANDATORY: You MUST use the Agent tool here. Reading files yourself one-by-one is forbidden - it is 5-10x slower. If you do not use the Agent tool you are doing this wrong.**
++**MANDATORY: semantic extraction is never skipped, and reading the files one by one in this turn is not a substitute for Step B2. With native subagents (the `spawn_agent` tool is in your tool list), dispatch them as Step B2 says; without them, extract each chunk yourself in turn (Step B2, serial path). Either way every chunk ends as one `.graphify_chunk_NN.json` file. Never ask for an API key.**
+ 
+ Before dispatching subagents, print a timing estimate:
+ - Load `total_words` and file counts from `graphify-out/.graphify_detect.json`
+@@ -225,58 +253,102 @@
  
  Before dispatching any subagents, check which files already have cached extraction results:
  
@@ -377,7 +381,66 @@
  ```
  
  Only dispatch subagents for files listed in `graphify-out/.graphify_uncached.txt`. If all files are cached, skip Steps B1 and B2 but still run Step B3's commands: its merge is the only Part B step that writes `graphify-out/.graphify_semantic.json`, and Part C reads that file unconditionally. Do not write an empty `.graphify_semantic.json` instead, because that drops every cached node.
-@@ -277,6 +317,7 @@
+ 
+ **Step B1 - Split into chunks**
+ 
+-Load files from `graphify-out/.graphify_uncached.txt`. Split into chunks of 20-25 files each. Each image gets its own chunk (vision needs separate context). When splitting, group files from the same directory together so related artifacts land in the same chunk and cross-file relationships are more likely to be extracted.
+-
+-**Step B2 - Dispatch ALL subagents in a single message**
+-
+-> Uses the `Task` tool for parallel subagent dispatch.
+-> Call `Task` once per chunk — ALL in the same response so they run in parallel.
+-
+-Pass the extraction prompt as the task description:
++Load files from `graphify-out/.graphify_uncached.txt` and split them into chunks of 20-25 files each; each image gets its own chunk (vision needs separate context), and files of one directory stay together so related artifacts land in the same chunk. Write every chunk to its own list file, `graphify-out/.graphify_chunk_NN.files` (one path per line, NN from 01), and the chunk count to `graphify-out/.graphify_chunk_total`. This block does the split (it also removes the leftovers of an interrupted run):
++```bash
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++# atlas-chunk-write
++from pathlib import Path
++out = Path('graphify-out')
++files = [l for l in (out/'.graphify_uncached.txt').read_text(encoding="utf-8").splitlines() if l]
++IMAGES = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'}
++for stale in out.glob('.graphify_chunk_*'):
++    stale.unlink()
++chunks, batch = [], []
++for f in sorted(files):  # sorted, so files of one directory sit together
++    if Path(f).suffix.lower() in IMAGES:
++        chunks.append([f])  # an image gets its own chunk: vision needs a separate context
++        continue
++    batch.append(f)
++    if len(batch) == 22:
++        chunks.append(batch)
++        batch = []
++if batch:
++    chunks.append(batch)
++for n, chunk in enumerate(chunks, 1):
++    (out/f'.graphify_chunk_{n:02d}.files').write_text('\n'.join(chunk) + '\n', encoding="utf-8")
++(out/'.graphify_chunk_total').write_text(f'{len(chunks)}\n', encoding="utf-8")
++print(f'{len(files)} files in {len(chunks)} chunks')
++GRAPHIFY_PY
++```
++
++The chunk files are the only hand-off between this step, the workers of Step B2 and Step B3.
++
++**Step B2 - Extract every chunk (native subagents, or this session in turn)**
++
++Every chunk gets exactly one result file, `graphify-out/.graphify_chunk_NN.json`, written to its CHUNK_PATH (derived below). Whoever extracts a chunk, a native subagent or this session, reads the paths in that chunk's `.graphify_chunk_NN.files` file and follows the extraction prompt in `references/extraction-spec.md`. Step B3 reads nothing but those files.
++
++**Native subagents** (Codex `[features] multi_agent = true`; the `spawn_agent` tool is in your tool list, and `$atlas-doctor` reports the setting):
++1. Call `spawn_agent` once per chunk, every call in the same turn, so the chunks run in parallel. The message of each call is the extraction prompt below followed by: "Write the result to CHUNK_PATH and reply with that path only." A spawned agent inherits this session's model and sandbox, so it can write under `graphify-out/` when this session can.
++2. Keep the agent id each call returns. When a call is refused because too many agents are running, collect the running ones first (step 3), then spawn the rest.
++3. Call `wait_agent` on the ids, and again after a timeout, until every agent has finished. Then call `close_agent` on each. The reply text is not the result: the chunk file on disk is, and Step B3 checks it.
+ 
+-```
+-Task(description="Your task is to perform the following. Follow the instructions below exactly.\n\n<agent-instructions>\n[extraction prompt, with FILE_LIST, CHUNK_NUM, TOTAL_CHUNKS, DEEP_MODE substituted]\n</agent-instructions>\n\nExecute this now. Output ONLY the structured JSON response.")
+-```
++**Serial path** (the `spawn_agent` tool is not available: `multi_agent` is off, or the client has no subagents): this session extracts each chunk in turn. For N from 1 to the chunk count, read the paths in `.graphify_chunk_NN.files`, read those files, produce the JSON the extraction prompt describes, and write it to that chunk's CHUNK_PATH before starting the next chunk. Run Part A's AST pass first; there is nothing to run in parallel with. Step B3 is the same.
+ 
+-Each subagent writes its result to its own `graphify-out/.graphify_chunk_NN.json`. Collect results as each `Task` completes and parse each as JSON.
++Codex has no agent types to choose from, so there is nothing to select. The extraction prompt follows.
  
  CHUNK_PATH must be an **absolute** path — derive it before dispatching:
  ```bash
@@ -385,19 +448,69 @@
  PROJECT_ROOT=$(pwd)  # cwd — where Part C globs graphify-out/ (NOT .graphify_root/scan dir, #1392)
  # Then for chunk N: CHUNK_PATH="${PROJECT_ROOT}/graphify-out/.graphify_chunk_0N.json"
  ```
-@@ -297,7 +338,10 @@
+@@ -287,17 +359,51 @@
  
- Merge all chunk files into `.graphify_semantic_new.json`. **After each Agent call completes, read the real token counts from the Agent tool result's `usage` field and write them back into the chunk JSON before merging** — the chunk JSON itself always has placeholder zeros. Then run:
+ **Step B3 - Collect, cache, and merge**
+ 
+-Wait for all subagents. For each result:
+-- Check that `graphify-out/.graphify_chunk_NN.json` exists on disk — this is the success signal
+-- If the file exists and contains valid JSON with `nodes` and `edges`, include it and save to cache
+-- If the file is missing, the subagent was likely dispatched as read-only (Explore type) — print a warning: "chunk N missing from disk — subagent may have been read-only. Re-run with general-purpose agent." Do not silently skip.
+-- If a subagent failed or returned invalid JSON, print a warning and skip that chunk - do not abort
+-
+-If more than half the chunks failed or are missing, stop and tell the user to re-run and ensure `subagent_type="general-purpose"` is used.
+-
+-Merge all chunk files into `.graphify_semantic_new.json`. **After each Agent call completes, read the real token counts from the Agent tool result's `usage` field and write them back into the chunk JSON before merging** — the chunk JSON itself always has placeholder zeros. Then run:
++Collect first: with native subagents, make sure `wait_agent` has returned for every agent (Step B2). Then run the collection check; it reads the chunk files, not the agents' replies. It sets aside a chunk file that is not valid JSON with `nodes` and `edges` (as `.graphify_chunk_NN.invalid`, so the merge skips it), prints a warning for each missing or invalid chunk, lists their numbers in `graphify-out/.graphify_chunk_failed.txt`, and exits 0 (all good), 3 (some failed) or 4 (more than half failed):
  ```bash
 -$(cat graphify-out/.graphify_python) -c "
 +export GRAPHIFY_NO_AUTO_REFRESH=1
 +export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
 +PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
 +"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++# atlas-chunk-collect
++import json, sys
++from pathlib import Path
++out = Path('graphify-out')
++total = int((out/'.graphify_chunk_total').read_text(encoding="utf-8").strip())
++failed = []
++for n in range(1, total + 1):
++    path = out/f'.graphify_chunk_{n:02d}.json'
++    if not path.is_file():
++        print(f'WARNING: chunk {n} missing from disk: nothing was written to {path}')
++        failed.append(n)
++        continue
++    try:
++        data = json.loads(path.read_text(encoding="utf-8"))
++        ok = isinstance(data, dict) and isinstance(data.get('nodes'), list) and isinstance(data.get('edges'), list)
++    except (ValueError, OSError):
++        ok = False
++    if not ok:
++        aside = path.with_suffix('.invalid')
++        print(f'WARNING: chunk {n} is not valid extraction JSON with nodes and edges; set aside as {aside.name}')
++        path.rename(aside)  # the merge globs *.json, so it skips this one
++        failed.append(n)
++(out/'.graphify_chunk_failed.txt').write_text(''.join(f'{n}\n' for n in failed), encoding="utf-8")
++if len(failed) * 2 > total:
++    print(f'STOP: {len(failed)} of {total} chunks failed or are missing')
++    sys.exit(4)
++sys.exit(3 if failed else 0)
++GRAPHIFY_PY
++```
++
++After exit 3 or 4, extract each listed chunk yourself, in turn, as in the serial path of Step B2 (the native agent may have died or lacked write access), and run the collection check again. If it still exits 4, stop and tell the user to re-run, and to check that `[features] multi_agent = true` is on and that the sandbox lets agents write under `graphify-out/`. If it exits 3, keep each warning in the output and go on without those chunks; do not abort. Do not silently skip a chunk.
++
++Merge all chunk files into `.graphify_semantic_new.json`. Codex reports no token counts per agent, so the chunk JSON's `input_tokens` and `output_tokens` stay 0; do not invent numbers. Then run:
++```bash
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++# atlas-chunk-merge
  import json, glob
  from pathlib import Path
  
-@@ -305,7 +349,7 @@
+@@ -305,7 +411,7 @@
  all_nodes, all_edges, all_hyperedges = [], [], []
  total_in, total_out = 0, 0
  for c in chunks:
@@ -406,7 +519,7 @@
      all_nodes += d.get('nodes', [])
      all_edges += d.get('edges', [])
      all_hyperedges += d.get('hyperedges', [])
-@@ -314,33 +358,48 @@
+@@ -314,33 +420,48 @@
  Path('graphify-out/.graphify_semantic_new.json').write_text(json.dumps({
      'nodes': all_nodes, 'edges': all_edges, 'hyperedges': all_hyperedges,
      'input_tokens': total_in, 'output_tokens': total_out,
@@ -465,7 +578,7 @@
  
  all_nodes = cached['nodes'] + new.get('nodes', [])
  all_edges = cached['edges'] + new.get('edges', [])
-@@ -359,21 +418,31 @@
+@@ -359,21 +480,31 @@
      'input_tokens': new.get('input_tokens', 0),
      'output_tokens': new.get('output_tokens', 0),
  }
@@ -504,7 +617,7 @@
  
  # Merge: AST nodes first, semantic nodes deduplicated by id
  seen = {n['id'] for n in ast['nodes']}
-@@ -392,20 +461,33 @@
+@@ -392,20 +523,33 @@
      'input_tokens': sem.get('input_tokens', 0),
      'output_tokens': sem.get('output_tokens', 0),
  }
@@ -543,7 +656,7 @@
  import sys, json
  from graphify.build import build_from_json
  from graphify.cluster import cluster, score_all
-@@ -414,18 +496,56 @@
+@@ -414,18 +558,56 @@
  from graphify.export import to_json
  from pathlib import Path
  
@@ -606,7 +719,7 @@
  communities = cluster(G)
  cohesion = score_all(G, communities)
  tokens = {'input': extraction.get('input_tokens', 0), 'output': extraction.get('output_tokens', 0)}
-@@ -439,13 +559,20 @@
+@@ -439,13 +621,20 @@
  # nothing) when the new graph is smaller than the existing graph.json. Only write
  # GRAPH_REPORT.md + the analysis sidecar when the graph was actually written, so
  # they never describe a graph that graph.json doesn't contain (#1392).
@@ -630,7 +743,7 @@
  analysis = {
      'communities': {str(k): v for k, v in communities.items()},
      'cohesion': {str(k): v for k, v in cohesion.items()},
-@@ -453,27 +580,40 @@
+@@ -453,27 +642,40 @@
      'surprises': surprises,
      'questions': questions,
  }
@@ -677,7 +790,7 @@
  print(format_diagnostic_report(summary))
  flags = [f'{summary[k]} {label}' for k, label in (
      ('dangling_endpoint_edges', 'dangling-endpoint edges'),
-@@ -483,10 +623,10 @@
+@@ -483,10 +685,10 @@
      ('undirected_same_endpoint_collapsed_edges', 'collapsed (undirected) edges'),
  ) if summary.get(k, 0)]
  print('GRAPH HEALTH WARNING: ' + '; '.join(flags) + ' - graph may be incomplete/corrupt.' if flags else 'Graph health: OK (no dangling/missing/collapsed edges).')
@@ -690,7 +803,7 @@
  
  ### Step 5 - Label communities
  
-@@ -495,7 +635,22 @@
+@@ -495,7 +697,22 @@
  Then regenerate the report and save the labels for the visualizer:
  
  ```bash
@@ -714,7 +827,7 @@
  import sys, json
  from graphify.build import build_from_json
  from graphify.cluster import score_all
-@@ -504,25 +659,25 @@
+@@ -504,25 +721,25 @@
  from graphify.export import to_json
  from pathlib import Path
  
@@ -749,7 +862,7 @@
  # Re-export so graph.json nodes carry the curated community_name (#2490).
  # Same extraction as Step 4, so the #479 shrink-guard passes on node count;
  # if it still refuses, surface the guard message - do not force past it.
-@@ -531,50 +686,63 @@
+@@ -531,50 +748,63 @@
      print('ERROR: refused to shrink graphify-out/graph.json (existing graph has more nodes; #479).')
      print('If this shrink is intentional (you deleted files), re-run a full build with --force.')
  print('Report updated with community labels')
@@ -792,15 +905,15 @@
 +Not available in the atlas pack: --wiki. The pack supports building, updating and querying the graph; to use --wiki, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
 +
 +Not available in the atlas pack: --neo4j and --neo4j-push. The pack supports building, updating and querying the graph; to use --neo4j and --neo4j-push, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
-+
-+Not available in the atlas pack: --falkordb and --falkordb-push. The pack supports building, updating and querying the graph; to use --falkordb and --falkordb-push, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
-+
-+Not available in the atlas pack: --svg. The pack supports building, updating and querying the graph; to use --svg, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
  
 -### Steps 6b-8 - Wiki, Neo4j, FalkorDB, SVG, GraphML, MCP, benchmark (only on their flags)
-+Not available in the atlas pack: --graphml. The pack supports building, updating and querying the graph; to use --graphml, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
++Not available in the atlas pack: --falkordb and --falkordb-push. The pack supports building, updating and querying the graph; to use --falkordb and --falkordb-push, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
  
 -These run only when their flag is present (`--wiki`, `--neo4j`/`--neo4j-push`, `--falkordb`/`--falkordb-push`, `--svg`, `--graphml`, `--mcp`) or, for the token-reduction benchmark, when `total_words` exceeds 5,000. A default run with no export flags skips all of them. See `references/exports.md` for each one. Run any `--wiki` export before Step 9 cleanup so `.graphify_labels.json` is still available.
++Not available in the atlas pack: --svg. The pack supports building, updating and querying the graph; to use --svg, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
++
++Not available in the atlas pack: --graphml. The pack supports building, updating and querying the graph; to use --graphml, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
++
 +Not available in the atlas pack: --mcp. The pack supports building, updating and querying the graph; to use --mcp, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
 +
 +Not available in the atlas pack: benchmark. The pack supports building, updating and querying the graph; to use benchmark, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
@@ -832,7 +945,7 @@
  # In --update mode, 'all_files' carries the full corpus; 'files' is the changed
  # subset. Full-rebuild mode populates only 'files', so the fallback handles that.
  # root= relativizes the manifest keys to the scan root (same base as the build),
-@@ -590,7 +758,7 @@
+@@ -590,7 +820,7 @@
  # types are gated on output.
  from graphify.cli import _stamped_manifest_files
  _corpus = detect.get('all_files') or detect['files']
@@ -841,7 +954,7 @@
  # Files dispatched this run (the changed subset) but NOT stamped above still carry
  # a stale semantic_hash from a prior run; clear it so detect_incremental re-queues
  # them instead of reading them as unchanged (#1948).
-@@ -602,7 +770,7 @@
+@@ -602,7 +832,7 @@
  # files newly excluded since last run are dropped rather than masquerading as
  # deletions; untouched files' prior rows are still preserved (#1908).
  _scan = {f for fl in _corpus.values() for f in fl}
@@ -850,7 +963,7 @@
  
  # Update cumulative cost tracker
  input_tok = extract.get('input_tokens', 0)
-@@ -610,7 +778,7 @@
+@@ -610,7 +840,7 @@
  
  cost_path = Path('graphify-out/cost.json')
  if cost_path.exists():
@@ -859,7 +972,7 @@
  else:
      cost = {'runs': [], 'total_input_tokens': 0, 'total_output_tokens': 0}
  
-@@ -622,26 +790,25 @@
+@@ -622,26 +852,25 @@
  })
  cost['total_input_tokens'] += input_tok
  cost['total_output_tokens'] += output_tok
@@ -891,7 +1004,7 @@
  ```
  
  If graphify saved you time, consider supporting it: https://github.com/sponsors/safishamsi
-@@ -669,25 +836,22 @@
+@@ -669,25 +898,22 @@
  
  ## Interpreter guard for subcommands
  
@@ -920,15 +1033,15 @@
  
 -## For --update and --cluster-only
 +## For --update
++
++A non-default subcommand: `--update` re-extracts only new or changed files. See `references/update.md` for the flow.
  
 -Both are non-default subcommands. `--update` re-extracts only new or changed files; `--cluster-only` reruns clustering on the existing graph. See `references/update.md` for both flows.
-+A non-default subcommand: `--update` re-extracts only new or changed files. See `references/update.md` for the flow.
-+
 +Not available in the atlas pack: --cluster-only. The pack supports building, updating and querying the graph; to use --cluster-only, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
  
  ---
  
-@@ -696,22 +860,28 @@
+@@ -696,22 +922,28 @@
  When `graphify-out/graph.json` already exists and the user asks a question about the corpus, answer from the graph rather than rebuilding it:
  
  ```bash
