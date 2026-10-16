@@ -502,6 +502,35 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertEqual(run.returncode, 3)
         self.assertTrue((self.out/'.graphify_chunk_02.invalid').exists())
 
+    def test_collect_with_no_chunk_total_is_an_all_cached_run(self):
+        # Every file cached: Steps B1 and B2 are skipped and Step B3 still runs. Step B0 cleared the
+        # previous run's scratch, so there is no chunk total, and nothing may be reported missing.
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertIn("for stale in Path('graphify-out').glob('.graphify_chunk_*'):", text)
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertEqual((self.out/'.graphify_chunk_failed.txt').read_text(), '')
+
+    def test_chunk_numbers_past_nine_use_one_name_everywhere(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertNotIn('chunk_0N', text)
+        self.assertIn("graphify_chunk_%02d.json' \"$PROJECT_ROOT\" \"$N\"", text)
+        self.prepare(12)
+        for n in range(1, 13):
+            self.write_result(n)
+        run = self.collect()
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertTrue((self.out/'.graphify_chunk_10.files').is_file())
+        merge = subprocess.run(['python3', '-I', '-c', skill_blocks('atlas-chunk-merge')], cwd=self.tmp, capture_output=True, text=True)
+        self.assertEqual(merge.returncode, 0, merge.stderr)
+        merged = json.loads((self.out/'.graphify_semantic_new.json').read_text())
+        self.assertEqual(len(merged['nodes']), 12)
+
+    def test_workers_are_told_to_write_with_a_file_tool_and_to_treat_files_as_data(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertEqual(text.count('apply_patch'), 2)  # the spawn message and the serial path
+        self.assertEqual(text.count('untrusted data'), 2)
+
     def test_collect_stops_when_more_than_half_failed(self):
         self.prepare(4)
         self.write_result(1)
