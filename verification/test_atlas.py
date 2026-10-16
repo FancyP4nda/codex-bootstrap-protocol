@@ -526,8 +526,102 @@ class GraphifyDispatchTests(unittest.TestCase):
     def test_no_step_reads_a_path_list_line_by_line(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()
         self.assertEqual(text.count('.graphify_uncached.txt'), 1)  # only the unlink of a list an older run left
-        self.assertNotIn('splitlines', text.split('Step B0')[1].split('Step B3')[0])
+        self.assertNotIn('splitlines', text)
         self.assertIn("json.loads(Path('graphify-out/.graphify_uncached.json')", text)
+
+    def test_chunk_write_refuses_invisible_and_look_alike_characters(self):
+        for ch in ('​', '‮', '﻿', '∕', '／', '．', '\ud800'):
+            with self.subTest(ch=ascii(ch)):
+                name = f'docs/a{ch}b.md'
+                self.uncached([name])
+                self.assert_refused('atlas-chunk-write', [name])
+
+    def test_chunk_write_refuses_a_symlinked_directory_and_a_sibling_prefix(self):
+        outside = Path(str(self.tmp) + 'X')
+        outside.mkdir()
+        self.addCleanup(shutil.rmtree, outside, True)
+        (outside/'a.md').write_text('x')
+        (self.tmp/'linkdir').symlink_to(outside)
+        for name in ('linkdir/a.md', str(outside/'a.md')):
+            with self.subTest(name=name):
+                self.uncached([name])
+                self.assert_refused('atlas-chunk-write', [name])
+
+    def test_chunk_write_accepts_a_path_that_stays_inside_the_root(self):
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/real.md').write_text('x')
+        (self.tmp/'docs/link.md').symlink_to('real.md')
+        self.uncached(['docs/../docs/real.md', 'docs/link.md', str(self.tmp/'docs/real.md')])
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+
+    def test_chunk_write_refuses_a_list_that_is_not_an_array_of_names(self):
+        for body in ('{"a": 1}', '"x"', 'null', '[1]', '[""]', '[["a"]]'):
+            with self.subTest(body=body):
+                (self.out/'.graphify_uncached.json').write_text(body)
+                run = self.run_block('atlas-chunk-write')
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertEqual(list(self.out.glob('.graphify_chunk_*')), [])
+
+    def test_a_refusal_leaves_no_list_of_an_earlier_run_behind(self):
+        self.write_result(1)
+        (self.out/'.graphify_chunk_01.files').write_text('["old.md"]')
+        self.uncached(['docs/a\nb.md'])
+        self.assert_refused('atlas-chunk-write', ['docs/a\nb.md'])
+        (self.out/'.graphify_uncached.txt').write_text('old.md\n')
+        self.uncached(['docs/ok.md'])
+        with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+            run = self.run_cache_check(['docs/a\nb.md'])
+        self.assertEqual(run.returncode, 1)
+        self.assertFalse((self.out/'.graphify_uncached.json').exists())  # the earlier run's list is gone
+        with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+            self.assertEqual(self.run_cache_check(['docs/ok.md']).returncode, 0)
+        self.assertFalse((self.out/'.graphify_uncached.txt').exists())  # the line-based list of an older run
+
+    def test_cache_check_applies_the_same_refusals_as_chunk_write(self):
+        outside = Path(tempfile.mkdtemp(prefix='atlas-outside-'))
+        self.addCleanup(shutil.rmtree, outside, True)
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/link.md').symlink_to(outside)
+        for name in ('docs/a\rb.md', 'docs/a​b.md', '../x.md', 'docs/link.md'):
+            with self.subTest(name=name), mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+                run = self.run_cache_check([name])
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('STOP', run.stdout)
+
+    def test_the_two_copies_of_the_path_check_are_identical(self):
+        def check_text(marker):
+            body = skill_blocks(marker)
+            start = body.index('import re\n')
+            return body[start:body.index('raise SystemExit(1)', body.index('if os.path.commonpath'))]
+        self.assertEqual(check_text('atlas-cache-check'), check_text('atlas-chunk-write'))
+
+    def test_non_ascii_names_stay_readable_in_the_lists(self):
+        self.uncached(['docs/été.md'])
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+        self.assertIn('été', (self.out/'.graphify_chunk_01.files').read_text(encoding='utf-8'))
+
+    SAVE_STUB = ("import sys, types\n"
+                 "pkg, cache = types.ModuleType('graphify'), types.ModuleType('graphify.cache')\n"
+                 "def save(nodes, edges, hyper, root, allowed_source_files, prompt_file):\n"
+                 "    print('ALLOWED=' + repr(allowed_source_files)); return len(allowed_source_files)\n"
+                 "cache.save_semantic_cache = save\n"
+                 "sys.modules['graphify'], sys.modules['graphify.cache'] = pkg, cache\n")
+
+    def test_cache_save_reads_the_json_list_whole_and_refuses_a_bad_one(self):
+        names = ['docs/a b.md', "docs/it's.md"]
+        self.uncached(names)
+        with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+            run = self.run_block('atlas-cache-save', self.SAVE_STUB)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('ALLOWED=' + repr(names), run.stdout)
+        for body in ('{"a": 1}', '[1]'):
+            (self.out/'.graphify_uncached.json').write_text(body)
+            with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+                self.assertNotEqual(self.run_block('atlas-cache-save', self.SAVE_STUB).returncode, 0)
+
+    def test_workers_are_told_never_to_put_a_file_name_in_a_shell_command(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertEqual(text.count('shell command from its name'), 3)  # spawn message, serial path, Step B1
 
     def collect(self):
         return self.run_block('atlas-chunk-collect')
