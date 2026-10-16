@@ -276,16 +276,22 @@ import re
 import unicodedata
 # The two copies of this check (Step B0 and Step B1) must stay identical.
 BAD = re.compile(r'[\x00-\x1f\x7f-\x9f\u2028\u2029\ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
-LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8'  # characters that pass for a slash or a dot
+LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8\u2216\u2571\u27cb\u1735\uff3c\u29f5\u29f9'  # characters that pass for a slash or a dot
+BLANK = '\u3164\uffa0\u115f\u1160\u2800\u034f\u17b4\u17b5'  # characters that render as nothing
+def odd(c):
+    if c in '\u200c\u200d\u2026':  # joiners are part of Persian, Indic and emoji names; an ellipsis is no path component
+        return False
+    n = unicodedata.normalize('NFKC', c)  # a compatibility form of '.', '/' or a backslash
+    return c in LOOKALIKE or c in BLANK or unicodedata.category(c) == 'Cf' or (n != c and all(x in './\\' for x in n))
 ROOT_REAL = os.path.realpath(ROOT)
 def check_input(f):
     """Stop the run unless f is one whole path inside the scan root; the message names the file."""
-    if not isinstance(f, str) or not f or BAD.search(f) or any(c in LOOKALIKE or unicodedata.category(c) == 'Cf' for c in f):
-        print(f'STOP: refusing the file name {f!r}: it is empty or holds a line break, control, invisible or look-alike character. Rename or move that file, then run again.')
+    if not isinstance(f, str) or not f or BAD.search(f) or any(odd(c) for c in f):
+        print(f'STOP: refusing the file name {f!r}: it is empty or holds a line break, control, invisible or look-alike character. The user must rename or move that file before the run is repeated.')
         raise SystemExit(1)
     real = os.path.realpath(f)  # a relative name is relative to the working directory, as Graphify detect lists it
     if os.path.commonpath([real, ROOT_REAL]) != ROOT_REAL:
-        print(f'STOP: refusing {f!r}: it resolves to {real!r}, outside the scan root {ROOT!r}. Remove that file or link, then run again.')
+        print(f'STOP: refusing {f!r}: it resolves to {real!r}, outside the scan root {ROOT!r}. The user must remove that file or link before the run is repeated.')
         raise SystemExit(1)
 from pathlib import Path
 
@@ -296,6 +302,8 @@ detect = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encodin
 all_files = [f for cat in ('document', 'paper', 'image') for f in detect['files'].get(cat, [])]
 
 Path('graphify-out/.graphify_uncached.json').unlink(missing_ok=True)  # a refusal must not leave an earlier run's list behind
+for stale in Path('graphify-out').glob('.graphify_chunk_*'):  # lists, total and results of an earlier run: cleared before any check can refuse
+    stale.unlink()
 for f in all_files:  # a repository file name is attacker-controlled: check every one before any list is written
     check_input(f)
 cached_nodes, cached_edges, cached_hyperedges, uncached = check_semantic_cache(all_files, root=ROOT, prompt_file=os.environ['GRAPHIFY_SPEC_PATH'])
@@ -316,7 +324,7 @@ print(f'Cache: {len(all_files)-len(uncached)} files hit, {len(uncached)} files n
 GRAPHIFY_PY
 ```
 
-Only dispatch subagents for files listed in `graphify-out/.graphify_uncached.json`. If all files are cached, skip Steps B1 and B2 but still run Step B3's commands: its merge is the only Part B step that writes `graphify-out/.graphify_semantic.json`, and Part C reads that file unconditionally. Do not write an empty `.graphify_semantic.json` instead, because that drops every cached node.
+If the block prints a line that starts with `STOP`, show it to the user exactly as printed and stop: run no later step, and rename, move or delete no file yourself. Only dispatch subagents for files listed in `graphify-out/.graphify_uncached.json`. If all files are cached, skip Steps B1 and B2 but still run Step B3's commands: its merge is the only Part B step that writes `graphify-out/.graphify_semantic.json`, and Part C reads that file unconditionally. Do not write an empty `.graphify_semantic.json` instead, because that drops every cached node.
 
 **Step B1 - Split into chunks**
 
@@ -330,28 +338,34 @@ PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { pr
 import json, os
 from pathlib import Path
 out = Path('graphify-out')
+for stale in out.glob('.graphify_chunk_*'):  # first, so that no refusal leaves an earlier run's lists to be dispatched
+    stale.unlink()
 ROOT = os.fsdecode((out/'.graphify_root').read_bytes())  # the scan root Step 1 recorded
 import re
 import unicodedata
 # The two copies of this check (Step B0 and Step B1) must stay identical.
 BAD = re.compile(r'[\x00-\x1f\x7f-\x9f\u2028\u2029\ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
-LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8'  # characters that pass for a slash or a dot
+LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8\u2216\u2571\u27cb\u1735\uff3c\u29f5\u29f9'  # characters that pass for a slash or a dot
+BLANK = '\u3164\uffa0\u115f\u1160\u2800\u034f\u17b4\u17b5'  # characters that render as nothing
+def odd(c):
+    if c in '\u200c\u200d\u2026':  # joiners are part of Persian, Indic and emoji names; an ellipsis is no path component
+        return False
+    n = unicodedata.normalize('NFKC', c)  # a compatibility form of '.', '/' or a backslash
+    return c in LOOKALIKE or c in BLANK or unicodedata.category(c) == 'Cf' or (n != c and all(x in './\\' for x in n))
 ROOT_REAL = os.path.realpath(ROOT)
 def check_input(f):
     """Stop the run unless f is one whole path inside the scan root; the message names the file."""
-    if not isinstance(f, str) or not f or BAD.search(f) or any(c in LOOKALIKE or unicodedata.category(c) == 'Cf' for c in f):
-        print(f'STOP: refusing the file name {f!r}: it is empty or holds a line break, control, invisible or look-alike character. Rename or move that file, then run again.')
+    if not isinstance(f, str) or not f or BAD.search(f) or any(odd(c) for c in f):
+        print(f'STOP: refusing the file name {f!r}: it is empty or holds a line break, control, invisible or look-alike character. The user must rename or move that file before the run is repeated.')
         raise SystemExit(1)
     real = os.path.realpath(f)  # a relative name is relative to the working directory, as Graphify detect lists it
     if os.path.commonpath([real, ROOT_REAL]) != ROOT_REAL:
-        print(f'STOP: refusing {f!r}: it resolves to {real!r}, outside the scan root {ROOT!r}. Remove that file or link, then run again.')
+        print(f'STOP: refusing {f!r}: it resolves to {real!r}, outside the scan root {ROOT!r}. The user must remove that file or link before the run is repeated.')
         raise SystemExit(1)
 files = json.loads((out/'.graphify_uncached.json').read_text(encoding="utf-8"))
 if not isinstance(files, list):
     print('STOP: .graphify_uncached.json is not a JSON array of paths; run Step B0 again.')
     raise SystemExit(1)
-for stale in out.glob('.graphify_chunk_*'):  # a refusal must not leave an earlier run's lists to be dispatched
-    stale.unlink()
 for f in files:  # every worker input is checked here, before any chunk file exists
     check_input(f)
 IMAGES = {'.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.bmp'}
@@ -372,6 +386,8 @@ for n, chunk in enumerate(chunks, 1):
 print(f'{len(files)} files in {len(chunks)} chunks')
 GRAPHIFY_PY
 ```
+
+If the block prints a line that starts with `STOP`, show it to the user exactly as printed and stop: run no later step, and rename, move or delete no file yourself.
 
 The chunk files are the only hand-off between this step, the workers of Step B2 and Step B3.
 

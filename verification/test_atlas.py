@@ -530,7 +530,7 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertIn("json.loads(Path('graphify-out/.graphify_uncached.json')", text)
 
     def test_chunk_write_refuses_invisible_and_look_alike_characters(self):
-        for ch in ('​', '‮', '﻿', '∕', '／', '．', '\ud800'):
+        for ch in ('\u200b', '\u202e', '\ufeff', '\u2215', '\uff0f', '\uff0e', '\ud800', '\u2024', '\u2025', '\ufe52', '\u2571', '\u3164', '\u2800'):
             with self.subTest(ch=ascii(ch)):
                 name = f'docs/a{ch}b.md'
                 self.uncached([name])
@@ -582,7 +582,7 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, outside, True)
         (self.tmp/'docs').mkdir()
         (self.tmp/'docs/link.md').symlink_to(outside)
-        for name in ('docs/a\rb.md', 'docs/a​b.md', '../x.md', 'docs/link.md'):
+        for name in ('docs/a\rb.md', 'docs/a\u200bb.md', '../x.md', 'docs/link.md'):
             with self.subTest(name=name), mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
                 run = self.run_cache_check([name])
                 self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
@@ -596,9 +596,9 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertEqual(check_text('atlas-cache-check'), check_text('atlas-chunk-write'))
 
     def test_non_ascii_names_stay_readable_in_the_lists(self):
-        self.uncached(['docs/été.md'])
+        self.uncached(['docs/\u00e9t\u00e9.md'])
         self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
-        self.assertIn('été', (self.out/'.graphify_chunk_01.files').read_text(encoding='utf-8'))
+        self.assertIn('\u00e9t\u00e9', (self.out/'.graphify_chunk_01.files').read_text(encoding='utf-8'))
 
     SAVE_STUB = ("import sys, types\n"
                  "pkg, cache = types.ModuleType('graphify'), types.ModuleType('graphify.cache')\n"
@@ -622,6 +622,37 @@ class GraphifyDispatchTests(unittest.TestCase):
     def test_workers_are_told_never_to_put_a_file_name_in_a_shell_command(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()
         self.assertEqual(text.count('shell command from its name'), 3)  # spawn message, serial path, Step B1
+
+    def seed_dead_run(self):
+        for name, body in (('.graphify_chunk_01.files', '["old.md"]'), ('.graphify_chunk_total', '1\n'), ('.graphify_chunk_01.json', '{}')):
+            (self.out/name).write_text(body)
+
+    def test_every_refusal_path_clears_the_lists_of_an_earlier_run(self):
+        for body in ('{"a": 1}', '[1]', '{', ''):  # not an array, not names, invalid JSON, empty
+            with self.subTest(body=body):
+                self.seed_dead_run()
+                (self.out/'.graphify_uncached.json').write_text(body)
+                self.assertEqual(self.run_block('atlas-chunk-write').returncode, 1)
+                self.assertEqual(list(self.out.glob('.graphify_chunk_*')), [])
+        self.seed_dead_run()
+        (self.out/'.graphify_uncached.json').unlink()  # a refused Step B0 leaves no list at all
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 1)
+        self.assertEqual(list(self.out.glob('.graphify_chunk_*')), [])
+        self.seed_dead_run()
+        with mock.patch.dict(os.environ, {'GRAPHIFY_SPEC_PATH': '/spec.md'}):
+            self.assertEqual(self.run_cache_check(['docs/a\nb.md']).returncode, 1)
+        self.assertEqual(list(self.out.glob('.graphify_chunk_*')), [])
+
+    def test_names_with_joiners_ellipses_and_combining_marks_are_accepted(self):
+        names = ['docs/\u0645\u06cc\u200c\u062e\u0648\u0627\u0647\u0645.md', 'docs/Wait\u2026.md', 'docs/e\u0301.md', 'docs/a\u00a0b.md']
+        self.uncached(names)
+        self.assertEqual(self.run_block('atlas-chunk-write').returncode, 0)
+
+    def test_a_stop_line_is_shown_to_the_user_and_nothing_is_fixed_by_the_session(self):
+        text = (SKILLS/'graphify/SKILL.md').read_text()
+        self.assertEqual(text.count('line that starts with `STOP`, show it to the user exactly as printed and stop'), 2)  # after Step B0 and Step B1
+        self.assertEqual(text.count('rename, move or delete no file yourself'), 2)
+        self.assertNotIn('then run again', text)
 
     def collect(self):
         return self.run_block('atlas-chunk-collect')

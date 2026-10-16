@@ -1188,7 +1188,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/graphify/SKILL.md",
       "source_sha256": "46d10a53a5d0c08a86ecdf45ad470e7d6b9896015085c9315405678de7d80796",
       "destination": "global/.agents/skills/graphify/SKILL.md",
-      "destination_sha256": "82cdb69834af793ce846c1fadc49233b2d5fb3d1642fea1aa0e138de03fed90c",
+      "destination_sha256": "8e2ef8cdc0db8517b8df529f1bb73eaaaa4891f8350554d3a51ed751542a7ef7",
       "transform": "graphify-skill"
     },
     {

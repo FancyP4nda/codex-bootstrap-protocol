@@ -96,8 +96,9 @@ serve operations the pack does not support and are not vendored.
   supported surface, the modification notice) and, in `SKILL.md`, a Codex
   adaptation of Part B: JSON path lists (`.graphify_uncached.json` and the chunk
   list files `.graphify_chunk_NN.files`, never one path per line, with every name
-  refused if it holds a control or line-separator character or resolves outside the
-  scan root), native
+  refused if it is empty, holds a control, line-separator, surrogate, invisible
+  or slash-or-dot look-alike character, or resolves outside the scan root; the
+  session shows the STOP line to the user and fixes nothing itself), native
   subagents through `spawn_agent`, `wait_agent` and `close_agent` when
   `multi_agent` is on, a serial path (the session extracts each chunk in turn)
   when it is off, and a collection check that sets aside invalid chunk files and
