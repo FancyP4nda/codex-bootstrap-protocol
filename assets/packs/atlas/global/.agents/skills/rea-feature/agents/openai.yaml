@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Feature"
+  short_description: "Explain how one feature of a binary works"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Archify"
+  short_description: "Architecture and workflow diagrams as standalone HTML"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Atlas Doctor"
+  short_description: "Check the atlas pack's setup (read-only)"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Graphify"
+  short_description: "Knowledge graph of a codebase or corpus"
+policy:
+  allow_implicit_invocation: false

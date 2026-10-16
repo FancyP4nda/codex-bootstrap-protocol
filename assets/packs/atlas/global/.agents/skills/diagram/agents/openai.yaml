@@ -1,0 +1,5 @@
+interface:
+  display_name: "Diagram"
+  short_description: "Draw a diagram from a description"
+policy:
+  allow_implicit_invocation: false

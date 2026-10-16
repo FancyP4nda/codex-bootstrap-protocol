@@ -16,7 +16,7 @@ def digest(base, paths):
 
 
 integrity = {}
-for pack in ('falcon', 'herald', 'web-design', 'craft'):
+for pack in ('falcon', 'herald', 'web-design', 'craft', 'atlas'):
     root = ROOT/'assets/packs'/pack
     metadata = root/'pack.yaml'
     text = metadata.read_text()
@@ -35,7 +35,8 @@ for pack in ('falcon', 'herald', 'web-design', 'craft'):
     files = [Path('global-manifest.txt' if tree == 'global' else 'manifest.txt'), Path('pack.yaml')]
     files += [p.relative_to(root) for p in (root/tree).rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix != '.pyc']
     validation = {'web-design': 'unverified: evidence fields remain null',
-                  'craft': 'vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null'}
+                  'craft': 'vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null',
+                  'atlas': 'unverified: evidence fields remain null; vendored archify@1c2b42d and graphify@b4e6307 with recorded patches; Commands derived from the Claude kit by tools/migrate-atlas.mjs'}
     integrity[pack] = {'sha256': digest(root, files), 'validation': validation.get(pack, 'first-party native adaptation')}
 (ROOT/'docs/pack-integrity.json').write_text(json.dumps(integrity, indent=2)+'\n')
 print('Refreshed migration digests; no release stamp written.')

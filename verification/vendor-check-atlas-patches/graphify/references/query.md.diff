@@ -1,0 +1,313 @@
+--- query.md
++++ query.md
+@@ -1,6 +1,10 @@
+ # graphify reference: query, path, explain
+ 
+-Load this when the user asks a question against an existing graph, or runs `/graphify path` or `/graphify explain`. The core's query stub points here for the full traversal flow. These flows use the `graphify query` CLI when it is available and fall back to an inline NetworkX traversal otherwise.
++> Modified by the codex-bootstrap atlas pack from Graphify v0.9.85 (Apache-2.0). The changes are listed in `references/atlas-pack-notes.md` in the agents directory (`~/.agents`).
++
++Load this when the user asks a question against an existing graph, or runs `/graphify path` or `/graphify explain`. The core's query stub points here for the full traversal flow. These flows use the `graphify query` CLI (through the runner) when it is available and fall back to an inline NetworkX traversal otherwise (only after the guard ran and printed nothing; if the guard or the runner printed a refusal, stop: there is no fallback).
++
++Start this flow with the block under `## Interpreter guard for subcommands` in `SKILL.md`, every time, even when Step 1 or an earlier flow ran it in this conversation: it checks the Graphify CLI against the pinned version and the output roots, and the blocks below read `graphify-out/.graphify_python` and `graphify-out/.graphify_root` only as this run wrote them, never as an earlier run or the repository left them. It empties `graphify-out/.graphify_values/`, so write the value files a block reads after it. Every block below takes the runner's `PATH` first (`PATH=$(... atlas-graphify.sh --path)`, which prints a refusal instead when the repository could supply graphify), and every Graphify operation runs through the runner, `atlas-graphify.sh`, with its values after the runner's `--`; if the guard or the runner prints a line, show it to the user exactly as printed and stop. A short value the user typed (a path, URL, flag or number) goes in a quoted heredoc (`<<'GRAPHIFY_VALUE_EOF'`), one line, whose body you fill in; free text (a question, an answer, node names, labels, a prompt) goes in a file you write with your file tool in `graphify-out/.graphify_values/` after the guard ran, never in a heredoc, since text taken from the repository or the graph could end one. Never write a value into a command line or into Python source.
+ 
+ Two traversal modes - choose based on the question:
+ 
+@@ -11,12 +15,15 @@
+ 
+ First check the graph exists:
+ ```bash
+-$(cat graphify-out/.graphify_python) -c "
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
+ from pathlib import Path
+ if not Path('graphify-out/graph.json').exists():
+     print('ERROR: No graph found. Run /graphify <path> first to build the graph.')
+     raise SystemExit(1)
+-"
++GRAPHIFY_PY
+ ```
+ If it fails, stop and tell the user to run `/graphify <path>` first.
+ 
+@@ -28,7 +35,10 @@
+ 
+ 1. Extract the token vocabulary from node labels:
+ ```bash
+-$(cat graphify-out/.graphify_python) -c "
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
+ import json, re
+ from pathlib import Path
+ data = json.loads(Path('graphify-out/graph.json').read_text(encoding='utf-8'))
+@@ -42,7 +52,7 @@
+                 vocab.add(t)
+ Path('graphify-out/.vocab.txt').write_text('\n'.join(sorted(vocab)), encoding='utf-8')
+ print(f'vocab: {len(vocab)} tokens')
+-"
++GRAPHIFY_PY
+ ```
+ 
+ 2. Read `graphify-out/.vocab.txt`. Then for the user's question, select **up to 12 tokens from this exact list** that semantically match the query intent. Hard constraints:
+@@ -60,15 +70,25 @@
+ 
+ ### Step 1 — Traversal
+ 
+-Build the **expanded query string** by joining the selected tokens with spaces. Use this string as `QUESTION` below — NOT the original user question. (The original question is preserved only for `save-result` at the end.)
++Build the **expanded query string** by joining the selected tokens with spaces. Use this string as `QUESTION` below — NOT the original user question.
+ 
+ Prefer the CLI when it is installed:
+ ```bash
+-graphify query "QUESTION"
+-# or: graphify query "QUESTION" --dfs --budget 3000
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_QUESTION=$(cat graphify-out/.graphify_values/question) || exit 1
++GRAPHIFY_BUDGET=$(cat <<'GRAPHIFY_VALUE_EOF'
++BUDGET
++GRAPHIFY_VALUE_EOF
++)
++/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" query --budget -- "$GRAPHIFY_BUDGET" "$GRAPHIFY_QUESTION"
++# for a DFS trace: query --dfs --budget -- "$GRAPHIFY_BUDGET" "$GRAPHIFY_QUESTION"
+ ```
+ 
+-If the CLI is unavailable, load `graphify-out/graph.json` and run the traversal inline:
++Before the block, write the expanded query string to `graphify-out/.graphify_values/question` with your file tool; replace `BUDGET` in its heredoc with the token budget (`2000`, or whatever `--budget N` specifies).
++
++If the CLI is unavailable (after the guard passed silently; never as a way around a guard or a runner refusal that printed a line), load `graphify-out/graph.json` and run the traversal inline:
+ 
+ 1. Find the 1-3 nodes whose label best matches the expanded tokens.
+ 2. Run the appropriate traversal from each starting node.
+@@ -77,8 +97,23 @@
+ 5. If the graph lacks enough information, say so - do not hallucinate edges.
+ 
+ ```bash
+-$(cat graphify-out/.graphify_python) -c "
+-import sys, json
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_QUESTION=$(cat graphify-out/.graphify_values/question) || exit 1
++export GRAPHIFY_QUESTION
++GRAPHIFY_MODE=$(cat <<'GRAPHIFY_VALUE_EOF'
++MODE
++GRAPHIFY_VALUE_EOF
++)
++export GRAPHIFY_MODE
++GRAPHIFY_BUDGET=$(cat <<'GRAPHIFY_VALUE_EOF'
++BUDGET
++GRAPHIFY_VALUE_EOF
++)
++export GRAPHIFY_BUDGET
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++import os, sys, json
+ from networkx.readwrite import json_graph
+ import networkx as nx
+ from pathlib import Path
+@@ -86,8 +121,8 @@
+ data = json.loads(Path('graphify-out/graph.json').read_text(encoding='utf-8'))
+ G = json_graph.node_link_graph(data, edges='links')
+ 
+-question = 'QUESTION'
+-mode = 'MODE'  # 'bfs' or 'dfs'
++question = os.environ['GRAPHIFY_QUESTION']
++mode = os.environ['GRAPHIFY_MODE']  # 'bfs' or 'dfs'
+ terms = [t.lower() for t in question.split() if len(t) >= 3]  # match the vocab threshold; keeps api/jwt/ios (#1392)
+ 
+ # Find best-matching start nodes
+@@ -137,7 +172,7 @@
+         frontier = next_frontier
+ 
+ # Token-budget aware output: rank by relevance, cut at budget (~4 chars/token)
+-token_budget = BUDGET  # default 2000
++token_budget = int(os.environ['GRAPHIFY_BUDGET'])  # default 2000
+ char_budget = token_budget * 4
+ 
+ # Score each node by term overlap for ranked output
+@@ -147,39 +182,27 @@
+ 
+ ranked_nodes = sorted(subgraph_nodes, key=relevance, reverse=True)
+ 
+-lines = [f'Traversal: {mode.upper()} | Start: {[G.nodes[n].get(\"label\",n) for n in start_nodes]} | {len(subgraph_nodes)} nodes']
++lines = [f'Traversal: {mode.upper()} | Start: {[G.nodes[n].get("label",n) for n in start_nodes]} | {len(subgraph_nodes)} nodes']
+ for nid in ranked_nodes:
+     d = G.nodes[nid]
+-    lines.append(f'  NODE {d.get(\"label\", nid)} [src={d.get(\"source_file\",\"\")} loc={d.get(\"source_location\",\"\")}]')
++    lines.append(f'  NODE {d.get("label", nid)} [src={d.get("source_file","")} loc={d.get("source_location","")}]')
+ for u, v in subgraph_edges:
+     if u in subgraph_nodes and v in subgraph_nodes:
+         _raw = G[u][v]; d = next(iter(_raw.values()), {}) if isinstance(G, nx.MultiGraph) else _raw
+-        lines.append(f'  EDGE {G.nodes[u].get(\"label\",u)} --{d.get(\"relation\",\"\")} [{d.get(\"confidence\",\"\")}]--> {G.nodes[v].get(\"label\",v)}')
++        lines.append(f'  EDGE {G.nodes[u].get("label",u)} --{d.get("relation","")} [{d.get("confidence","")}]--> {G.nodes[v].get("label",v)}')
+ 
+ output = '\n'.join(lines)
+ if len(output) > char_budget:
+     output = output[:char_budget] + f'\n... (truncated at ~{token_budget} token budget - use --budget N for more)'
+ print(output)
+-"
++GRAPHIFY_PY
+ ```
+ 
+-Replace `QUESTION` with the **expanded** query string, `MODE` with `bfs` or `dfs`, and `BUDGET` with the token budget (default `2000`, or whatever `--budget N` specifies). Then answer based on the subgraph output above, using only what the graph contains.
++The block reads the **expanded** query string from `graphify-out/.graphify_values/question`; in the heredocs, replace `MODE` with `bfs` or `dfs` and `BUDGET` with the token budget (default `2000`, or whatever `--budget N` specifies). Then answer based on the subgraph output above, using only what the graph contains.
+ 
+-After writing the answer, save it back into the graph so it improves future queries. Include the expanded tokens inside the `--answer` text (e.g. `"Expanded from original query via vocab: [tokens]. Then traversed..."`) so the next `--update` extracts the expansion history as a graph node:
++Not available in the atlas pack: save-result. The pack supports building, updating and querying the graph; to use save-result, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
+ 
+-```bash
+-$(cat graphify-out/.graphify_python) -m graphify save-result --question "ORIGINAL_QUESTION" --answer "ANSWER" --type query --nodes NODE1 NODE2
+-```
+-
+-Replace `ORIGINAL_QUESTION` with the user's verbatim question, `ANSWER` with your full answer text (containing the expanded-token trace), `NODE1 NODE2` with the list of node labels you cited. This closes the feedback loop: the next `--update` will extract this Q&A as a node in the graph.
+-
+-**Work memory (self-improving loop).** Add an `--outcome` so future sessions learn from this one — append `--outcome useful|dead_end|corrected` to the `save-result` command (and `--correction "the right answer"` when correcting):
+-
+-- `useful` — the cited nodes answered the question well (they become *preferred sources*).
+-- `dead_end` — the question/path led nowhere; don't re-derive it next time.
+-- `corrected` — the saved answer was wrong; `--correction` records what was right.
+-
+-At the **start** of graph work, refresh and read the lessons: run `graphify reflect --if-stale` (cheap, deterministic, no LLM; `--if-stale` makes it a no-op when `LESSONS.md` is already newer than every input, e.g. when the git hook just refreshed it), then read `graphify-out/reflections/LESSONS.md`. It lists **preferred sources** (start there), **known dead ends** (skip them), and prior **corrections**. Running `reflect` yourself keeps the lessons current even without the git hook installed; if the post-commit hook *is* installed, `--if-stale` means your session-start run costs almost nothing.
++Not available in the atlas pack: reflect. The pack supports building, updating and querying the graph; to use reflect, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
+ 
+ ---
+ 
+@@ -188,14 +211,26 @@
+ Find the shortest path between two named concepts in the graph. Prefer the CLI when installed:
+ 
+ ```bash
+-graphify path "NODE_A" "NODE_B"
+-```
+-
+-If the CLI is unavailable, run it inline:
+-
+-```bash
+-$(cat graphify-out/.graphify_python) -c "
+-import json, sys
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_NODE_A=$(cat graphify-out/.graphify_values/node_a) || exit 1
++GRAPHIFY_NODE_B=$(cat graphify-out/.graphify_values/node_b) || exit 1
++/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" path -- "$GRAPHIFY_NODE_A" "$GRAPHIFY_NODE_B"
++```
++
++If the CLI is unavailable (after the guard passed silently; never as a way around a guard or a runner refusal that printed a line), run it inline:
++
++```bash
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_NODE_A=$(cat graphify-out/.graphify_values/node_a) || exit 1
++export GRAPHIFY_NODE_A
++GRAPHIFY_NODE_B=$(cat graphify-out/.graphify_values/node_b) || exit 1
++export GRAPHIFY_NODE_B
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++import json, os, sys
+ import networkx as nx
+ from networkx.readwrite import json_graph
+ from pathlib import Path
+@@ -203,8 +238,8 @@
+ data = json.loads(Path('graphify-out/graph.json').read_text(encoding='utf-8'))
+ G = json_graph.node_link_graph(data, edges='links')
+ 
+-a_term = 'NODE_A'
+-b_term = 'NODE_B'
++a_term = os.environ['GRAPHIFY_NODE_A']
++b_term = os.environ['GRAPHIFY_NODE_B']
+ 
+ def find_node(term):
+     term = term.lower()
+@@ -238,16 +273,12 @@
+     print(f'No path found between {a_term!r} and {b_term!r}')
+ except nx.NodeNotFound as e:
+     print(f'Node not found: {e}')
+-"
++GRAPHIFY_PY
+ ```
+ 
+-Replace `NODE_A` and `NODE_B` with the actual concept names from the user. Then explain the path in plain language - what each hop means, why it's significant.
++Before these blocks, write the two concept names from the user to `graphify-out/.graphify_values/node_a` and `node_b` with your file tool. Then explain the path in plain language - what each hop means, why it's significant.
+ 
+-After writing the explanation, save it back:
+-
+-```bash
+-$(cat graphify-out/.graphify_python) -m graphify save-result --question "Path from NODE_A to NODE_B" --answer "ANSWER" --type path_query --nodes NODE_A NODE_B
+-```
++Not available in the atlas pack: save-result. The pack supports building, updating and querying the graph; to use save-result, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).
+ 
+ ---
+ 
+@@ -256,14 +287,23 @@
+ Give a plain-language explanation of a single node - everything connected to it. Prefer the CLI when installed:
+ 
+ ```bash
+-graphify explain "NODE_NAME"
+-```
+-
+-If the CLI is unavailable, run it inline:
+-
+-```bash
+-$(cat graphify-out/.graphify_python) -c "
+-import json, sys
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_NODE_NAME=$(cat graphify-out/.graphify_values/node_name) || exit 1
++/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" explain -- "$GRAPHIFY_NODE_NAME"
++```
++
++If the CLI is unavailable (after the guard passed silently; never as a way around a guard or a runner refusal that printed a line), run it inline:
++
++```bash
++export GRAPHIFY_NO_AUTO_REFRESH=1
++export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
++PATH=$(/bin/sh "$HOME/.agents/skills/graphify/atlas-graphify.sh" --path) || { printf '%s\n' "$PATH"; exit 1; }
++GRAPHIFY_NODE_NAME=$(cat graphify-out/.graphify_values/node_name) || exit 1
++export GRAPHIFY_NODE_NAME
++"$(cat graphify-out/.graphify_python)" -I - <<'GRAPHIFY_PY'
++import json, os, sys
+ import networkx as nx
+ from networkx.readwrite import json_graph
+ from pathlib import Path
+@@ -271,7 +311,7 @@
+ data = json.loads(Path('graphify-out/graph.json').read_text(encoding='utf-8'))
+ G = json_graph.node_link_graph(data, edges='links')
+ 
+-term = 'NODE_NAME'
++term = os.environ['GRAPHIFY_NODE_NAME']
+ term_lower = term.lower()
+ 
+ # Find best matching node
+@@ -286,9 +326,9 @@
+ 
+ nid = scored[0][1]
+ data_n = G.nodes[nid]
+-print(f'NODE: {data_n.get(\"label\", nid)}')
+-print(f'  source: {data_n.get(\"source_file\",\"unknown\")}')
+-print(f'  type: {data_n.get(\"file_type\",\"unknown\")}')
++print(f'NODE: {data_n.get("label", nid)}')
++print(f'  source: {data_n.get("source_file","unknown")}')
++print(f'  type: {data_n.get("file_type","unknown")}')
+ print(f'  degree: {G.degree(nid)}')
+ print()
+ print('CONNECTIONS:')
+@@ -299,13 +339,9 @@
+     conf = edge.get('confidence', '')
+     src_file = G.nodes[neighbor].get('source_file', '')
+     print(f'  --{rel}--> {nlabel} [{conf}] ({src_file})')
+-"
++GRAPHIFY_PY
+ ```
+ 
+-Replace `NODE_NAME` with the concept the user asked about. Then write a 3-5 sentence explanation of what this node is, what it connects to, and why those connections are significant. Use the source locations as citations.
++Before these blocks, write the concept the user asked about to `graphify-out/.graphify_values/node_name` with your file tool. Then write a 3-5 sentence explanation of what this node is, what it connects to, and why those connections are significant. Use the source locations as citations.
+ 
+-After writing the explanation, save it back:
+-
+-```bash
+-$(cat graphify-out/.graphify_python) -m graphify save-result --question "Explain NODE_NAME" --answer "ANSWER" --type explain --nodes NODE_NAME
+-```
++Not available in the atlas pack: save-result. The pack supports building, updating and querying the graph; to use save-result, run upstream Graphify by hand outside the kit (see "Running Graphify by hand" in references/atlas-pack-notes.md in the agents directory (`~/.agents`)).

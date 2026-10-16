@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Triage"
+  short_description: "Identify a target and propose the REA workflow"
+policy:
+  allow_implicit_invocation: false

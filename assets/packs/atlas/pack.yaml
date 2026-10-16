@@ -1,0 +1,272 @@
+# =========================================================================
+# Atlas pack — a global pack of mapping and diagramming skills (mirror of the
+# Claude kit's atlas pack, T053; decision brief docs/decision-brief-archify-
+# graphify.md; Claude PRD Part III FR-047, AC-091).
+#
+# Global-only: no scaffold/. `codex-bootstrap --global-only --pack atlas`
+# installs global/.agents/ into ~/.agents (skills and the references the
+# Commands point to); `--remove-global-pack atlas` removes it. Opt-in: it adds
+# 18 skills. Every skill is user-only: each has an agents/openai.yaml with
+# policy.allow_implicit_invocation: false (D-2), and its SKILL.md frontmatter
+# keeps only name and description.
+#
+# Contents
+#   - 13 Commands today (16 once the Claude kit's T048 merges: rea-binary,
+#     rea-android, rea-electron), invoked with $: map-repo, map-ask,
+#     map-impact, diagram, diagram-repo, diagram-flow, atlas-doctor,
+#     rea-doctor, rea-triage, rea-feature, rea-diagram, rea-map, rea-update.
+#     Their text, their scripts and the two vendored skills' pack-authored
+#     scripts are DERIVED from the Claude kit's pack by tools/migrate-atlas.mjs
+#     (D-3); docs/atlas-source-map.json records the source commit and
+#     the hash of every derived file. Fix a Command in the Claude kit, then
+#     re-derive here; never edit the derived files by hand.
+#   - archify (tt-a1i/archify v3.1.0): the Claude pack's vendored tree, byte
+#     for byte (same pin, same three recorded patches), except SKILL.md.
+#   - graphify (Graphify-Labs/graphify v0.9.85): graphify/skill-agents.md (the
+#     agents-root variant) as SKILL.md and the skills/agents/ references, with
+#     the Claude pack's recorded patches (the diffs apply to the agents
+#     variant unchanged, except the closing hook pointers, which the patch
+#     replaces anyway).
+#   - atlas-pack-notes.md: the one native file, in global/.agents/references/.
+#
+# Not schema-valid on purpose: this kit's pack validator has no External
+# Prerequisite field yet (decision brief, "Code/doc contradictions"), and no
+# suite runs it on a global pack (craft is the same). Evidence-bearing fields
+# are null: no airlock scan or adjudication exists. The verdict is a
+# placeholder, as in craft and web-design. docs/pack-integrity.json carries
+# the migration digest and says so. Paths are relative to the pack's global/
+# tree.
+# =========================================================================
+pack:
+  name: atlas
+  description: >-
+    Global mapping and diagramming pack: 13 Commands today (16 with the REA
+    binary, Android and Electron Commands), the vendored Archify skill
+    (architecture, workflow, sequence, data-flow and lifecycle diagrams as
+    standalone HTML) and the vendored Graphify skill (a knowledge graph of a
+    codebase or corpus, cut to building, updating and querying), plus a notes
+    file. All user-only.
+  install_scope: global
+  mission_guide: null
+  component_notes: ".agents/references/atlas-pack-notes.md"
+  rules_file: null
+  pack_paths:
+    - ".agents/references/atlas-pack-notes.md"
+    - ".agents/skills/graphify/atlas-preflight.sh"
+    - ".agents/skills/graphify/atlas-graphify.sh"
+    - ".agents/skills/atlas-doctor/"
+    - ".agents/skills/map-repo/"
+    - ".agents/skills/map-ask/"
+    - ".agents/skills/map-impact/"
+    - ".agents/skills/diagram/"
+    - ".agents/skills/diagram-repo/"
+    - ".agents/skills/diagram-flow/"
+    - ".agents/skills/rea-doctor/"
+    - ".agents/skills/rea-triage/"
+    - ".agents/skills/rea-feature/"
+    - ".agents/skills/rea-diagram/"
+    - ".agents/skills/rea-map/"
+    - ".agents/skills/rea-update/"
+    - ".agents/skills/archify/agents/openai.yaml"
+    - ".agents/skills/graphify/agents/openai.yaml"
+  local_patches:
+    - path: ".agents/skills/archify/SKILL.md"
+      reason: >-
+        the Claude pack's patches (wrapper sentence: every Archify command runs
+        through skills/atlas-doctor/scripts/atlas-archify.sh), with the path
+        spelled "$HOME/.agents/skills/atlas-doctor/scripts/atlas-archify.sh";
+        frontmatter reduced to name and description (the user-only switch is
+        agents/openai.yaml, D-2); derived by tools/migrate-atlas.mjs
+    - path: ".agents/skills/archify/renderers/shared/brand-marks.mjs"
+      reason: >-
+        the Claude pack's brand-capture switch (ARCHIFY_BRAND_CAPTURE_DISABLED=1
+        makes captureRemoteBrand refuse before any lookup), byte-identical to
+        the Claude pack's copy
+    - path: ".agents/skills/archify/bin/visual-check.mjs"
+      reason: >-
+        the Claude pack's browser network switch
+        (ARCHIFY_BROWSER_NETWORK_DISABLED=1 starts Chrome off the network),
+        byte-identical to the Claude pack's copy
+    - path: ".agents/skills/graphify/SKILL.md"
+      reason: >-
+        vendored from upstream graphify/skill-agents.md, renamed to SKILL.md;
+        the Claude pack's execution-safety edits (FR-031: the preflight and
+        runner calls, values passed as data, the supported surface cut to
+        building, updating and querying, the modification notice, the --update
+        manifest order), with the paths spelled "$HOME/.agents/skills/graphify/
+        ..." and the frontmatter reduced to name and description (D-2). The
+        recorded diff against skill-agents.md is
+        verification/vendor-check-atlas-patches/graphify/SKILL.md.diff
+    - path: ".agents/skills/graphify/references/extraction-spec.md"
+      reason: >-
+        the Claude pack's patch (modification notice; the removed extract CLI
+        advice); upstream's skills/agents/references copy equals skills/claude's
+        at the pin, so the same diff applies
+    - path: ".agents/skills/graphify/references/query.md"
+      reason: >-
+        the Claude pack's patch (guard note, runner calls, values as data, the
+        work-memory parts replaced by the unsupported-operation line)
+    - path: ".agents/skills/graphify/references/update.md"
+      reason: >-
+        the Claude pack's patch (guard note, runner calls, the --update
+        manifest order, the removed --cluster-only and transcription hand-offs)
+  # External Prerequisites (Claude PRD FR-026, ADR 0009; here AD-1): the runtimes
+  # the Commands need but the pack does not vendor. $atlas-doctor's
+  # scripts/atlas-check.sh checks them and prints the fix lines; it delegates
+  # graphify to skills/graphify/atlas-graphify.sh --resolve, the one home of
+  # Graphify's pin. test_atlas.py holds the scripts to these pins.
+  external_prerequisites:
+    - id: graphify
+      kind: python-tool
+      pin: {type: exact, value: "0.9.85"}
+      on_newer: block
+      check: >-
+        graphify --version, run by skills/graphify/atlas-graphify.sh
+        --resolve through the interpreter beside the executable as "$PY" -I
+        -m graphify --version, with GRAPHIFY_NO_AUTO_REFRESH=1
+      install_hint: "uv tool install graphifyy==0.9.85 --constraints <installed constraints file>"
+      constraints_file: ".agents/skills/atlas-doctor/graphify-constraints.txt"
+      required_by: [map-repo, map-ask, map-impact, diagram-repo, diagram-flow, rea-map]
+      network: >-
+        None in the five supported operations, which read and write local
+        files; installing it fetches graphifyy and its constrained
+        dependencies from PyPI.
+      accepted_risk: >-
+        The graphifyy package and its 29 dependencies from PyPI are not
+        scanned; the exact pin, the constraints file and the runner's
+        version check are the controls.
+    - id: uv
+      kind: runtime
+      pin: {type: presence, value: null}
+      check: "uv --version"
+      install_hint: "Install uv (https://docs.astral.sh/uv/)"
+      required_by: []
+      hint_for: [graphify]
+      network: >-
+        The kit runs only uv --version; the graphify fix line the operator
+        runs fetches packages from PyPI.
+      accepted_risk: "uv itself is not scanned; the operator installs it."
+    - id: rea
+      kind: npm-global
+      pin: {type: exact, value: "6.4.0"}
+      on_newer: warn
+      check: "rea --version"
+      install_hint: "npm install --global rea-agents@6.4.0"
+      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-diagram, rea-update]
+      network: >-
+        Static analysis is local; its dynamic captures (web pages, devices)
+        and rea update reach the network. The REA Commands run it static by
+        default and run rea update only after a yes.
+      accepted_risk: >-
+        The rea-agents package and its npm dependencies are not scanned; the
+        exact pin and the version check are the controls.
+    - id: node-archify
+      kind: runtime
+      pin: {type: floor, value: "18"}
+      check: "node --version"
+      install_hint: "Install Node 18 or later"
+      required_by: [diagram, diagram-repo, diagram-flow, rea-diagram]
+      network: >-
+        None of its own. Archify's update check, its object-brand fetch and its
+        browser checks are switched off by the atlas-archify.sh wrapper
+        (ARCHIFY_UPDATE_CHECK_DISABLED, ARCHIFY_BRAND_CAPTURE_DISABLED,
+        ARCHIFY_BROWSER_NETWORK_DISABLED), through which every Archify run
+        goes.
+      accepted_risk: "Node itself is not scanned; the operator installs it."
+    - id: node-rea
+      kind: runtime
+      pin: {type: range, value: "^22.19.0 || ^24.11.0 || >=26.0.0"}
+      check: "node --version"
+      install_hint: "Install a matching Node"
+      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-diagram]
+      network: "None of its own; REA's network use is the rea entry's."
+      accepted_risk: "Node itself is not scanned; the operator installs it."
+    - id: browser
+      kind: browser
+      pin: {type: presence, value: null}
+      check: >-
+        ARCHIFY_CHROME if set, else what Archify's findChrome tries: google-chrome,
+        google-chrome-stable, chromium and chromium-browser on PATH (the Chrome
+        and Chromium app bundles on macOS)
+      install_hint: "Install chromium, or set ARCHIFY_CHROME to a Chrome or Chromium executable"
+      required_by: [diagram, diagram-repo, diagram-flow, rea-diagram]
+      network: >-
+        Archify's browser checks open a local HTML file in it, started with
+        every connection sent to a dead proxy (ARCHIFY_BROWSER_NETWORK_DISABLED=1).
+      accepted_risk: "The browser is not scanned; the operator installs it."
+components:
+  - id: archify
+    kind: skill
+    upstream_url: "https://github.com/tt-a1i/archify"
+    staging_fork: "not-yet-forked:archify"
+    pinned_commit: "1c2b42d660e4a7571813fb43839c79e3e9ca7720"
+    scan_target: source-tree
+    # The release subset (archify.zip at v3.1.0): the archify/ tree minus
+    # package-lock.json and two generator scripts. Files are the Claude pack's.
+    selected_paths:
+      - "archify/LICENSE"
+      - "archify/SKILL.md"
+      - "archify/THIRD_PARTY_NOTICES.md"
+      - "archify/assets"
+      - "archify/bin"
+      - "archify/brand-marks"
+      - "archify/delta"
+      - "archify/examples"
+      - "archify/locales"
+      - "archify/migrations"
+      - "archify/package.json"
+      - "archify/recipes"
+      - "archify/references"
+      - "archify/renderers"
+      - "archify/schemas"
+      - "archify/scripts/check-render-output.mjs"
+      - "archify/scripts/check-update.mjs"
+      - "archify/scripts/delivery-update-child.mjs"
+      - "archify/scripts/render-examples.mjs"
+      - "archify/scripts/update-contract.mjs"
+      - "archify/skill-release.json"
+    vendored_paths:
+      - ".agents/skills/archify/"
+    # Archify's own code (MIT) and the third-party content its release subset
+    # bundles, as THIRD_PARTY_NOTICES.md and assets/JetBrainsMono-OFL.txt record.
+    license: MIT AND Apache-2.0 AND CC0-1.0 AND CC-BY-4.0 AND CC-BY-SA-3.0 AND CC-BY-SA-4.0 AND CC-BY-NC-SA-4.0 AND OFL-1.1
+    airlock_evidence_id: null
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: null
+  - id: graphify
+    kind: skill
+    upstream_url: "https://github.com/Graphify-Labs/graphify"
+    staging_fork: "not-yet-forked:graphify"
+    pinned_commit: "b4e6307bf170f27e0cb888c03f4af9308d531a42"
+    scan_target: source-tree
+    # graphify/skill-agents.md is vendored as SKILL.md (the recorded rename;
+    # the Claude pack renames graphify/skill.md). The three license files sit
+    # at the repository root upstream. Three of the eight agents-variant
+    # reference files are selected; the other five serve only operations the
+    # pack does not support and must stay out.
+    selected_paths:
+      - "LICENSE"
+      - "LICENSE-MIT"
+      - "NOTICE"
+      - "graphify/skill-agents.md"
+      - "graphify/skills/agents/references/extraction-spec.md"
+      - "graphify/skills/agents/references/query.md"
+      - "graphify/skills/agents/references/update.md"
+    # File by file: atlas-preflight.sh, atlas-graphify.sh and agents/openai.yaml
+    # in the same directory are pack-authored (pack_paths).
+    vendored_paths:
+      - ".agents/skills/graphify/SKILL.md"
+      - ".agents/skills/graphify/references/"
+      - ".agents/skills/graphify/LICENSE"
+      - ".agents/skills/graphify/NOTICE"
+      - ".agents/skills/graphify/LICENSE-MIT"
+    license: Apache-2.0
+    airlock_evidence_id: null
+    engine_pin: null
+    scan_date: null
+    verdict: pass                  # placeholder verdict; unverifiable without evidence
+    content_hash: null
+    vendored_tree_digest: null
