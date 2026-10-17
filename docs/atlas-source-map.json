@@ -1107,14 +1107,14 @@
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
       "source_sha256": "fbe8a0c0f693c7a11bcc9923ab4dbee51c25e5bb47556b6e4a5ec7e432074805",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "784b7d5485df501eb695d2abbee101c1e40aef26977d26890d88a0816e03ab4a",
+      "destination_sha256": "a290e957719d54083700534fcde7eb6a8419c4c589eb572554fbc4fd6a1b385b",
       "transform": "script"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/doctor.sh",
       "source_sha256": "bc636b4b9f9be975907570378a757e70c15463afc8835e613a3161cb18717375",
       "destination": "global/.agents/skills/atlas-doctor/scripts/doctor.sh",
-      "destination_sha256": "dd72d1366a3ec0356ea81cb6a4b4aa75a52cad4b492640264f53589894f55a64",
+      "destination_sha256": "37fda37ef031c6974d94b5d333344e9627f027a8b39e990c1375ed96614b2ef3",
       "transform": "script"
     },
     {
@@ -1261,7 +1261,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
       "source_sha256": "54cd6345af41759f2c8e2558a5378f6067ec311f8bf037257fe7006b0598846f",
       "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
-      "destination_sha256": "b2fe02a6371d72f79fb08698a604b9f8a6dc952465e4b1b6fff4710f5a6caa9f",
+      "destination_sha256": "1f07a3c3c359be2132b69f763a3fa5f3ce67c66e74034a9b75b3f8d893b8d46d",
       "transform": "script"
     },
     {
@@ -1275,7 +1275,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
       "source_sha256": "a87eda7956a11859d8492cbffacd23581f3de00d2293f30cb2496a21049f21ee",
       "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
-      "destination_sha256": "d992f512e81075fb95efe8c95745abd0f98220b18ad20ca025c642e42526bcb6",
+      "destination_sha256": "2c667b42dd3a01ac26ee9ab9e2cf435b80cdd4dc8f4bca899cae5555d1b18b16",
       "transform": "script"
     },
     {

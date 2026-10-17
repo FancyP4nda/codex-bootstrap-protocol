@@ -389,6 +389,7 @@ _REEPYSRC='# The Codex configuration of the REA MCP server, read with tomllib (T
 # per line, never as shell text:
 #   ok            first line of a result
 #   f:<path>      a config file that holds the entry (one per layer)
+#   d:            the merged entry is disabled (enabled = false)
 #   c:<command>   h:   (args are set)   a:<arg> (one per argument)
 #   v:<NAME>      an env_vars name      e:<NAME>=<value> an env pair
 #   w:<cwd>       x:<path of the file that set it>
@@ -468,6 +469,10 @@ def entry_of(doc, path):
     if not isinstance(raw, dict):
         raise Refuse("the [mcp_servers.rea] entry in %s is in a form this check cannot map (it is not a table)" % shown(path))
     entry = {}
+    if "enabled" in raw:
+        if not isinstance(raw["enabled"], bool):
+            raise Refuse("the [mcp_servers.rea] entry in %s has an enabled that is not true or false" % shown(path))
+        entry["enabled"] = raw["enabled"]
     if "command" in raw:
         entry["command"] = text_of(raw["command"], "a command", path)
     if "args" in raw:
@@ -615,13 +620,15 @@ def run(home, cwd, logical):
     cwd_file = ""
     for path, entry in layers:
         out.append("f:" + path)
-        for key in ("command", "args", "env_vars"):
+        for key in ("command", "args", "env_vars", "enabled"):
             if key in entry:
                 merged[key] = entry[key]
         if "cwd" in entry:
             merged["cwd"] = entry["cwd"]
             cwd_file = path
         env.update(entry.get("env", {}))
+    if merged.get("enabled") is False:
+        out.append("d:")
     if "command" in merged:
         out.append("c:" + merged["command"])
     if "args" in merged:
@@ -679,6 +686,7 @@ _rea_config() {
                 _REEFILE="${_REEFILE:+$_REEFILE, }${_REEL#f:}"
                 _REEANY=1
                 ;;
+            d:*) _REEDIS=1 ;;
             c:*) _REEMC=${_REEL#c:} ;;
             h:*) _REEMHAVE=1 ;;
             a:*) _REEMA="$_REEMA${_REEL#a:}$_REENL" ;;
@@ -734,11 +742,16 @@ _rea_env_server() {
     _REEMCWFILE=""
     _REEFILE=""
     _REEANY=""
+    _REEDIS=""
     _rea_config || return 1
     [ -n "$_REEANY" ] || {
         _rea_say "found no [mcp_servers.rea] entry in $_REEHOME/config.toml or in a trusted project's .codex/config.toml from the project root down to this directory, so REA's MCP server can't be checked; nothing checked. Run: rea setup"
         return 1
     }
+    if [ -n "$_REEDIS" ]; then
+        _rea_say "REA's MCP server is disabled in the Codex config (enabled = false in the [mcp_servers.rea] entry, merged as Codex layers it: $_REEFILE), so Codex does not start it and its environment can't be checked; nothing checked. Enable it in that config (enabled = true), then restart Codex."
+        return 1
+    fi
     if [ -z "$_REEMC" ] || [ -z "$_REEMHAVE" ]; then
         _rea_say "the [mcp_servers.rea] entry ($_REEFILE, merged as Codex layers them) has no command or no args array, so REA's MCP server can't be checked; nothing checked."
         return 1
@@ -755,6 +768,17 @@ _rea_env_server() {
     # What Codex gives a stdio server: its default variables and env_vars
     # from the session (this process's own environment, checked before this),
     # then the entry's env over them.
+    if [ "${_ATLAS_ORIG_PATH+set}" != set ]; then
+        _rea_say "can't tell what PATH REA's MCP server inherits (this process did not record the PATH it was started with), so its environment can't be checked; nothing checked."
+        return 1
+    fi
+    case "$_ATLAS_ORIG_PATH" in
+        *"$_REENL"* | *"$_REECR"*)
+            _rea_say "the PATH REA's MCP server inherits holds a line break, so its environment can't be checked; nothing checked."
+            return 1
+            ;;
+    esac
+    _REEINH=$_ATLAS_ORIG_PATH
     _REEO=$(env 2>/dev/null) || {
         _rea_say "can't read this shell's environment (env failed), so what REA's MCP server would see can't be checked; nothing checked."
         return 1
@@ -771,6 +795,12 @@ _rea_env_server() {
             *"$_REENL$_REEK$_REENL"*) continue ;;
         esac
         _REEDONE="$_REEDONE$_REEK$_REENL"
+        # The server starts with the caller's original PATH, not the cut one this
+        # process runs with (_ATLAS_ORIG_PATH, taken before any filtering).
+        if [ "$_REEK" = PATH ]; then
+            _REE="${_REE}PATH=$_REEINH$_REENL"
+            continue
+        fi
         while IFS= read -r _REEL; do
             case "$_REEL" in
                 "$_REEK="*)
@@ -1072,8 +1102,10 @@ _rea_refuse_code() {
 _rea_refuse_path() {
     _atlas_shown "$_REEN"
     _REEZ=$_ABV
+    _atlas_shown "${_REEA2:-a path}"
+    _REEZ2=$_ABV
     _atlas_shown "$_REEH"
-    printf '%s in %s names a path inside %s, which atlas treats as a repository, so it could supply what REA or a tool it starts runs; unset it or point it outside the repository there, then restart Codex.\n' "$_REEZ" "$_REEW" "$_ABV"
+    printf '%s in %s names %s, inside %s, which atlas treats as a repository, so it could supply what REA or a tool it starts runs; unset it or point it outside the repository there, then restart Codex.\n' "$_REEZ" "$_REEW" "$_REEZ2" "$_ABV"
 }
 # _rea_path_abs <value>: the server's PATH holds absolute entries only.
 # REA resolves an empty, relative or bare entry from the server's working
@@ -1303,6 +1335,7 @@ main() {
             exit 1
             ;;
     esac
+    _ATLAS_ORIG_PATH=$PATH
     PATH=$cut
     export PATH
     _atlas_area_init || exit 1

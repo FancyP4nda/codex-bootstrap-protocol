@@ -16,7 +16,7 @@
     "validation": "vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null"
   },
   "atlas": {
-    "sha256": "c8b80f8124b3f3ba213647e7d580907e7e4997c90d5e7a732bdd6b3d00605319",
+    "sha256": "cfb2f6816f8227841ec4c31dde632b840fc00416c824dbcba31fdf66f4d39b59",
     "validation": "unverified: evidence fields remain null; vendored archify@1c2b42d and graphify@b4e6307 with recorded patches; Commands derived from the Claude kit by tools/migrate-atlas.mjs"
   }
 }

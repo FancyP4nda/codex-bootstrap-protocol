@@ -52,7 +52,9 @@ behaviour in full; the text installed here is that text with the `$` sigil.
     with the two lines to add. Graphify's parallel semantic extraction needs it;
     without it the extraction runs serially (D-5).
   - `rea-config`: `[ok]` when the same file has an `[mcp_servers.rea]` entry;
-    otherwise `[warn]` with `rea setup` (D-6).
+    otherwise `[warn]` with `rea setup` (D-6). Both lines read the file with
+    `tomllib` (the interpreter below), so quoted keys and inline tables count; a
+    file that does not parse, or no Python 3.11, gives a `[warn]` that says so.
   - REA's MCP server, for the REA Commands' environment checks, is read as
     Codex configures it: `config.toml` in `$CODEX_HOME`, then the
     `.codex/config.toml` of each directory from the project root (the nearest
@@ -66,7 +68,13 @@ behaviour in full; the text installed here is that text with the `$` sigil.
     the project root or the main checkout of a linked worktree. The merged
     command and args must be a registration `rea-agents@6.4.0` writes (`rea
     mcp`, `<path>/scripts/rea.mjs mcp`, `node <path>/scripts/rea.mjs mcp` or
-    `npx -y rea-agents@6.4.0 mcp`). A file `tomllib` cannot parse, an entry in
+    `npx -y rea-agents@6.4.0 mcp`). `enabled` is merged like any other key: an
+    effective entry with `enabled = false` is refused (REA's MCP server is
+    disabled in the Codex config) before any provider check runs. The server
+    inherits the PATH this process was started with, taken before the helper
+    cuts its own; when the entry sets no `env.PATH`, that PATH is held to the
+    same rule (absolute entries, none inside the repository), and the refusal
+    names the entry. A file `tomllib` cannot parse, an entry in
     a form that is not mapped, a project entry whose trust is not marked
     (or marked both ways), and a missing Python 3.11 each stop the check with
     a line naming the file. Nothing is treated as absent when it cannot be

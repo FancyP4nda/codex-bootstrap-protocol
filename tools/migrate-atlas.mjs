@@ -167,6 +167,13 @@ const REA_ENV_SERVER = exactly(snippet('rea-env-server.sh'), '@@REA-ENV-PY@@', R
 function reaServerDiscovery(text, where) {
   text = between(text, '# _rea_ppid <pid>:', '    case "$_REER" in\n        *"$_REENL"*)', REA_ENV_SERVER, where);
   text = exactly(text, '(process $_REEM) was removed', '(from its config entry) was removed', where);
+  // The refusal names the entry it found, not only the repository around it.
+  text = exactly(text, `    _atlas_shown "$_REEH"
+    printf '%s in %s names a path inside %s, which atlas treats`, `    _atlas_shown "\${_REEA2:-a path}"
+    _REEZ2=$_ABV
+    _atlas_shown "$_REEH"
+    printf '%s in %s names %s, inside %s, which atlas treats`, where);
+  text = exactly(text, `unset it or point it outside the repository there, then restart Claude Code.\\n' "$_REEZ" "$_REEW" "$_ABV"`, `unset it or point it outside the repository there, then restart Claude Code.\\n' "$_REEZ" "$_REEW" "$_REEZ2" "$_ABV"`, where);
   text = exactly(text, '# from env, tr and readlink, from the cut PATH.', "# from env, tr and readlink, and, to read Codex's config.toml, a Python 3.11 or\n# later (python3 -I), from the cut PATH.", where);
   return between(text, '#   _rea_env_server  the environment of the one "rea mcp" child of the', '# _rea_env_scan then checks', `#   _rea_env_server  the environment of REA's MCP server as Codex's
 #                    configuration starts it (the [mcp_servers.rea] entry
@@ -185,6 +192,12 @@ function reaServerDiscovery(text, where) {
 `, where);
 }
 
+// The two helpers cut PATH in main before any server check. The server inherits the
+// caller's original PATH, so main records it first, as atlas-check.sh's _atlas_fix_path does.
+function inheritedPath(text, where) {
+  return exactly(text, '    PATH=$cut\n', '    _ATLAS_ORIG_PATH=$PATH\n    PATH=$cut\n', where);
+}
+
 const ADAPT = {
   'atlas-doctor/scripts/atlas-archify.sh': (text, where) =>
     exactly(text, 'the Claude config directory, $_ABV, is not an absolute path; set CLAUDE_CONFIG_DIR to one.',
@@ -200,6 +213,7 @@ const ADAPT = {
   },
   'rea-android/scripts/tool-check.sh': (text, where) => {
     text = reaServerDiscovery(text, where);
+    text = inheritedPath(text, where);
     text = exactly(text, `# environment from /proc/<pid>/environ of the one process whose parent is
 # the agent (CLAUDE_PID, which must be an ancestor of this script) and
 # whose command line is "rea mcp", and applies FR-038's environment rule to
@@ -216,6 +230,7 @@ const ADAPT = {
   },
   'rea-binary/scripts/provider-check.sh': (text, where) => {
     text = reaServerDiscovery(text, where);
+    text = inheritedPath(text, where);
     return exactly(text, `# read from /proc/<pid>/environ of the one "rea mcp" child of the agent
 # (CLAUDE_PID, an ancestor of this script); when it can't be read with
 # certainty the helper stops and says why.`, `# read from Codex's configuration of REA's MCP server (the [mcp_servers.rea]

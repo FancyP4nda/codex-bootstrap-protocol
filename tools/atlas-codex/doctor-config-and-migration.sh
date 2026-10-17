@@ -1,8 +1,34 @@
 # --- Codex config (decision brief D-5, D-6) ---------------------------------
 # The config.toml in CODEX_HOME: [features] multi_agent = true and an
-# [mcp_servers.rea] entry. Read with bash builtins; the file is never edited.
+# [mcp_servers.rea] entry. A Python 3.11 or later parses the file with tomllib,
+# so a quoted key, a dotted key or an inline table reads as Codex reads it; no
+# shell parses TOML. The file is never edited. The interpreter is the one the
+# REA server discovery uses (_rea_python: an absolute PATH entry outside the
+# repository, run isolated from /).
+_DOCTOR_TOMLSRC='import sys, tomllib
+try:
+    with open(sys.argv[1], "rb") as handle:
+        data = handle.read(1048577)
+    if len(data) > 1048576:
+        print("bad:is too large to read")
+        sys.exit(0)
+    doc = tomllib.loads(data.decode("utf-8"))
+except OSError:
+    print("bad:can not be read")
+    sys.exit(0)
+except (ValueError, RecursionError):
+    print("bad:is not valid TOML")
+    sys.exit(0)
+features = doc.get("features")
+if isinstance(features, dict) and features.get("multi_agent") is True:
+    print("multi")
+servers = doc.get("mcp_servers")
+if isinstance(servers, dict) and "rea" in servers:
+    print("rea")
+    if isinstance(servers["rea"], dict) and servers["rea"].get("enabled") is False:
+        print("off")'
 _doctor_codex_config() {
-    local cfg="${CODEX_HOME:-$HOME/.codex}/config.toml" l table="" key val multi="" rea="" shown
+    local cfg="${CODEX_HOME:-$HOME/.codex}/config.toml" l multi="" rea="" off="" bad="" fix="Fix the file by hand, then run again; nothing here edits it." shown out
     shown="$(_atlas_printable "$cfg")"
     case "$cfg" in
         /*) ;;
@@ -14,36 +40,29 @@ _doctor_codex_config() {
             ;;
     esac
     if [ -f "$cfg" ]; then
-        while IFS= read -r l || [ -n "$l" ]; do
-            _doctor_strip "$l"
-            case "$_DL" in '' | '#'*) continue ;; esac
-            case "$_DL" in
-                '['*)
-                    table="${_DL#\[}"
-                    table="${table%%]*}"
-                    table="${table//[[:space:]]/}"
-                    case "$table" in mcp_servers.rea | mcp_servers.rea.*) rea=1 ;; esac
-                    continue
-                    ;;
-            esac
-            case "$_DL" in *=*) ;; *) continue ;; esac
-            key="${_DL%%=*}"
-            val="${_DL#*=}"
-            key="${key//[[:space:]]/}"
-            val="${val%%#*}"
-            val="${val//[[:space:]]/}"
-            case "$table:$key" in
-                features:multi_agent | :features.multi_agent)
-                    if [ "$val" = true ]; then multi=1; else multi=""; fi
-                    ;;
-                :features)
-                    case "$val" in *multi_agent=true*) multi=1 ;; esac
-                    ;;
-                :mcp_servers.rea | :mcp_servers.rea.* | mcp_servers:rea | mcp_servers:rea.*)
-                    rea=1
-                    ;;
-            esac
-        done 2>/dev/null <"$cfg"
+        if ! _rea_python; then
+            bad="was not checked: found no Python 3.11 or later (with tomllib) outside the repository on PATH"
+            fix="Put a Python 3.11 or later outside the repository on PATH, then run again."
+        elif out="$(cd / && MISE_AUTO_INSTALL=0 MISE_NOT_FOUND_AUTO_INSTALL=0 "$_REEPY" -I -S -c "$_DOCTOR_TOMLSRC" "$cfg" 2>/dev/null)"; then
+            while IFS= read -r l; do
+                case "$l" in
+                    multi) multi=1 ;;
+                    rea) rea=1 ;;
+                    off) off=1 ;;
+                    bad:*) bad="${l#bad:}" ;;
+                esac
+            done <<EOF
+$out
+EOF
+        else
+            bad="was not checked: the TOML reader did not finish"
+            fix="Run again; if it repeats, check that the Python 3.11 or later on PATH runs with -I -S."
+        fi
+    fi
+    if [ -n "$bad" ]; then
+        _doctor_warn "multi_agent: ${shown} ${bad}." "$fix"
+        _doctor_warn "rea-config: ${shown} ${bad}." "$fix"
+        return
     fi
     if [ -n "$multi" ]; then
         printf '[ok] multi_agent\n'
@@ -53,7 +72,9 @@ _doctor_codex_config() {
 [features]
 multi_agent = true"
     fi
-    if [ -n "$rea" ]; then
+    if [ -n "$off" ]; then
+        _doctor_warn "rea-config: the [mcp_servers.rea] entry in ${shown} has enabled = false, so Codex does not start REA's MCP server." "Set enabled = true there by hand (nothing here edits the file), then restart Codex."
+    elif [ -n "$rea" ]; then
         printf '[ok] rea-config\n'
     else
         _doctor_warn "rea-config: ${shown} has no [mcp_servers.rea] entry." "Run: rea setup"

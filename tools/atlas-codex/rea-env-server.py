@@ -11,6 +11,7 @@
 # per line, never as shell text:
 #   ok            first line of a result
 #   f:<path>      a config file that holds the entry (one per layer)
+#   d:            the merged entry is disabled (enabled = false)
 #   c:<command>   h:   (args are set)   a:<arg> (one per argument)
 #   v:<NAME>      an env_vars name      e:<NAME>=<value> an env pair
 #   w:<cwd>       x:<path of the file that set it>
@@ -90,6 +91,10 @@ def entry_of(doc, path):
     if not isinstance(raw, dict):
         raise Refuse("the [mcp_servers.rea] entry in %s is in a form this check cannot map (it is not a table)" % shown(path))
     entry = {}
+    if "enabled" in raw:
+        if not isinstance(raw["enabled"], bool):
+            raise Refuse("the [mcp_servers.rea] entry in %s has an enabled that is not true or false" % shown(path))
+        entry["enabled"] = raw["enabled"]
     if "command" in raw:
         entry["command"] = text_of(raw["command"], "a command", path)
     if "args" in raw:
@@ -237,13 +242,15 @@ def run(home, cwd, logical):
     cwd_file = ""
     for path, entry in layers:
         out.append("f:" + path)
-        for key in ("command", "args", "env_vars"):
+        for key in ("command", "args", "env_vars", "enabled"):
             if key in entry:
                 merged[key] = entry[key]
         if "cwd" in entry:
             merged["cwd"] = entry["cwd"]
             cwd_file = path
         env.update(entry.get("env", {}))
+    if merged.get("enabled") is False:
+        out.append("d:")
     if "command" in merged:
         out.append("c:" + merged["command"])
     if "args" in merged:

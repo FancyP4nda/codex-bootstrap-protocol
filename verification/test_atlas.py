@@ -290,6 +290,55 @@ class DoctorTests(unittest.TestCase):
                 out = self.doctor(config=config)
                 self.assertTrue(any(line.startswith('[warn] multi_agent') for line in self.lines(out)), out.stdout)
 
+    def test_the_doctor_reads_quoted_keys_and_inline_tables_with_a_toml_parser(self):
+        for config in ('["features"]\n"multi_agent" = true\n',
+                       "['features']\n'multi_agent' = true\n",
+                       'features = { multi_agent = true }\n',
+                       '[ features ]\nmulti_agent=true\n',
+                       '"features"."multi_agent" = true\n'):
+            with self.subTest(config=config):
+                self.assertIn('[ok] multi_agent', self.lines(self.doctor(config=config)))
+        for config in ('["features"]\n"multi_agent" = false\n', 'features = { multi_agent = false }\n',
+                       '[features]\nmulti_agent = "true"\n', 'features = { other = 1 }\n[tools]\nmulti_agent = true\n'):
+            with self.subTest(config=config):
+                lines = self.lines(self.doctor(config=config))
+                self.assertTrue(any(line.startswith('[warn] multi_agent') for line in lines), lines)
+        for config in ('["mcp_servers"."rea"]\ncommand = "rea"\n', 'mcp_servers = { rea = { command = "rea" } }\n',
+                       "[mcp_servers.'rea']\ncommand = 'rea'\n", '[mcp_servers.rea.env]\nA = "1"\n'):
+            with self.subTest(config=config):
+                self.assertIn('[ok] rea-config', self.lines(self.doctor(config=config)))
+        for config in ('[mcp_servers.reactor]\ncommand = "rea"\n', 'model = "mcp_servers.rea"\n'):
+            with self.subTest(config=config):
+                lines = self.lines(self.doctor(config=config))
+                self.assertTrue(any(line.startswith('[warn] rea-config') for line in lines), lines)
+
+    def test_a_disabled_rea_entry_is_a_warning_not_an_ok(self):
+        lines = self.lines(self.doctor(config='[mcp_servers.rea]\ncommand = "rea"\nenabled = false\n'))
+        self.assertTrue(any(line.startswith('[warn] rea-config') and 'enabled = false' in line for line in lines), lines)
+        self.assertNotIn('[ok] rea-config', lines)
+
+    def test_no_python_for_the_doctor_gets_an_interpreter_fix_line_not_a_file_one(self):
+        (self.codex/'config.toml').write_text('[features]\nmulti_agent = true\n')
+        stub = self.tmp/'nopython'
+        stub.mkdir()
+        for name in ('python3', 'python3.11', 'python3.12', 'python3.13', 'python3.14'):
+            (stub/name).write_text('#!/bin/sh\nexit 1\n')
+            (stub/name).chmod(0o755)
+        out = subprocess.run(['/usr/bin/bash', str(self.home/'.agents/skills/atlas-doctor/scripts/doctor.sh'), 'codex'], cwd=self.work,
+                             env={'PATH': str(stub), 'HOME': str(self.home), 'CODEX_HOME': str(self.codex), 'LC_ALL': 'C'},
+                             capture_output=True, text=True, timeout=120)
+        lines = out.stdout.splitlines()
+        at = next(i for i, line in enumerate(lines) if line.startswith('[warn] multi_agent'))
+        self.assertIn('Python 3.11', lines[at])
+        self.assertIn('Python 3.11', lines[at + 1])
+        self.assertNotIn('by hand', lines[at + 1])
+        self.assertTrue(any(line.startswith('[warn] rea-config') for line in lines), lines)
+
+    def test_a_config_that_does_not_parse_is_reported_not_guessed_at(self):
+        lines = self.lines(self.doctor(config='[features\nmulti_agent = true\n'))
+        self.assertTrue(any(line.startswith('[warn] multi_agent') and 'not valid TOML' in line for line in lines), lines)
+        self.assertTrue(any(line.startswith('[warn] rea-config') and 'not valid TOML' in line for line in lines), lines)
+
     def test_multi_agent_accepts_comments_spacing_and_the_dotted_form(self):
         for config in ('[features]   # on\nmulti_agent   =   true   # parallel\n',
                        'features.multi_agent = true\n',
@@ -876,6 +925,80 @@ class ReaServerDiscoveryTests(unittest.TestCase):
         run = self.setup_run(self.ENTRY, CODEX_HOME='relative')
         self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
         self.assertIn('CODEX_HOME', run.stdout)
+
+    # T053 round 8, item 1: the server inherits the caller's original PATH, not the helper's cut one.
+    def repo_path(self):
+        return f'{self.work}/tools:{self.bin}:/usr/bin:/bin'
+
+    def test_the_servers_inherited_path_is_the_original_one_not_the_helpers_cut_one(self):
+        run = self.setup_run(self.ENTRY, PATH=self.repo_path())
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn(f'{self.work}/tools', run.stdout)
+        self.assertNotIn('[ok] rea-mcp', run.stdout)
+        # a registration that sets env.PATH is judged on that value, whatever the caller's PATH holds
+        trusted = f'{self.ENTRY}env = {{ PATH = "{self.bin}:/usr/bin:/bin" }}\n'
+        run = self.setup_run(trusted, PATH=self.repo_path())
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('[ok] rea-mcp', run.stdout)
+        # a trusted control passes
+        run = self.setup_run(self.ENTRY)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_the_helpers_refuse_an_inherited_repository_path_entry_too(self):
+        self.install_helpers()
+        (self.codex/'config.toml').write_text(self.ENTRY)
+        for rel in ('rea-binary/scripts/provider-check.sh', 'rea-android/scripts/tool-check.sh'):
+            with self.subTest(helper=rel):
+                run = self.helper(rel, PATH=self.repo_path())
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn(f'{self.work}/tools', run.stdout + run.stderr)
+                self.assertNotIn('[ok] provider', run.stdout)
+
+    def test_an_unknown_inherited_path_is_refused_with_a_named_line(self):
+        script = SKILLS/'atlas-doctor/scripts/atlas-check.sh'
+        (self.codex/'config.toml').write_text(self.ENTRY)
+        # sourced, with the helper's own PATH step skipped: nothing records the original PATH
+        code = f'. "{script}"; _atlas_area_init; _REETAG=x; _rea_env_server; echo rc=$?'
+        run = subprocess.run(['bash', '-c', code], cwd=self.work, env=self.env(), capture_output=True, text=True, timeout=120)
+        self.assertIn('rc=1', run.stdout, run.stdout + run.stderr)
+        self.assertIn('inherits', run.stdout)
+
+    # T053 round 8, item 2: enabled = false is merged across layers like any other key.
+    def test_a_disabled_registration_is_refused_and_no_provider_check_runs(self):
+        run = self.setup_run(self.ENTRY + 'enabled = false\n')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn("REA's MCP server is disabled in the Codex config", run.stdout)
+        self.assertNotIn('[ok] rea-mcp', run.stdout)
+        self.install_helpers()
+        for rel in ('rea-binary/scripts/provider-check.sh', 'rea-android/scripts/tool-check.sh'):
+            with self.subTest(helper=rel):
+                run = self.helper(rel)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn("REA's MCP server is disabled in the Codex config", run.stdout)
+                self.assertNotIn('[ok]', run.stdout)
+
+    def test_enabled_is_merged_across_layers(self):
+        on = self.ENTRY + 'enabled = true\n'
+        off = self.ENTRY + 'enabled = false\n'
+        cases = ((off + self.trust(), '[mcp_servers.rea]\nenabled = true\n', 0),
+                 (on + self.trust(), '[mcp_servers.rea]\nenabled = false\n', 1),
+                 (off + self.trust(), '[mcp_servers.rea]\nargs = ["mcp"]\n', 1),
+                 (on, None, 0))
+        for config, project, code in cases:
+            with self.subTest(config=config, project=project):
+                run = self.setup_run(config, project=project)
+                self.assertEqual(run.returncode, code, run.stdout + run.stderr)
+                if code:
+                    self.assertIn("disabled in the Codex config", run.stdout)
+                    self.assertNotIn('[ok] rea-mcp', run.stdout)
+                else:
+                    self.assertIn('[ok] rea-mcp', run.stdout)
+
+    def test_an_enabled_that_is_not_a_boolean_is_refused(self):
+        run = self.setup_run(self.ENTRY + 'enabled = "no"\n')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('enabled', run.stdout)
+        self.assertNotIn('[ok] rea-mcp', run.stdout)
 
     def install_helpers(self):
         shutil.copytree(SKILLS, self.home/'.agents/skills')
