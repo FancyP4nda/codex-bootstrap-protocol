@@ -1,0 +1,5 @@
+interface:
+  display_name: "Map Repo"
+  short_description: "Build or update the repository's knowledge graph"
+policy:
+  allow_implicit_invocation: false

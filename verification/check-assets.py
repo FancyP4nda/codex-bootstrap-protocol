@@ -145,6 +145,17 @@ def check(root):
             if not re.match(r'https?://|/|~|\$|<', rel) and not any(c in rel for c in '* '):
                 assert (p.parent/rel).exists(), (p, rel)
     assert len(names) == len(set(names)), 'duplicate canonical skill names'
+    # Every atlas Command and vendored skill is user-only (decision brief D-2, D-8): an
+    # agents/openai.yaml with the policy line beside a SKILL.md whose frontmatter keeps only
+    # name and description. A skill without it would load implicitly.
+    atlas = root/'assets/packs/atlas/global/.agents/skills'
+    for skill in sorted(p for p in atlas.iterdir() if p.is_dir()):
+        policy = skill/'agents/openai.yaml'
+        assert policy.is_file() and re.search(r'^policy:\n  allow_implicit_invocation: false$', policy.read_text(), re.M), f'atlas skill without a user-only policy: {skill.name}'
+        match = re.match(r'---\n([\s\S]*?)\n---\n', (skill/'SKILL.md').read_text())
+        assert match, f'atlas skill without frontmatter: {skill.name}'
+        header = match.group(1)
+        assert re.findall(r'^([A-Za-z][\w-]*):', header, re.M) == ['name', 'description'], f'atlas frontmatter keeps only name and description: {skill.name}'
     agents = []
     for p in (root/'assets').rglob('*.toml'):
         data = tomllib.loads(p.read_text())

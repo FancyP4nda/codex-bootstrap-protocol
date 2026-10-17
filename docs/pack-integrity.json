@@ -14,5 +14,9 @@
   "craft": {
     "sha256": "1b8feb33b1c8564d67f055693e27210e03e0d2b8336cfc876619f93899ce9dbb",
     "validation": "vendored byte-identical from addyosmani/agent-skills@1be8e34; evidence fields remain null"
+  },
+  "atlas": {
+    "sha256": "cfb2f6816f8227841ec4c31dde632b840fc00416c824dbcba31fdf66f4d39b59",
+    "validation": "unverified: evidence fields remain null; vendored archify@1c2b42d and graphify@b4e6307 with recorded patches; Commands derived from the Claude kit by tools/migrate-atlas.mjs"
   }
 }

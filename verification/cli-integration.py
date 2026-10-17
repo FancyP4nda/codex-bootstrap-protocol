@@ -28,8 +28,8 @@ def run():
                                '--promote-global','--status-line','--notifications','--hooks'],
                               env=env,capture_output=True,text=True,timeout=90)
         if result.returncode: raise RuntimeError(result.stdout+result.stderr)
-        # Global packs (craft) install once into ~/.agents, not into the project.
-        result=subprocess.run([str(KIT/'bootstrap'),'--global-only','--pack','craft'],env=env,capture_output=True,text=True,timeout=90)
+        # Global packs (craft, atlas) install once into ~/.agents, not into the project.
+        result=subprocess.run([str(KIT/'bootstrap'),'--global-only','--pack','craft','--pack','atlas'],env=env,capture_output=True,text=True,timeout=90)
         if result.returncode: raise RuntimeError(result.stdout+result.stderr)
         captured=[]
         def strings(value):

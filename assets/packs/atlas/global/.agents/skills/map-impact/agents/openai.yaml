@@ -1,0 +1,5 @@
+interface:
+  display_name: "Map Impact"
+  short_description: "Report what a change touches, from the graph"
+policy:
+  allow_implicit_invocation: false

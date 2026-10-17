@@ -1,0 +1,23 @@
+--- a/archify/bin/visual-check.mjs
++++ b/global/.claude/skills/archify/bin/visual-check.mjs
+@@ -1505,6 +1505,20 @@
+   const rootUser = typeof getuid === 'function' && getuid() === 0;
+   const sandboxOptOut = env?.[CHROME_NO_SANDBOX_ENV] === '1';
+   if (rootUser || sandboxOptOut) args.unshift('--no-sandbox');
++  // claude-bootstrap atlas pack, recorded local patch (FR-030): the switch
++  // keeps the checked page off the network. Every connection, loopback
++  // included, goes to a proxy where nothing listens, host-name lookups fail
++  // and WebRTC sends no UDP outside the proxy; a file: page still loads.
++  // The WebRTC policy goes in both spellings: Chromium 152 honours only the
++  // first, and Chrome ignores a switch it does not know.
++  if (env?.ARCHIFY_BROWSER_NETWORK_DISABLED === '1') {
++    args.splice(args.indexOf('about:blank'), 0,
++      '--proxy-server=127.0.0.1:9',
++      '--proxy-bypass-list=<-loopback>',
++      '--host-resolver-rules=MAP * ~NOTFOUND',
++      '--webrtc-ip-handling-policy=disable_non_proxied_udp',
++      '--force-webrtc-ip-handling-policy=disable_non_proxied_udp');
++  }
+   return args;
+ }
+ 

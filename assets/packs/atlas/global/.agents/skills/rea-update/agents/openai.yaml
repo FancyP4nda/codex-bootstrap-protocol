@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Update"
+  short_description: "Update REA to its latest release"
+policy:
+  allow_implicit_invocation: false

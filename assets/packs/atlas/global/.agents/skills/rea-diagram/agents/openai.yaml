@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Diagram"
+  short_description: "Draw one feature of a binary from REA's evidence"
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Android"
+  short_description: "Analyse an Android APK with REA: manifest, resources, classes and methods through jadx and apktool"
+policy:
+  allow_implicit_invocation: false

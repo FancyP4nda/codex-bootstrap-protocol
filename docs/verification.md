@@ -37,6 +37,21 @@ All test projects/homes are temporary. The loopback mock is test-only and makes
 no external model call. Process/socket sandboxes may require permission to run
 that local fixture; rejection is not silently skipped.
 
+## Atlas pack (T053)
+
+The `atlas` global pack mirrors the Claude kit's. `verification/test_atlas.py` holds the pack to the
+decision brief: the 16 derived Commands and two vendored skills, each with `agents/openai.yaml` and
+`allow_implicit_invocation: false`; no Claude path or `/command` form left in derived text; the source map's hashes;
+`$atlas-doctor` against a stub home (`multi_agent`, `rea-config`, the unstamped-copy migration line, the hook and
+`AGENTS.md` traces, a byte-identical home and `config.toml` after a run); the pin agreement between `pack.yaml` and the
+scripts. With `ATLAS_SOURCE_KIT=<claude-kit-checkout>` it also re-derives the whole skills tree with
+`tools/migrate-atlas.mjs` and compares it with the committed one (mirror-time check; it needs the sibling checkout).
+`test_installer.py` installs, repeats, removes and symlink-probes the pack in a temporary home.
+`verification/check-assets.py` asserts the user-only policy beside every atlas skill.
+`python3 verification/vendor-check-atlas.py` proves the recorded patches reverse-apply to the pinned upstream files;
+`--network` also compares every other vendored file with upstream (run once for this mirror: pass).
+Not claimed: a real Codex session's behaviour (A-011, R-021) and an install into the real `~/.agents`.
+
 ## Authenticated disposable smoke
 
 `python3 verification/authenticated-smoke.py` separately uses the existing Codex

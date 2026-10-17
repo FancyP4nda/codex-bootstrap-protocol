@@ -1,0 +1,5 @@
+interface:
+  display_name: "Map Ask"
+  short_description: "Answer a question from the repository's graph"
+policy:
+  allow_implicit_invocation: false

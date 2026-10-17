@@ -1,0 +1,5 @@
+interface:
+  display_name: "Diagram Repo"
+  short_description: "Draw the repository's architecture from its graph"
+policy:
+  allow_implicit_invocation: false

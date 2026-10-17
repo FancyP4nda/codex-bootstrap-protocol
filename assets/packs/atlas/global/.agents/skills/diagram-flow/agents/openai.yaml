@@ -1,0 +1,5 @@
+interface:
+  display_name: "Diagram Flow"
+  short_description: "Trace one flow through the graph and draw it"
+policy:
+  allow_implicit_invocation: false

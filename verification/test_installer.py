@@ -431,4 +431,50 @@ class InstallerTests(unittest.TestCase):
         for name in self.CRAFT_SKILLS: self.assertFalse((skills/name).exists(),name)
         self.assertEqual(self.core_view(),core_before)
 
+    ATLAS_COMMANDS=('map-repo','map-ask','map-impact','diagram','diagram-repo','diagram-flow','atlas-doctor','rea-doctor',
+                    'rea-triage','rea-feature','rea-binary','rea-android','rea-electron','rea-diagram','rea-map','rea-update')
+
+    def test_atlas_global_pack(self):
+        self.run_bootstrap('--global-only')
+        core_before=self.core_view()
+        self.run_bootstrap('--global-only','--pack','atlas')
+        skills=self.home/'.agents/skills'
+        for name in self.ATLAS_COMMANDS+('archify','graphify'):
+            self.assertTrue((skills/name/'SKILL.md').is_file(),name)
+            policy=(skills/name/'agents/openai.yaml').read_text()
+            self.assertIn('policy:\n  allow_implicit_invocation: false\n',policy,name)
+        # The notes the Commands point to install beside the skills, where "../../references" resolves.
+        self.assertTrue((self.home/'.agents/references/atlas-pack-notes.md').is_file())
+        record=json.loads((self.home/'.agents/bootstrap/packs/atlas.json').read_text())
+        for name in ('archify','graphify'): self.assertIn(f'skills/{name}/SKILL.md',record['managed'])
+        self.assertFalse((self.home/'custom codex/bootstrap-packs').exists())
+        again=self.run_bootstrap('--global-only','--pack','atlas')
+        self.assertIn('0 planned non-identical operations',again.stdout)
+        self.run_bootstrap('--remove-global-pack','atlas')
+        for name in self.ATLAS_COMMANDS+('archify','graphify'): self.assertFalse((skills/name).exists(),name)
+        self.assertFalse((self.home/'.agents/references').exists())
+        self.assertEqual(self.core_view(),core_before)
+
+    def test_atlas_pack_leaves_a_preexisting_identical_copy_unowned(self):
+        # Decision brief D-4: the pack never adopts an identical file that was already there.
+        shutil.copytree(KIT/'assets/packs/atlas/global/.agents/skills/archify',self.home/'.agents/skills/archify')
+        self.run_bootstrap('--global-only','--pack','atlas')
+        record=json.loads((self.home/'.agents/bootstrap/packs/atlas.json').read_text())
+        self.assertNotIn('skills/archify/SKILL.md',record['managed'])
+        self.assertIn('skills/graphify/SKILL.md',record['managed'])
+        self.run_bootstrap('--remove-global-pack','atlas')
+        self.assertTrue((self.home/'.agents/skills/archify/SKILL.md').is_file())
+        self.assertFalse((self.home/'.agents/skills/graphify').exists())
+
+    def test_atlas_pack_dies_on_a_symlink_ancestor_and_writes_nothing(self):
+        outside=self.root/'outside'; outside.mkdir()
+        (self.home/'.agents').symlink_to(outside,target_is_directory=True)
+        out=self.run_bootstrap('--global-only','--pack','atlas',ok=False)
+        self.assertIn('symlink',out.stderr.lower())
+        self.assertEqual(list(outside.iterdir()),[])
+        (self.home/'.agents').unlink(); (self.home/'.agents').mkdir()
+        (self.home/'.agents/skills').symlink_to(outside,target_is_directory=True)
+        self.run_bootstrap('--global-only','--pack','atlas',ok=False)
+        self.assertEqual(list(outside.iterdir()),[])
+
 if __name__=='__main__': unittest.main()

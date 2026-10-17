@@ -1,0 +1,1359 @@
+{
+  "converter": "tools/migrate-atlas.mjs",
+  "source_kit": "claude-bootstrap-protocol",
+  "source_commit": "bc90ee4f95a404f46d7a6c0869c2c61703e46b4f",
+  "commands_not_yet_derived": [],
+  "files": [
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/LICENSE",
+      "source_sha256": "b799ab081703e7821ae5096d2c1abdf14bbdc75e8ea1c4045998c36ed6db9706",
+      "destination": "global/.agents/skills/archify/LICENSE",
+      "destination_sha256": "b799ab081703e7821ae5096d2c1abdf14bbdc75e8ea1c4045998c36ed6db9706",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/SKILL.md",
+      "source_sha256": "8757634b015e8de66eb28c72705dba66d55794f2cead9bac97741b93966a8001",
+      "destination": "global/.agents/skills/archify/SKILL.md",
+      "destination_sha256": "bd2a1182f2c8c976ddeafa30bd46561b2cdcc3b5dfda97f344e4bb718776d611",
+      "transform": "archify-skill"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/THIRD_PARTY_NOTICES.md",
+      "source_sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
+      "destination": "global/.agents/skills/archify/THIRD_PARTY_NOTICES.md",
+      "destination_sha256": "0b7fb59365dc21c93b0f62526d74ee913aeec9ae532c112bc76afa7edcd56e14",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/assets/JetBrainsMono-OFL.txt",
+      "source_sha256": "c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90",
+      "destination": "global/.agents/skills/archify/assets/JetBrainsMono-OFL.txt",
+      "destination_sha256": "c1ab7c666206842a02b35b30770dac0d7a10156ed401c9defc3f02a754d89e90",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/assets/template.html",
+      "source_sha256": "d41049723af445573d8eb7b0dcc371d07d3f735a8a291c438148b8195bbea7d2",
+      "destination": "global/.agents/skills/archify/assets/template.html",
+      "destination_sha256": "d41049723af445573d8eb7b0dcc371d07d3f735a8a291c438148b8195bbea7d2",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/archify.mjs",
+      "source_sha256": "5737a0e720579722b167456b3eb4dd301699b8685ef8f3669975e3fd18c15408",
+      "destination": "global/.agents/skills/archify/bin/archify.mjs",
+      "destination_sha256": "5737a0e720579722b167456b3eb4dd301699b8685ef8f3669975e3fd18c15408",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/delivery-update.mjs",
+      "source_sha256": "d5ad7d6d7d949a8a8c37af4f80d79a8b4e057245e30ba11866efb40c6771dafa",
+      "destination": "global/.agents/skills/archify/bin/delivery-update.mjs",
+      "destination_sha256": "d5ad7d6d7d949a8a8c37af4f80d79a8b4e057245e30ba11866efb40c6771dafa",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/finalize.mjs",
+      "source_sha256": "fcdf818198f04b825e2a0f2892d0794768c16adac635482cbb8eb8ff61242484",
+      "destination": "global/.agents/skills/archify/bin/finalize.mjs",
+      "destination_sha256": "fcdf818198f04b825e2a0f2892d0794768c16adac635482cbb8eb8ff61242484",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/open-artifact.mjs",
+      "source_sha256": "b0ab5f37c4f4556f76040dc862744afe9d4b65f319f35e1f9b505e0344b9c409",
+      "destination": "global/.agents/skills/archify/bin/open-artifact.mjs",
+      "destination_sha256": "b0ab5f37c4f4556f76040dc862744afe9d4b65f319f35e1f9b505e0344b9c409",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/preview.mjs",
+      "source_sha256": "95bdc09c7ea2679f137bf1bf4248cdb401a54da979ff4a16d518caafeae0070d",
+      "destination": "global/.agents/skills/archify/bin/preview.mjs",
+      "destination_sha256": "95bdc09c7ea2679f137bf1bf4248cdb401a54da979ff4a16d518caafeae0070d",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/recover-output.mjs",
+      "source_sha256": "b3f7db21b3fc5341326207c1259aa787730120f42179eff50e481b0c6ad1e2d4",
+      "destination": "global/.agents/skills/archify/bin/recover-output.mjs",
+      "destination_sha256": "b3f7db21b3fc5341326207c1259aa787730120f42179eff50e481b0c6ad1e2d4",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/bin/visual-check.mjs",
+      "source_sha256": "47430eb65289ad377580625b0cf9bedc43ccc0f6184a29b4d91d656cad299ddd",
+      "destination": "global/.agents/skills/archify/bin/visual-check.mjs",
+      "destination_sha256": "47430eb65289ad377580625b0cf9bedc43ccc0f6184a29b4d91d656cad299ddd",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/brand-marks/README.md",
+      "source_sha256": "8b771a16322ce9ea47fdc00b9935e33adf0f3af608f2d735235443e15ef622e2",
+      "destination": "global/.agents/skills/archify/brand-marks/README.md",
+      "destination_sha256": "8b771a16322ce9ea47fdc00b9935e33adf0f3af608f2d735235443e15ef622e2",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/brand-marks/catalog.json",
+      "source_sha256": "e1a6c555cbf8ea36fb8100a4a25824e7ab87bebe9871e450ba05b6dea3b036d6",
+      "destination": "global/.agents/skills/archify/brand-marks/catalog.json",
+      "destination_sha256": "e1a6c555cbf8ea36fb8100a4a25824e7ab87bebe9871e450ba05b6dea3b036d6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/delta/architecture-delta.mjs",
+      "source_sha256": "80f25a93c1ae6f40ebd6c066a3cfbff468fc48f258755d3740f6347a45ebe7a8",
+      "destination": "global/.agents/skills/archify/delta/architecture-delta.mjs",
+      "destination_sha256": "80f25a93c1ae6f40ebd6c066a3cfbff468fc48f258755d3740f6347a45ebe7a8",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/agent-run.lifecycle.json",
+      "source_sha256": "5ba36f5ce91ed428cb48b599e275424916d82b619b9a3231cbd1bbc3966fc54b",
+      "destination": "global/.agents/skills/archify/examples/agent-run.lifecycle.json",
+      "destination_sha256": "5ba36f5ce91ed428cb48b599e275424916d82b619b9a3231cbd1bbc3966fc54b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/agent-tool-call.workflow.json",
+      "source_sha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
+      "destination": "global/.agents/skills/archify/examples/agent-tool-call.workflow.json",
+      "destination_sha256": "d67965d50872c97e4ff3476271e645bf19fab6b3ab44e111bdb44b063e3aa36f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/archify-dev-activity.timeline.json",
+      "source_sha256": "e9c8d76528e8c38a68d9a8df2499c462f6b9633292ea43bf33350546ef2fd3a3",
+      "destination": "global/.agents/skills/archify/examples/archify-dev-activity.timeline.json",
+      "destination_sha256": "e9c8d76528e8c38a68d9a8df2499c462f6b9633292ea43bf33350546ef2fd3a3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/archify-repository.tree.json",
+      "source_sha256": "970617ee844ecfb1bb792c677aa8b85688abfd2cf8ab2365dc03ea9e26e6b9c7",
+      "destination": "global/.agents/skills/archify/examples/archify-repository.tree.json",
+      "destination_sha256": "970617ee844ecfb1bb792c677aa8b85688abfd2cf8ab2365dc03ea9e26e6b9c7",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/async-job-roundtrip.sequence.json",
+      "source_sha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
+      "destination": "global/.agents/skills/archify/examples/async-job-roundtrip.sequence.json",
+      "destination_sha256": "b8c6c52f1763ede2933c77deb8da59b3e06917bc41d27e66df896136456b859a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/brand-aware-delivery.architecture.json",
+      "source_sha256": "211c126ebdc5f0124617b1067cecfb858143a1a18fd10621d01f5765c7de3b5d",
+      "destination": "global/.agents/skills/archify/examples/brand-aware-delivery.architecture.json",
+      "destination_sha256": "211c126ebdc5f0124617b1067cecfb858143a1a18fd10621d01f5765c7de3b5d",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/cache-miss-request.sequence.json",
+      "source_sha256": "f8486daa803fff6c295cecca4604c561fbbf9acb2e83326022b5a87639e8afe6",
+      "destination": "global/.agents/skills/archify/examples/cache-miss-request.sequence.json",
+      "destination_sha256": "f8486daa803fff6c295cecca4604c561fbbf9acb2e83326022b5a87639e8afe6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/checkout-platform.base.architecture.json",
+      "source_sha256": "81d55a2e86fc39f6473b32dfba986a12d3b7a705a95821844865b1dc831c9fe7",
+      "destination": "global/.agents/skills/archify/examples/checkout-platform.base.architecture.json",
+      "destination_sha256": "81d55a2e86fc39f6473b32dfba986a12d3b7a705a95821844865b1dc831c9fe7",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/checkout-platform.head.architecture.json",
+      "source_sha256": "eb4ae056035dd3316414a5d7f6599525107b5d1af7bedbd905460ade77daf5c6",
+      "destination": "global/.agents/skills/archify/examples/checkout-platform.head.architecture.json",
+      "destination_sha256": "eb4ae056035dd3316414a5d7f6599525107b5d1af7bedbd905460ade77daf5c6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/checkout-request.waterfall.json",
+      "source_sha256": "55a5f74699a0f0e44018a4a000556d43c90430b95f39accac6141af8318b5133",
+      "destination": "global/.agents/skills/archify/examples/checkout-request.waterfall.json",
+      "destination_sha256": "55a5f74699a0f0e44018a4a000556d43c90430b95f39accac6141af8318b5133",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/class-payment-processors-rendered.html",
+      "source_sha256": "12240a8db8fdf6bb91e92dc71916c1dcef4873e7d3b1ba351b8bc00d9489d48b",
+      "destination": "global/.agents/skills/archify/examples/class-payment-processors-rendered.html",
+      "destination_sha256": "12240a8db8fdf6bb91e92dc71916c1dcef4873e7d3b1ba351b8bc00d9489d48b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/class-payments-rendered.html",
+      "source_sha256": "5b11c66ccaef1177e69ea28e8a04ee9d8ba5964e7476e1a1e57ce1fe36b4c53c",
+      "destination": "global/.agents/skills/archify/examples/class-payments-rendered.html",
+      "destination_sha256": "5b11c66ccaef1177e69ea28e8a04ee9d8ba5964e7476e1a1e57ce1fe36b4c53c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/dataflow-product-analytics.html",
+      "source_sha256": "8577ad3f6800a87c8b4074427ae942b729d582c6b2d5d19a4b23cfffc5e57bb9",
+      "destination": "global/.agents/skills/archify/examples/dataflow-product-analytics.html",
+      "destination_sha256": "8577ad3f6800a87c8b4074427ae942b729d582c6b2d5d19a4b23cfffc5e57bb9",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/deployment-release.lifecycle.json",
+      "source_sha256": "e3dc105d03c1c9881160006cdace23cb5d8533803e337caf0ec287c64e775275",
+      "destination": "global/.agents/skills/archify/examples/deployment-release.lifecycle.json",
+      "destination_sha256": "e3dc105d03c1c9881160006cdace23cb5d8533803e337caf0ec287c64e775275",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/erd-orders-rendered.html",
+      "source_sha256": "d6f13c5e6254ef3522294255a740e7aef78554058cbb29ac15e7e4149568c122",
+      "destination": "global/.agents/skills/archify/examples/erd-orders-rendered.html",
+      "destination_sha256": "d6f13c5e6254ef3522294255a740e7aef78554058cbb29ac15e7e4149568c122",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/event-stream.dataflow.json",
+      "source_sha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
+      "destination": "global/.agents/skills/archify/examples/event-stream.dataflow.json",
+      "destination_sha256": "3bdd77674282009c7c68d588cf8a3c495bc98a3be1b9c45327fd1801a6f83a23",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/example-rebuild.waterfall.json",
+      "source_sha256": "77d610013a5aab031df739c207b66ebc26e1740371b51da06956ecf06b5e9929",
+      "destination": "global/.agents/skills/archify/examples/example-rebuild.waterfall.json",
+      "destination_sha256": "77d610013a5aab031df739c207b66ebc26e1740371b51da06956ecf06b5e9929",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/holiday-planning.workflow.json",
+      "source_sha256": "b98354f921ca45842fed235db09fd4f19d94adc16865876f438c0d699d05e1ea",
+      "destination": "global/.agents/skills/archify/examples/holiday-planning.workflow.json",
+      "destination_sha256": "b98354f921ca45842fed235db09fd4f19d94adc16865876f438c0d699d05e1ea",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/incident-response.workflow.json",
+      "source_sha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
+      "destination": "global/.agents/skills/archify/examples/incident-response.workflow.json",
+      "destination_sha256": "630be98449925d2716ecb8439f404b2bff5fe65ba905b0ad0baea6d96890c526",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/lifecycle-agent-run.html",
+      "source_sha256": "7952d024d3f7605ba28cac10dff1883c6efb57788ba650b26cd1afd87459b042",
+      "destination": "global/.agents/skills/archify/examples/lifecycle-agent-run.html",
+      "destination_sha256": "7952d024d3f7605ba28cac10dff1883c6efb57788ba650b26cd1afd87459b042",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/de.json",
+      "source_sha256": "77975293855578923fbbee29f478d9d84002c04d6a7b3e22cd9db8cf3fb414ba",
+      "destination": "global/.agents/skills/archify/examples/locales/de.json",
+      "destination_sha256": "77975293855578923fbbee29f478d9d84002c04d6a7b3e22cd9db8cf3fb414ba",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/fr.json",
+      "source_sha256": "ea1af868932eb22761094a4950b769fd0634430fe706fc4ea4335eca7f0529bb",
+      "destination": "global/.agents/skills/archify/examples/locales/fr.json",
+      "destination_sha256": "ea1af868932eb22761094a4950b769fd0634430fe706fc4ea4335eca7f0529bb",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/fr.partial.json",
+      "source_sha256": "8958a8354ffccce2ce63ac21b3f8a0f131086f532832445a3fe7feff02200397",
+      "destination": "global/.agents/skills/archify/examples/locales/fr.partial.json",
+      "destination_sha256": "8958a8354ffccce2ce63ac21b3f8a0f131086f532832445a3fe7feff02200397",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/it.json",
+      "source_sha256": "be8cd15fcd0311521dc8ae1f35bbcf8e33a180e20e5ce94fd0d65dec4e147e6b",
+      "destination": "global/.agents/skills/archify/examples/locales/it.json",
+      "destination_sha256": "be8cd15fcd0311521dc8ae1f35bbcf8e33a180e20e5ce94fd0d65dec4e147e6b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/ja.json",
+      "source_sha256": "bb6d66d7e1126c5c622423317a536728820d3fe686be90d0c9cc8f6ca4ff3e67",
+      "destination": "global/.agents/skills/archify/examples/locales/ja.json",
+      "destination_sha256": "bb6d66d7e1126c5c622423317a536728820d3fe686be90d0c9cc8f6ca4ff3e67",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/pt.json",
+      "source_sha256": "8e3c6a054183e96465bd882bc23d38eafe19c0484eda5709f4e2b37e132e0731",
+      "destination": "global/.agents/skills/archify/examples/locales/pt.json",
+      "destination_sha256": "8e3c6a054183e96465bd882bc23d38eafe19c0484eda5709f4e2b37e132e0731",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/locales/ru.json",
+      "source_sha256": "ea673bf7156d87ac43d754839155a1a145aafa481b5de540e04d1f8d3ec008d3",
+      "destination": "global/.agents/skills/archify/examples/locales/ru.json",
+      "destination_sha256": "ea673bf7156d87ac43d754839155a1a145aafa481b5de540e04d1f8d3ec008d3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/orders.erd.json",
+      "source_sha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
+      "destination": "global/.agents/skills/archify/examples/orders.erd.json",
+      "destination_sha256": "1777a374647084466f4d7ce3a968004be6ab70ac9cf82459b96bed7c556cdfdd",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/payment-incident.timeline.json",
+      "source_sha256": "c1f535b3cc915ddd47ecd7df4e3ef02c441c8c3191daced5cf4422cff8dec95f",
+      "destination": "global/.agents/skills/archify/examples/payment-incident.timeline.json",
+      "destination_sha256": "c1f535b3cc915ddd47ecd7df4e3ef02c441c8c3191daced5cf4422cff8dec95f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/payment-platform.tree.json",
+      "source_sha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
+      "destination": "global/.agents/skills/archify/examples/payment-platform.tree.json",
+      "destination_sha256": "1e99f37b3845d67fa97c9a2ff33109981c23bfdb0d03ba05b7d92944dcdfc61f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/payment-processors.class.json",
+      "source_sha256": "98742b997db4782981460e8110e5fba899d8500c92c086aa867c5c62c3b89222",
+      "destination": "global/.agents/skills/archify/examples/payment-processors.class.json",
+      "destination_sha256": "98742b997db4782981460e8110e5fba899d8500c92c086aa867c5c62c3b89222",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/payments.class.json",
+      "source_sha256": "afba837f97a041e14687cbe8893523232c4afad7afd922d9b128606d1b3f12c8",
+      "destination": "global/.agents/skills/archify/examples/payments.class.json",
+      "destination_sha256": "afba837f97a041e14687cbe8893523232c4afad7afd922d9b128606d1b3f12c8",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/product-analytics.dataflow.json",
+      "source_sha256": "8a635db9e51a5b1a8d2955b9d66f5b9a450e0a298432ce8f2e2f0be11f372e05",
+      "destination": "global/.agents/skills/archify/examples/product-analytics.dataflow.json",
+      "destination_sha256": "8a635db9e51a5b1a8d2955b9d66f5b9a450e0a298432ce8f2e2f0be11f372e05",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/production-deployment.architecture.json",
+      "source_sha256": "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda",
+      "destination": "global/.agents/skills/archify/examples/production-deployment.architecture.json",
+      "destination_sha256": "610a5614667e8f108bdcf1769c9d7af5c3ce0fb62be3ea50550b10eb752e4bda",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/release-delivery.workflow.json",
+      "source_sha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
+      "destination": "global/.agents/skills/archify/examples/release-delivery.workflow.json",
+      "destination_sha256": "dbd5c174af66296caec372e7214cf4df7158b50a563508e16826b95ab8d1cd6c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/sequence-cache-miss-request.html",
+      "source_sha256": "0acc3f1f239d8dae8088538a5b245e5aff0d9c6f68268cfd16b66b3d6a6c9772",
+      "destination": "global/.agents/skills/archify/examples/sequence-cache-miss-request.html",
+      "destination_sha256": "0acc3f1f239d8dae8088538a5b245e5aff0d9c6f68268cfd16b66b3d6a6c9772",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/subscription-billing-rendered.html",
+      "source_sha256": "93e24ec18c465ed8ffd1d070fbb8a7db73d7510f09d770c869c79b254bd7a893",
+      "destination": "global/.agents/skills/archify/examples/subscription-billing-rendered.html",
+      "destination_sha256": "93e24ec18c465ed8ffd1d070fbb8a7db73d7510f09d770c869c79b254bd7a893",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/subscription-billing.erd.json",
+      "source_sha256": "89945699d92b9cc0ab91263cf38a07c350867d260eacd5d8ba1dc835fe2d22ed",
+      "destination": "global/.agents/skills/archify/examples/subscription-billing.erd.json",
+      "destination_sha256": "89945699d92b9cc0ab91263cf38a07c350867d260eacd5d8ba1dc835fe2d22ed",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/timeline-archify-dev-activity-rendered.html",
+      "source_sha256": "f8e63121681496338e7b10c4110075c957141d88b391eb110888b6f5e0a4b30a",
+      "destination": "global/.agents/skills/archify/examples/timeline-archify-dev-activity-rendered.html",
+      "destination_sha256": "f8e63121681496338e7b10c4110075c957141d88b391eb110888b6f5e0a4b30a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/timeline-payment-incident-rendered.html",
+      "source_sha256": "b8b33ee1c76992d472edf30ab726974e493ebbe966daacd2051a88ffd77be6ea",
+      "destination": "global/.agents/skills/archify/examples/timeline-payment-incident-rendered.html",
+      "destination_sha256": "b8b33ee1c76992d472edf30ab726974e493ebbe966daacd2051a88ffd77be6ea",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/tree-archify-repository-rendered.html",
+      "source_sha256": "8e8519d01535924c314d49f28b0f80f5777696ff2d9b411ef7ec28b7389f779f",
+      "destination": "global/.agents/skills/archify/examples/tree-archify-repository-rendered.html",
+      "destination_sha256": "8e8519d01535924c314d49f28b0f80f5777696ff2d9b411ef7ec28b7389f779f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/tree-payment-platform-rendered.html",
+      "source_sha256": "f64e8a5ffd3ae82ae6bf6f28cc8f716c0b437c1fa1c3bba74bf7c33e962b7bd3",
+      "destination": "global/.agents/skills/archify/examples/tree-payment-platform-rendered.html",
+      "destination_sha256": "f64e8a5ffd3ae82ae6bf6f28cc8f716c0b437c1fa1c3bba74bf7c33e962b7bd3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/waterfall-checkout-request-rendered.html",
+      "source_sha256": "a8f9bfc4651b172a4b927fa8365be3dec5a749690d6628d7ffcf7d595ee0e375",
+      "destination": "global/.agents/skills/archify/examples/waterfall-checkout-request-rendered.html",
+      "destination_sha256": "a8f9bfc4651b172a4b927fa8365be3dec5a749690d6628d7ffcf7d595ee0e375",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/waterfall-example-rebuild-rendered.html",
+      "source_sha256": "735f695685053c6095292647cb80c788e32064bcc411697bed8b12c1c7b0b053",
+      "destination": "global/.agents/skills/archify/examples/waterfall-example-rebuild-rendered.html",
+      "destination_sha256": "735f695685053c6095292647cb80c788e32064bcc411697bed8b12c1c7b0b053",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/web-app-rendered.html",
+      "source_sha256": "48b8012b0bfeeaf4fbffac8072cebf820f239010657bcf1cd53621d5298b03dc",
+      "destination": "global/.agents/skills/archify/examples/web-app-rendered.html",
+      "destination_sha256": "48b8012b0bfeeaf4fbffac8072cebf820f239010657bcf1cd53621d5298b03dc",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/web-app.architecture.json",
+      "source_sha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
+      "destination": "global/.agents/skills/archify/examples/web-app.architecture.json",
+      "destination_sha256": "95e051b27a9e4a3307e194c0f666fca4af51470be7e2228d400ff48aea5b353b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/examples/workflow-agent-tool-call-rendered.html",
+      "source_sha256": "6a30f19e88a722c6fab02a6e9d95b64ef109799597fb94509321257754ac3703",
+      "destination": "global/.agents/skills/archify/examples/workflow-agent-tool-call-rendered.html",
+      "destination_sha256": "6a30f19e88a722c6fab02a6e9d95b64ef109799597fb94509321257754ac3703",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/README.md",
+      "source_sha256": "f1b4e5693aca48655da29dd22b31d719057a701fd4c39bc6d426a1ec41f90ecd",
+      "destination": "global/.agents/skills/archify/locales/README.md",
+      "destination_sha256": "f1b4e5693aca48655da29dd22b31d719057a701fd4c39bc6d426a1ec41f90ecd",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/en.json",
+      "source_sha256": "1e8b43d8ba6d8ae75c2b393b2edb43cac5e142f33cbc2d1a2351e0e8baf9e1aa",
+      "destination": "global/.agents/skills/archify/locales/en.json",
+      "destination_sha256": "1e8b43d8ba6d8ae75c2b393b2edb43cac5e142f33cbc2d1a2351e0e8baf9e1aa",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/es.json",
+      "source_sha256": "f2b971994cb9f7091758e605931b4b4959103ed0090916fe281bfb2f2e1e5cc7",
+      "destination": "global/.agents/skills/archify/locales/es.json",
+      "destination_sha256": "f2b971994cb9f7091758e605931b4b4959103ed0090916fe281bfb2f2e1e5cc7",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/ko.json",
+      "source_sha256": "b7f2be52c61e4ced665ea62bb0670b4c2615a6c706127246a44bbcffdf65f8be",
+      "destination": "global/.agents/skills/archify/locales/ko.json",
+      "destination_sha256": "b7f2be52c61e4ced665ea62bb0670b4c2615a6c706127246a44bbcffdf65f8be",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/manifest.json",
+      "source_sha256": "c4d53064cfc2ed8d5e0fd72305bfebce746b4097a32ead87b96cccef69e2f7c7",
+      "destination": "global/.agents/skills/archify/locales/manifest.json",
+      "destination_sha256": "c4d53064cfc2ed8d5e0fd72305bfebce746b4097a32ead87b96cccef69e2f7c7",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/zh-CN.json",
+      "source_sha256": "83d870452e9ff3459a3cae88be6900d9a98b268e6cfba94b608a7c10f484e485",
+      "destination": "global/.agents/skills/archify/locales/zh-CN.json",
+      "destination_sha256": "83d870452e9ff3459a3cae88be6900d9a98b268e6cfba94b608a7c10f484e485",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/locales/zh-TW.json",
+      "source_sha256": "0db367aec82cf92b08d4335d5ed021480801f7ae79b1e2c1a0c79b27d4eafb2e",
+      "destination": "global/.agents/skills/archify/locales/zh-TW.json",
+      "destination_sha256": "0db367aec82cf92b08d4335d5ed021480801f7ae79b1e2c1a0c79b27d4eafb2e",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/migrations/workflow-v2.mjs",
+      "source_sha256": "0eec02057b8490afca9b093de5ea6e636c7fad2361cd28a04cf2f3e4b6197434",
+      "destination": "global/.agents/skills/archify/migrations/workflow-v2.mjs",
+      "destination_sha256": "0eec02057b8490afca9b093de5ea6e636c7fad2361cd28a04cf2f3e4b6197434",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/package.json",
+      "source_sha256": "f4d9639f975c3778dcdc87321c184c4d94be05b41eabcce5fef1759cb7bd2482",
+      "destination": "global/.agents/skills/archify/package.json",
+      "destination_sha256": "f4d9639f975c3778dcdc87321c184c4d94be05b41eabcce5fef1759cb7bd2482",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/recipes/scenarios.mjs",
+      "source_sha256": "1e93ba15d0782be535251bfb406cf8cc056291d84d77d33ca9dca01df743528f",
+      "destination": "global/.agents/skills/archify/recipes/scenarios.mjs",
+      "destination_sha256": "1e93ba15d0782be535251bfb406cf8cc056291d84d77d33ca9dca01df743528f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/architecture-layout-repair.md",
+      "source_sha256": "6c90caa232c004fa43b8770c745b83672919deaf8909f2592a3ad5fcd4031953",
+      "destination": "global/.agents/skills/archify/references/architecture-layout-repair.md",
+      "destination_sha256": "6c90caa232c004fa43b8770c745b83672919deaf8909f2592a3ad5fcd4031953",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/authoring-contract.md",
+      "source_sha256": "bcb0f9264fb3b2dff751cbd92e01877564fb3d2f9ab078349ced78282bde4b10",
+      "destination": "global/.agents/skills/archify/references/authoring-contract.md",
+      "destination_sha256": "bcb0f9264fb3b2dff751cbd92e01877564fb3d2f9ab078349ced78282bde4b10",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/authoring-defaults.md",
+      "source_sha256": "048bc5d1d81a2d5b3f5f55be5f4eb22f0f5f33c14b81ac1a4ce7b7cce7e161a4",
+      "destination": "global/.agents/skills/archify/references/authoring-defaults.md",
+      "destination_sha256": "048bc5d1d81a2d5b3f5f55be5f4eb22f0f5f33c14b81ac1a4ce7b7cce7e161a4",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/brand-marks.md",
+      "source_sha256": "d6e1a6ceafd07e48f27caf01655ea642365a5416ed0543b4022ca62750b58f0f",
+      "destination": "global/.agents/skills/archify/references/brand-marks.md",
+      "destination_sha256": "d6e1a6ceafd07e48f27caf01655ea642365a5416ed0543b4022ca62750b58f0f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/delivery-contract.md",
+      "source_sha256": "97dc20162c6596bdc77c632c1673bcbe6c3a33004049d4ce1d799f5d1409ae86",
+      "destination": "global/.agents/skills/archify/references/delivery-contract.md",
+      "destination_sha256": "97dc20162c6596bdc77c632c1673bcbe6c3a33004049d4ce1d799f5d1409ae86",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/repository-authoring.md",
+      "source_sha256": "c1648fc0c1b85a3a9bfbf3a8919dfa741ff0b5a55ea310d1fcacbf6ee837e139",
+      "destination": "global/.agents/skills/archify/references/repository-authoring.md",
+      "destination_sha256": "c1648fc0c1b85a3a9bfbf3a8919dfa741ff0b5a55ea310d1fcacbf6ee837e139",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/update-awareness.md",
+      "source_sha256": "57750c5c730b1804b6b1ece3af972d47cfe4d06ef7920fba4418c5b09c842b41",
+      "destination": "global/.agents/skills/archify/references/update-awareness.md",
+      "destination_sha256": "57750c5c730b1804b6b1ece3af972d47cfe4d06ef7920fba4418c5b09c842b41",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/references/viewer-runtime.md",
+      "source_sha256": "7d35ef52a8f47e77e8ec827cea7c71219bf1aafa53b5ef72ad4f1e1437f882a4",
+      "destination": "global/.agents/skills/archify/references/viewer-runtime.md",
+      "destination_sha256": "7d35ef52a8f47e77e8ec827cea7c71219bf1aafa53b5ef72ad4f1e1437f882a4",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/architecture/grid.mjs",
+      "source_sha256": "f6de99c32436feed3378b0ddef516bb4732ff27a89c543b50635d4d14a15a55a",
+      "destination": "global/.agents/skills/archify/renderers/architecture/grid.mjs",
+      "destination_sha256": "f6de99c32436feed3378b0ddef516bb4732ff27a89c543b50635d4d14a15a55a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/architecture/labels.mjs",
+      "source_sha256": "3a0066a987d8ad20121d0f7261d8bcfd3659443a335ea5e47938e7779ae12d31",
+      "destination": "global/.agents/skills/archify/renderers/architecture/labels.mjs",
+      "destination_sha256": "3a0066a987d8ad20121d0f7261d8bcfd3659443a335ea5e47938e7779ae12d31",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/architecture/render-architecture.mjs",
+      "source_sha256": "50bf6f0748446ba99c4236e29e2e39755d5a2b8894fb598f104f7b3107063ca3",
+      "destination": "global/.agents/skills/archify/renderers/architecture/render-architecture.mjs",
+      "destination_sha256": "50bf6f0748446ba99c4236e29e2e39755d5a2b8894fb598f104f7b3107063ca3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/architecture/routing.mjs",
+      "source_sha256": "908ddaf85caaa2d5d4a17c0544489ad9500614914c64a1d2ee2b96c4cc9ad4b3",
+      "destination": "global/.agents/skills/archify/renderers/architecture/routing.mjs",
+      "destination_sha256": "908ddaf85caaa2d5d4a17c0544489ad9500614914c64a1d2ee2b96c4cc9ad4b3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/class/README.md",
+      "source_sha256": "33074161e184a98dbb2b65d0ee308779b216a3c97dda4dfaa2bd6e2fb2e9f526",
+      "destination": "global/.agents/skills/archify/renderers/class/README.md",
+      "destination_sha256": "33074161e184a98dbb2b65d0ee308779b216a3c97dda4dfaa2bd6e2fb2e9f526",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/class/render-class.mjs",
+      "source_sha256": "e4943c1e91062aba7c72715e4887165f03908de03a1c99dc71f296bb0d1214cf",
+      "destination": "global/.agents/skills/archify/renderers/class/render-class.mjs",
+      "destination_sha256": "e4943c1e91062aba7c72715e4887165f03908de03a1c99dc71f296bb0d1214cf",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/dataflow/README.md",
+      "source_sha256": "3e9c8368e5aab1e686817745628d6da6e584b5009973ae1ee8e4fbea1f324ba5",
+      "destination": "global/.agents/skills/archify/renderers/dataflow/README.md",
+      "destination_sha256": "3e9c8368e5aab1e686817745628d6da6e584b5009973ae1ee8e4fbea1f324ba5",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/dataflow/dataflow-compiler.mjs",
+      "source_sha256": "e27a9b69876927b7285ce14569d22b92e32e8173fd953184ac13a8a02408e257",
+      "destination": "global/.agents/skills/archify/renderers/dataflow/dataflow-compiler.mjs",
+      "destination_sha256": "e27a9b69876927b7285ce14569d22b92e32e8173fd953184ac13a8a02408e257",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/dataflow/joint-label-routing.mjs",
+      "source_sha256": "8d1fd73d0d6055f6c551dcbc7ea3b01e4b801216c3101b2246e4172a564beea8",
+      "destination": "global/.agents/skills/archify/renderers/dataflow/joint-label-routing.mjs",
+      "destination_sha256": "8d1fd73d0d6055f6c551dcbc7ea3b01e4b801216c3101b2246e4172a564beea8",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/dataflow/label-capacity.mjs",
+      "source_sha256": "187af128f09630e512931b22bb301115d2a4d72c925cf02d3fc4736fb1846cb9",
+      "destination": "global/.agents/skills/archify/renderers/dataflow/label-capacity.mjs",
+      "destination_sha256": "187af128f09630e512931b22bb301115d2a4d72c925cf02d3fc4736fb1846cb9",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/dataflow/render-dataflow.mjs",
+      "source_sha256": "befc8bdacd86c07dd0b65a4b9635632a1246dd8dae7cb98dcf6d31dde361da2c",
+      "destination": "global/.agents/skills/archify/renderers/dataflow/render-dataflow.mjs",
+      "destination_sha256": "befc8bdacd86c07dd0b65a4b9635632a1246dd8dae7cb98dcf6d31dde361da2c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/erd/README.md",
+      "source_sha256": "ebced574d26695b7430b3a20ce345473eb0e39da2356c2b0104817036730383e",
+      "destination": "global/.agents/skills/archify/renderers/erd/README.md",
+      "destination_sha256": "ebced574d26695b7430b3a20ce345473eb0e39da2356c2b0104817036730383e",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/erd/grid.mjs",
+      "source_sha256": "1aa4644d8ef13fdebe5adf48377c0755222a0288f6cc487faf052d7957a78a32",
+      "destination": "global/.agents/skills/archify/renderers/erd/grid.mjs",
+      "destination_sha256": "1aa4644d8ef13fdebe5adf48377c0755222a0288f6cc487faf052d7957a78a32",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/erd/render-erd.mjs",
+      "source_sha256": "887cda4709e7905c48a375927a94f3b40210f74661e9609ca1d965e982e5f37a",
+      "destination": "global/.agents/skills/archify/renderers/erd/render-erd.mjs",
+      "destination_sha256": "887cda4709e7905c48a375927a94f3b40210f74661e9609ca1d965e982e5f37a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/lifecycle/README.md",
+      "source_sha256": "42aa4d37721661d1f59babb7e6467d910c7569d8573add2679c04942f5ebd72a",
+      "destination": "global/.agents/skills/archify/renderers/lifecycle/README.md",
+      "destination_sha256": "42aa4d37721661d1f59babb7e6467d910c7569d8573add2679c04942f5ebd72a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/lifecycle/render-lifecycle.mjs",
+      "source_sha256": "b700af01fa3848d7dfdf492b9efaccc7b384e6ad509a75bf9ac9af2038e4efc6",
+      "destination": "global/.agents/skills/archify/renderers/lifecycle/render-lifecycle.mjs",
+      "destination_sha256": "b700af01fa3848d7dfdf492b9efaccc7b384e6ad509a75bf9ac9af2038e4efc6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/sequence/README.md",
+      "source_sha256": "d93cdf05140ae60f8a5df495da5cd5c9dc492f2338760c53626f3943454d00b3",
+      "destination": "global/.agents/skills/archify/renderers/sequence/README.md",
+      "destination_sha256": "d93cdf05140ae60f8a5df495da5cd5c9dc492f2338760c53626f3943454d00b3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/sequence/render-sequence.mjs",
+      "source_sha256": "249689c4de5636bf7d746a04b3369f5576b91f76ea533502b313f943da4a8a95",
+      "destination": "global/.agents/skills/archify/renderers/sequence/render-sequence.mjs",
+      "destination_sha256": "249689c4de5636bf7d746a04b3369f5576b91f76ea533502b313f943da4a8a95",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/atomic-output.mjs",
+      "source_sha256": "f804d66d1801ac2dadc9d0a4c334645cfbb7a8cd1a7de112ddfb952c056a580b",
+      "destination": "global/.agents/skills/archify/renderers/shared/atomic-output.mjs",
+      "destination_sha256": "f804d66d1801ac2dadc9d0a4c334645cfbb7a8cd1a7de112ddfb952c056a580b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/automatic-labels.mjs",
+      "source_sha256": "3f3b63cd9cfd242968a739ca703291d7788567ec5699b5e7d6a11a4079e15917",
+      "destination": "global/.agents/skills/archify/renderers/shared/automatic-labels.mjs",
+      "destination_sha256": "3f3b63cd9cfd242968a739ca703291d7788567ec5699b5e7d6a11a4079e15917",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/brand-marks.mjs",
+      "source_sha256": "4011d9e5ce9a7d0c6b7ccd00de4430e2559201ea38cf5a30ed4e4ae68c707c49",
+      "destination": "global/.agents/skills/archify/renderers/shared/brand-marks.mjs",
+      "destination_sha256": "4011d9e5ce9a7d0c6b7ccd00de4430e2559201ea38cf5a30ed4e4ae68c707c49",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/cli.mjs",
+      "source_sha256": "9df5e6efb3dddc50b72d0daf3ca9d2b611bab31c5f1076f6769bd94999c5688c",
+      "destination": "global/.agents/skills/archify/renderers/shared/cli.mjs",
+      "destination_sha256": "9df5e6efb3dddc50b72d0daf3ca9d2b611bab31c5f1076f6769bd94999c5688c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/desktop-readability.mjs",
+      "source_sha256": "55ee7aba702d7883a08b6e54b39b00d5a17918a0c6bcf0c0fea19034f4de8990",
+      "destination": "global/.agents/skills/archify/renderers/shared/desktop-readability.mjs",
+      "destination_sha256": "55ee7aba702d7883a08b6e54b39b00d5a17918a0c6bcf0c0fea19034f4de8990",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/diagnostics.mjs",
+      "source_sha256": "4635119e65f77f28f0a81c038642c7d7de318ba9400073f37decd59df258dcd6",
+      "destination": "global/.agents/skills/archify/renderers/shared/diagnostics.mjs",
+      "destination_sha256": "4635119e65f77f28f0a81c038642c7d7de318ba9400073f37decd59df258dcd6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/engineering-profiles.mjs",
+      "source_sha256": "7e99f9d5423f66cc9ab6224da56dc2d5aa6c6faec29178034794e9db6b5b2889",
+      "destination": "global/.agents/skills/archify/renderers/shared/engineering-profiles.mjs",
+      "destination_sha256": "7e99f9d5423f66cc9ab6224da56dc2d5aa6c6faec29178034794e9db6b5b2889",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/generated-brand-marks.mjs",
+      "source_sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
+      "destination": "global/.agents/skills/archify/renderers/shared/generated-brand-marks.mjs",
+      "destination_sha256": "0f157d229c12df6f53763a3b88684baa5803a52484c49c4d34ec40b8743beea2",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/generated-validators.mjs",
+      "source_sha256": "c57ab36392b7ce10a293ea1d75de7d675f4f8d8c5717845c3018fb7eda01b87b",
+      "destination": "global/.agents/skills/archify/renderers/shared/generated-validators.mjs",
+      "destination_sha256": "c57ab36392b7ce10a293ea1d75de7d675f4f8d8c5717845c3018fb7eda01b87b",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/geometry.mjs",
+      "source_sha256": "818f6c000595f11a915cce2f73b5deb1a82ececf6c578a22bee70099988ea7a5",
+      "destination": "global/.agents/skills/archify/renderers/shared/geometry.mjs",
+      "destination_sha256": "818f6c000595f11a915cce2f73b5deb1a82ececf6c578a22bee70099988ea7a5",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/i18n.mjs",
+      "source_sha256": "1e6601157babd70c455dcddc93868f4665e56e7e723708d95dcc791dd1b636b9",
+      "destination": "global/.agents/skills/archify/renderers/shared/i18n.mjs",
+      "destination_sha256": "1e6601157babd70c455dcddc93868f4665e56e7e723708d95dcc791dd1b636b9",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/layout-report.mjs",
+      "source_sha256": "979da7226c5080cb16fb352236d5705cc79c06c15d0a3550b95963af02c63b6e",
+      "destination": "global/.agents/skills/archify/renderers/shared/layout-report.mjs",
+      "destination_sha256": "979da7226c5080cb16fb352236d5705cc79c06c15d0a3550b95963af02c63b6e",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/legend.mjs",
+      "source_sha256": "c33fcb54cc5aa60d788154036daa165f85d2e06d28aa9f1d4a73705fa278de70",
+      "destination": "global/.agents/skills/archify/renderers/shared/legend.mjs",
+      "destination_sha256": "c33fcb54cc5aa60d788154036daa165f85d2e06d28aa9f1d4a73705fa278de70",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/node-card-style.mjs",
+      "source_sha256": "80a0d473b936ee198e73cb89addd43a6344fb81da94f9fc88c53ae759cbf748d",
+      "destination": "global/.agents/skills/archify/renderers/shared/node-card-style.mjs",
+      "destination_sha256": "80a0d473b936ee198e73cb89addd43a6344fb81da94f9fc88c53ae759cbf748d",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/output-path.mjs",
+      "source_sha256": "7422139101abd93493918898a97bed06f2212bfd411d3514cd229b6d57a3797e",
+      "destination": "global/.agents/skills/archify/renderers/shared/output-path.mjs",
+      "destination_sha256": "7422139101abd93493918898a97bed06f2212bfd411d3514cd229b6d57a3797e",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/owned-temp-directory.mjs",
+      "source_sha256": "fb94515f8cd4b6b28799a7367745235822e2169534b8200791600ce7c3953a0e",
+      "destination": "global/.agents/skills/archify/renderers/shared/owned-temp-directory.mjs",
+      "destination_sha256": "fb94515f8cd4b6b28799a7367745235822e2169534b8200791600ce7c3953a0e",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/path-semantics.mjs",
+      "source_sha256": "4ef002af9061c06634a07de6d199fd7d13e6c50561c792fd018118bf3e065f52",
+      "destination": "global/.agents/skills/archify/renderers/shared/path-semantics.mjs",
+      "destination_sha256": "4ef002af9061c06634a07de6d199fd7d13e6c50561c792fd018118bf3e065f52",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/portable-path.mjs",
+      "source_sha256": "26130cbcdae9b9f082486aeb5feec9c5fe57905d2ed8e30c8081b9710e2e8ac3",
+      "destination": "global/.agents/skills/archify/renderers/shared/portable-path.mjs",
+      "destination_sha256": "26130cbcdae9b9f082486aeb5feec9c5fe57905d2ed8e30c8081b9710e2e8ac3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/repository-evidence.mjs",
+      "source_sha256": "8b3d778afb014ace93371b362b49dafb9e6703c4f9b1bb7c6fb11dad966b5105",
+      "destination": "global/.agents/skills/archify/renderers/shared/repository-evidence.mjs",
+      "destination_sha256": "8b3d778afb014ace93371b362b49dafb9e6703c4f9b1bb7c6fb11dad966b5105",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/repository-location.mjs",
+      "source_sha256": "344044d8240a093919894bd63278652bd01b3717c5b49fb174a6f77bea28b839",
+      "destination": "global/.agents/skills/archify/renderers/shared/repository-location.mjs",
+      "destination_sha256": "344044d8240a093919894bd63278652bd01b3717c5b49fb174a6f77bea28b839",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/route-quality.mjs",
+      "source_sha256": "c9cb9aae3a1623667f0490ba755bbc0ba57e5957e7ea56379d872eb1f2bb2090",
+      "destination": "global/.agents/skills/archify/renderers/shared/route-quality.mjs",
+      "destination_sha256": "c9cb9aae3a1623667f0490ba755bbc0ba57e5957e7ea56379d872eb1f2bb2090",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/sidecar-path.mjs",
+      "source_sha256": "c23cac8bcc265a74e2920c58d0968d1ffa06c1328bdd9cfd07755d4df2f22974",
+      "destination": "global/.agents/skills/archify/renderers/shared/sidecar-path.mjs",
+      "destination_sha256": "c23cac8bcc265a74e2920c58d0968d1ffa06c1328bdd9cfd07755d4df2f22974",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/spatial-grid.mjs",
+      "source_sha256": "e728bf6a729972f95ae09e368ea370490d10ff94d49debe2fab2e9bac923ee1a",
+      "destination": "global/.agents/skills/archify/renderers/shared/spatial-grid.mjs",
+      "destination_sha256": "e728bf6a729972f95ae09e368ea370490d10ff94d49debe2fab2e9bac923ee1a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/svg-path-analysis.mjs",
+      "source_sha256": "4c498ef5ba090a2d658c2ce3d80145f4cc63da9462f547b621206250096957c5",
+      "destination": "global/.agents/skills/archify/renderers/shared/svg-path-analysis.mjs",
+      "destination_sha256": "4c498ef5ba090a2d658c2ce3d80145f4cc63da9462f547b621206250096957c5",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/text-fit.mjs",
+      "source_sha256": "ebd499072ef4fe31c9aabf45a01c204a9c2c142d45f087c3240673f90f477038",
+      "destination": "global/.agents/skills/archify/renderers/shared/text-fit.mjs",
+      "destination_sha256": "ebd499072ef4fe31c9aabf45a01c204a9c2c142d45f087c3240673f90f477038",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/utils.mjs",
+      "source_sha256": "d0e8692b8acdc6993578c5d4aeb67065effdf5bf4cf2cd127bf561c677af38f5",
+      "destination": "global/.agents/skills/archify/renderers/shared/utils.mjs",
+      "destination_sha256": "d0e8692b8acdc6993578c5d4aeb67065effdf5bf4cf2cd127bf561c677af38f5",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/shared/validator.mjs",
+      "source_sha256": "f5cf5b9aa3623a456e9a07f0c5f08fe09a0a67d3ba356e32937c3287c75c3bc9",
+      "destination": "global/.agents/skills/archify/renderers/shared/validator.mjs",
+      "destination_sha256": "f5cf5b9aa3623a456e9a07f0c5f08fe09a0a67d3ba356e32937c3287c75c3bc9",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/timeline/README.md",
+      "source_sha256": "43d13baa7b56ddbad8842224d025bc0c4d1efb39a9091b5ae2f8ba8ad7d45601",
+      "destination": "global/.agents/skills/archify/renderers/timeline/README.md",
+      "destination_sha256": "43d13baa7b56ddbad8842224d025bc0c4d1efb39a9091b5ae2f8ba8ad7d45601",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/timeline/render-timeline.mjs",
+      "source_sha256": "71cbd3e61f73013308bbb1ae2a0f33419503492c3b44127458a29b4703443766",
+      "destination": "global/.agents/skills/archify/renderers/timeline/render-timeline.mjs",
+      "destination_sha256": "71cbd3e61f73013308bbb1ae2a0f33419503492c3b44127458a29b4703443766",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/tree/README.md",
+      "source_sha256": "c1afbcb94e026910987199776d76896b58b7947db2f94d90d1da608e44ca9a35",
+      "destination": "global/.agents/skills/archify/renderers/tree/README.md",
+      "destination_sha256": "c1afbcb94e026910987199776d76896b58b7947db2f94d90d1da608e44ca9a35",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/tree/render-tree.mjs",
+      "source_sha256": "4e2ba7d4a3f567760c3801e7439bd18fa28acfe51e581479bd56ad549e240b68",
+      "destination": "global/.agents/skills/archify/renderers/tree/render-tree.mjs",
+      "destination_sha256": "4e2ba7d4a3f567760c3801e7439bd18fa28acfe51e581479bd56ad549e240b68",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/waterfall/README.md",
+      "source_sha256": "13afed9d91d02bdabea0b920c23cd6ee851a42e53d30e80042e2aee4f845ecd0",
+      "destination": "global/.agents/skills/archify/renderers/waterfall/README.md",
+      "destination_sha256": "13afed9d91d02bdabea0b920c23cd6ee851a42e53d30e80042e2aee4f845ecd0",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/waterfall/render-waterfall.mjs",
+      "source_sha256": "49d64cf52bd6955fb955ccb6b2cd76e31726ab18833626b3194790020ab1dd28",
+      "destination": "global/.agents/skills/archify/renderers/waterfall/render-waterfall.mjs",
+      "destination_sha256": "49d64cf52bd6955fb955ccb6b2cd76e31726ab18833626b3194790020ab1dd28",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/workflow/README.md",
+      "source_sha256": "47764099a6b0bd02804f4415b99dc860d7fd3dec01120ca41171ca91cb47f868",
+      "destination": "global/.agents/skills/archify/renderers/workflow/README.md",
+      "destination_sha256": "47764099a6b0bd02804f4415b99dc860d7fd3dec01120ca41171ca91cb47f868",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/workflow/render-workflow.mjs",
+      "source_sha256": "304df0df006c44ab01ad534f34cb48cbe163f7ed2e7e2e8490dfee88827d3aba",
+      "destination": "global/.agents/skills/archify/renderers/workflow/render-workflow.mjs",
+      "destination_sha256": "304df0df006c44ab01ad534f34cb48cbe163f7ed2e7e2e8490dfee88827d3aba",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/workflow/workflow-compiler.mjs",
+      "source_sha256": "a84fa7570341166e9190892b4ab9bd5fd1ac63290cc9ec5a48dcaaf8a4183a3f",
+      "destination": "global/.agents/skills/archify/renderers/workflow/workflow-compiler.mjs",
+      "destination_sha256": "a84fa7570341166e9190892b4ab9bd5fd1ac63290cc9ec5a48dcaaf8a4183a3f",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/workflow/workflow-migration-geometry.mjs",
+      "source_sha256": "472d662c1b94517d57a9a80ac8d8ab1b49db7292e12b88c6476de532e6a1aafa",
+      "destination": "global/.agents/skills/archify/renderers/workflow/workflow-migration-geometry.mjs",
+      "destination_sha256": "472d662c1b94517d57a9a80ac8d8ab1b49db7292e12b88c6476de532e6a1aafa",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/renderers/workflow/workflow-placement-repair.mjs",
+      "source_sha256": "3ee6e83c3a5279e1af2b06db39fd39c3348264b2daa159a94cda3e1d8de5ed7c",
+      "destination": "global/.agents/skills/archify/renderers/workflow/workflow-placement-repair.mjs",
+      "destination_sha256": "3ee6e83c3a5279e1af2b06db39fd39c3348264b2daa159a94cda3e1d8de5ed7c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/README.md",
+      "source_sha256": "0e3d14c0feeb631938960b8a1348133536c3445d8f967fb35adcb7d3981451e6",
+      "destination": "global/.agents/skills/archify/schemas/README.md",
+      "destination_sha256": "0e3d14c0feeb631938960b8a1348133536c3445d8f967fb35adcb7d3981451e6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/architecture.schema.json",
+      "source_sha256": "aef992b585a18a4016b8207254fe43a6227b0d45322a1ba95e0f69a80fc8f8c1",
+      "destination": "global/.agents/skills/archify/schemas/architecture.schema.json",
+      "destination_sha256": "aef992b585a18a4016b8207254fe43a6227b0d45322a1ba95e0f69a80fc8f8c1",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/class.schema.json",
+      "source_sha256": "0ecfb9948563166c4f23df784d618ddd93f003ee61402a9349c5f63b0284ff2a",
+      "destination": "global/.agents/skills/archify/schemas/class.schema.json",
+      "destination_sha256": "0ecfb9948563166c4f23df784d618ddd93f003ee61402a9349c5f63b0284ff2a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/common.schema.json",
+      "source_sha256": "3bb6bde1122ebc1d47f73cf12400015baa0c7e5650e5780b0e89773d7ead4def",
+      "destination": "global/.agents/skills/archify/schemas/common.schema.json",
+      "destination_sha256": "3bb6bde1122ebc1d47f73cf12400015baa0c7e5650e5780b0e89773d7ead4def",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/dataflow.schema.json",
+      "source_sha256": "f01b2faafa5fd6e300f6b5045eeca70f70226552411180442d6e528dd45172f1",
+      "destination": "global/.agents/skills/archify/schemas/dataflow.schema.json",
+      "destination_sha256": "f01b2faafa5fd6e300f6b5045eeca70f70226552411180442d6e528dd45172f1",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/erd.schema.json",
+      "source_sha256": "83aef0349f3cd415a00da4ed30c7864056dc9599627e004e6b7168ad4149ebc8",
+      "destination": "global/.agents/skills/archify/schemas/erd.schema.json",
+      "destination_sha256": "83aef0349f3cd415a00da4ed30c7864056dc9599627e004e6b7168ad4149ebc8",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/lifecycle.schema.json",
+      "source_sha256": "151befae29a68833ba26e7848769e89ab9dc71fc5bba234a91a62307338cfa49",
+      "destination": "global/.agents/skills/archify/schemas/lifecycle.schema.json",
+      "destination_sha256": "151befae29a68833ba26e7848769e89ab9dc71fc5bba234a91a62307338cfa49",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/sequence.schema.json",
+      "source_sha256": "97af565f8b6d8fbd4b5be40ddb52f4943accab2cf4f386d695e800d367dd4f89",
+      "destination": "global/.agents/skills/archify/schemas/sequence.schema.json",
+      "destination_sha256": "97af565f8b6d8fbd4b5be40ddb52f4943accab2cf4f386d695e800d367dd4f89",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/timeline.schema.json",
+      "source_sha256": "4a657251d454bde44ef4697c960fe7503eeb4db4e50f9540c7e2d54046dd0769",
+      "destination": "global/.agents/skills/archify/schemas/timeline.schema.json",
+      "destination_sha256": "4a657251d454bde44ef4697c960fe7503eeb4db4e50f9540c7e2d54046dd0769",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/tree.schema.json",
+      "source_sha256": "65c794a1f522ce336afe787bd59adb63a81f57a5bba3ac266f2bae5c3a07b8c3",
+      "destination": "global/.agents/skills/archify/schemas/tree.schema.json",
+      "destination_sha256": "65c794a1f522ce336afe787bd59adb63a81f57a5bba3ac266f2bae5c3a07b8c3",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/waterfall.schema.json",
+      "source_sha256": "7c3000534b491ce86b96ace528e9bd5a453ba3d14294a724da3ece4bd83b51f6",
+      "destination": "global/.agents/skills/archify/schemas/waterfall.schema.json",
+      "destination_sha256": "7c3000534b491ce86b96ace528e9bd5a453ba3d14294a724da3ece4bd83b51f6",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/schemas/workflow.schema.json",
+      "source_sha256": "e13a1ce3b841376c8c6f6b9cb8152f8c0c7d70a77a2960fecdfe9025de83dc25",
+      "destination": "global/.agents/skills/archify/schemas/workflow.schema.json",
+      "destination_sha256": "e13a1ce3b841376c8c6f6b9cb8152f8c0c7d70a77a2960fecdfe9025de83dc25",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/scripts/check-render-output.mjs",
+      "source_sha256": "89b977928a525006eb4ffeb07f3b7607a31cd850c3c8cb47fa85e276f3b5c093",
+      "destination": "global/.agents/skills/archify/scripts/check-render-output.mjs",
+      "destination_sha256": "89b977928a525006eb4ffeb07f3b7607a31cd850c3c8cb47fa85e276f3b5c093",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/scripts/check-update.mjs",
+      "source_sha256": "899e275fc63aa8cc7d324c112dfcc23bae0a6079cdbde97b9d7718a6e4bbd047",
+      "destination": "global/.agents/skills/archify/scripts/check-update.mjs",
+      "destination_sha256": "899e275fc63aa8cc7d324c112dfcc23bae0a6079cdbde97b9d7718a6e4bbd047",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/scripts/delivery-update-child.mjs",
+      "source_sha256": "ec231c992ab9b548c735698f209cb350d4b137aad2a5e8cb1374e692b6b38064",
+      "destination": "global/.agents/skills/archify/scripts/delivery-update-child.mjs",
+      "destination_sha256": "ec231c992ab9b548c735698f209cb350d4b137aad2a5e8cb1374e692b6b38064",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/scripts/render-examples.mjs",
+      "source_sha256": "c2c99c4153cf21f0526cf3f041c1d81716017be182d404173f8961fa494e8c8c",
+      "destination": "global/.agents/skills/archify/scripts/render-examples.mjs",
+      "destination_sha256": "c2c99c4153cf21f0526cf3f041c1d81716017be182d404173f8961fa494e8c8c",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/scripts/update-contract.mjs",
+      "source_sha256": "7c5d34c5fa2e08fcd0b42e33a0f3b4685fcecf3ac88f1ed820528df8fdc46cbc",
+      "destination": "global/.agents/skills/archify/scripts/update-contract.mjs",
+      "destination_sha256": "7c5d34c5fa2e08fcd0b42e33a0f3b4685fcecf3ac88f1ed820528df8fdc46cbc",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/archify/skill-release.json",
+      "source_sha256": "654ba03f9d19229b2646dc74283b205fc4403b6205b7c56f62bd4747a3ffdfe4",
+      "destination": "global/.agents/skills/archify/skill-release.json",
+      "destination_sha256": "654ba03f9d19229b2646dc74283b205fc4403b6205b7c56f62bd4747a3ffdfe4",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/SKILL.md",
+      "source_sha256": "9593fa06929e73e74e2a1dde81d4ca8227fbec6fbe325567d4ca544aac71024d",
+      "destination": "global/.agents/skills/atlas-doctor/SKILL.md",
+      "destination_sha256": "e9ca4b105691a80f6bb56a72018b79122c7e856b9fb894dc0b93a939ac9c746c",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/graphify-constraints.txt",
+      "source_sha256": "b2693ab853513cd6c8d8b2cd4137bd520017ac1a20b9f940860eb5972307ca5a",
+      "destination": "global/.agents/skills/atlas-doctor/graphify-constraints.txt",
+      "destination_sha256": "b2693ab853513cd6c8d8b2cd4137bd520017ac1a20b9f940860eb5972307ca5a",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-archify.sh",
+      "source_sha256": "73c31129db19ac9a7137945653b654aa0c6c51d448edf5251e94476ec819efa8",
+      "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-archify.sh",
+      "destination_sha256": "3811b0b9da4c3d0efe11c6f027c969f4636bd4a6068b72223de39dce19509aad",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
+      "source_sha256": "fbe8a0c0f693c7a11bcc9923ab4dbee51c25e5bb47556b6e4a5ec7e432074805",
+      "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
+      "destination_sha256": "a290e957719d54083700534fcde7eb6a8419c4c589eb572554fbc4fd6a1b385b",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/doctor.sh",
+      "source_sha256": "bc636b4b9f9be975907570378a757e70c15463afc8835e613a3161cb18717375",
+      "destination": "global/.agents/skills/atlas-doctor/scripts/doctor.sh",
+      "destination_sha256": "37fda37ef031c6974d94b5d333344e9627f027a8b39e990c1375ed96614b2ef3",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram-flow/SKILL.md",
+      "source_sha256": "4f319dd20d0d2b512b4b3f5b4c1f62de6d9a199de4cff952486f8baa09a669c2",
+      "destination": "global/.agents/skills/diagram-flow/SKILL.md",
+      "destination_sha256": "3bf8d56f33d6d2fc724c3a8441c4b46ce281888f86ea5233d76e97bdc9b526b9",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram-repo/SKILL.md",
+      "source_sha256": "8819d9a9c074dd8a489ddcc498d5064d3e61f2040a3552c27369bef52fa1bb8c",
+      "destination": "global/.agents/skills/diagram-repo/SKILL.md",
+      "destination_sha256": "c8fc1f8ae9b145e686ad0aa5535ab0c30646f5e98241a8d15379a08f03c14a2a",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram-repo/scripts/repo-identity.sh",
+      "source_sha256": "e7dd4c217b5a15a4a5f1953db8f38395a19c15a893dbac4374abda1e301f3e34",
+      "destination": "global/.agents/skills/diagram-repo/scripts/repo-identity.sh",
+      "destination_sha256": "70fd9397c6a3643d8077d3bb12d59647bddca01b4d22db12efee718213313c42",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram/SKILL.md",
+      "source_sha256": "248243b3a787ce5f509ad1ddaa5e8059bc28e4ebeab9ac0a2bfed16311102bea",
+      "destination": "global/.agents/skills/diagram/SKILL.md",
+      "destination_sha256": "a636500b3798ac59185f36f22b454e5993b4b2b3d33951cf42ba77469e0bd7b1",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram/scripts/keep-copy.sh",
+      "source_sha256": "6fd434c232fe62dd8454a006af282d07e972ff4f59a38081c2dc2f94e299ad94",
+      "destination": "global/.agents/skills/diagram/scripts/keep-copy.sh",
+      "destination_sha256": "d4bce61cb3c0d687ed2e7d22ea09ac4b29f1e335013185d93c7a3f294add1b0e",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/diagram/scripts/request-dir.sh",
+      "source_sha256": "76dace355bbada1ea9ec258ad47e7acdf5a172814ed6ad7fc35e59b64242b631",
+      "destination": "global/.agents/skills/diagram/scripts/request-dir.sh",
+      "destination_sha256": "abe625cc3e01770261d6b5251cea00a62b2b7f54f2aa3a9ad01e863ee69f00c2",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/LICENSE",
+      "source_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "destination": "global/.agents/skills/graphify/LICENSE",
+      "destination_sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/LICENSE-MIT",
+      "source_sha256": "36ecff6bbb97aca1be64e95f42538cf796adde5864edac583e620643c096931a",
+      "destination": "global/.agents/skills/graphify/LICENSE-MIT",
+      "destination_sha256": "36ecff6bbb97aca1be64e95f42538cf796adde5864edac583e620643c096931a",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/NOTICE",
+      "source_sha256": "3448ea175bba09f6fed8a743000139fb4c7112de83f164355b5540b158576621",
+      "destination": "global/.agents/skills/graphify/NOTICE",
+      "destination_sha256": "3448ea175bba09f6fed8a743000139fb4c7112de83f164355b5540b158576621",
+      "transform": "copy"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/SKILL.md",
+      "source_sha256": "2386d546ab9e8b30dea1b0751f13d52e221988271c2cc8320d25a21419dc1d5c",
+      "destination": "global/.agents/skills/graphify/SKILL.md",
+      "destination_sha256": "8cd2aeb2d4e83be8d9ea72db26ce18dc9cea49b82793a28726b0e605bc33a7f3",
+      "transform": "graphify-skill"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/atlas-graphify.sh",
+      "source_sha256": "dfa4507301114d71a034ac26327ed1e36e333b55b3f41e1475525bfbc493d133",
+      "destination": "global/.agents/skills/graphify/atlas-graphify.sh",
+      "destination_sha256": "7e4caf65e62b49e9e2f7386e8b737ada93bf75c7f3fc27984fd892206d969cdd",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/atlas-preflight.sh",
+      "source_sha256": "c542c274968fdb9fcae8e5155d3a9a6fc9bf5e69d29f2b1394b5031411bec53a",
+      "destination": "global/.agents/skills/graphify/atlas-preflight.sh",
+      "destination_sha256": "bfef56d6574732ef93f21119381f2b28398aa08f6a6d29cbd45c5e82752d4ad5",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/references/extraction-spec.md",
+      "source_sha256": "eb0e1eb039687751f85c2931a81f3dc281b452135a998ae88dc4cac9026383da",
+      "destination": "global/.agents/skills/graphify/references/extraction-spec.md",
+      "destination_sha256": "6b4c5056234b588ee1217f8c5abc1d8f65f0b1fe8c16e67e3488d8fec164b49d",
+      "transform": "reference"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/references/query.md",
+      "source_sha256": "716884a9439cae3ea6aaa9c5ca39541c9553525756b3d7160e7dcccef64e3cc4",
+      "destination": "global/.agents/skills/graphify/references/query.md",
+      "destination_sha256": "ff75b94dadd2bf052bb3f61dcbc02b37fd627c18db0a97f18a390fe3ad4febe8",
+      "transform": "reference"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/graphify/references/update.md",
+      "source_sha256": "d743d7879ca2f2d4d4e1cdb807d24d85708ab78423b7990dc7d13f88e4e04d8e",
+      "destination": "global/.agents/skills/graphify/references/update.md",
+      "destination_sha256": "f76b8a5679ce2a4aaf04d88adb4c07183846116a02164a2f94f185abdc0b8e2d",
+      "transform": "reference"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/map-ask/SKILL.md",
+      "source_sha256": "4162d73da10ad6c11451a62163c33cd86d9f49f936455c596c4162ad2eddb9c1",
+      "destination": "global/.agents/skills/map-ask/SKILL.md",
+      "destination_sha256": "78688517b8ba74c408230575de37efac3c7d1d44555c9039ace65f6eafbc24a9",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/map-impact/SKILL.md",
+      "source_sha256": "70e7a494023e4dfcfb625b4bfa656eff5f58288b2d5c200fb012a7a9f739377c",
+      "destination": "global/.agents/skills/map-impact/SKILL.md",
+      "destination_sha256": "d7508c3054cf8ad8b38fcff333d2c76be05b5c9e4dc2da598b9972d508ca9b79",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/map-impact/scripts/bead-names.sh",
+      "source_sha256": "4c934136bac32db06ff7f925f0401c63a6ed8f4f736984ee72b9d2d87b2cef2f",
+      "destination": "global/.agents/skills/map-impact/scripts/bead-names.sh",
+      "destination_sha256": "4bed8d15c25067e2f2bd6f68d3f4164d3ae9036bd033f032afa64c31db7cd185",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/map-repo/SKILL.md",
+      "source_sha256": "e09832eeaa8a40a44ad9df77714ab034a686e77ceb24d23eb01d726b1d3e1274",
+      "destination": "global/.agents/skills/map-repo/SKILL.md",
+      "destination_sha256": "35f5ad1be34e11881405a07bbc72e344977859398b501297fc4958bf81cee8e6",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-android/SKILL.md",
+      "source_sha256": "fe5699f3436dfe655b4cd5f6aba6be135731268262d5d4f89afd98aedde117dd",
+      "destination": "global/.agents/skills/rea-android/SKILL.md",
+      "destination_sha256": "887960d686df9eb3a9e737dc9ac1b65cb6011c248610b6bf1bdeb2ead01c73e1",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
+      "source_sha256": "54cd6345af41759f2c8e2558a5378f6067ec311f8bf037257fe7006b0598846f",
+      "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
+      "destination_sha256": "1f07a3c3c359be2132b69f763a3fa5f3ce67c66e74034a9b75b3f8d893b8d46d",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-binary/SKILL.md",
+      "source_sha256": "f4bc2e9d89282cdd59c3212cd3c7c66bb679d72833c2d24bf615e426d0d98a73",
+      "destination": "global/.agents/skills/rea-binary/SKILL.md",
+      "destination_sha256": "541d77435384f5eda7d0fd9a4e7b8bf79247486fa49e2bec202f7b28dcb8e2cf",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
+      "source_sha256": "a87eda7956a11859d8492cbffacd23581f3de00d2293f30cb2496a21049f21ee",
+      "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
+      "destination_sha256": "2c667b42dd3a01ac26ee9ab9e2cf435b80cdd4dc8f4bca899cae5555d1b18b16",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-diagram/SKILL.md",
+      "source_sha256": "506517be81e5623b0aab5b0dc0e53b6b8c01e8ae03ed01abc7d8e90367218641",
+      "destination": "global/.agents/skills/rea-diagram/SKILL.md",
+      "destination_sha256": "89740340ccaa176dbf3256c2d5ab7e7a2a2708539ae48dfead537c58cb7eb6c9",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-doctor/SKILL.md",
+      "source_sha256": "6d8965b2b6848efbb43529f7b0c5da09657b229cabb4277c046ea0203702edcf",
+      "destination": "global/.agents/skills/rea-doctor/SKILL.md",
+      "destination_sha256": "91faa10bd0203626ed0c1f057cd28f0c1f9df38fa978b6b3d33756f90a1a0bea",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-electron/SKILL.md",
+      "source_sha256": "25a822eb89c687ee0b14c0290a95f31322663ffce4d3f378b439dfa2f7958663",
+      "destination": "global/.agents/skills/rea-electron/SKILL.md",
+      "destination_sha256": "c573569b18226c8bd8c837019a7bd284fbb09fdbf53d94ab0360ef562fafeca2",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-feature/SKILL.md",
+      "source_sha256": "828f3c37c59af1611dfc9664666d22330a715461239988d2b28c3c4ae8f0fb71",
+      "destination": "global/.agents/skills/rea-feature/SKILL.md",
+      "destination_sha256": "aeff078b7ea3665eef31fae798e38df1fb7f95b0300d0c24c6c69330cc162f9d",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-map/SKILL.md",
+      "source_sha256": "b2201ef4dde8e462abdf6bc8ae9c0ca3fdc8505b062ed5b1270e8e37608c8f23",
+      "destination": "global/.agents/skills/rea-map/SKILL.md",
+      "destination_sha256": "f497f72434d88070e14adf4064f2e3c25d9e9cfec673861cf5b1a40e753d069d",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-triage/SKILL.md",
+      "source_sha256": "5ebb7b306589b6b135dbc7294536bae863a86fa4a9c6b46710fb89bf19053cd0",
+      "destination": "global/.agents/skills/rea-triage/SKILL.md",
+      "destination_sha256": "1fcd32887c020dcedee14ee32bf1fcf33f0468798794eced92e08d03216be997",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-triage/scripts/target-kind.sh",
+      "source_sha256": "3da981e822aa59ce9c6d7d845dcad610e6e4e1af1fa954b8865dfc2a803c7b38",
+      "destination": "global/.agents/skills/rea-triage/scripts/target-kind.sh",
+      "destination_sha256": "e37d3bafc292b99172f1fb9ef5fb647f3e205e6db5c8cdaf3bd1b451b5d227d6",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-update/SKILL.md",
+      "source_sha256": "4892d1c9e1fcb590186af8eb6debafe80e27a0928d2b00c1e1c9d2ab82d5cfe1",
+      "destination": "global/.agents/skills/rea-update/SKILL.md",
+      "destination_sha256": "10feddd95b9b336b6bf95c9d661f4e06175cecb25e2e309fa4321da171076013",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-update/scripts/update.sh",
+      "source_sha256": "8780223776573155d663a47d2d2aa78c9900dd6d0587e121774bc5d0c6a5c87b",
+      "destination": "global/.agents/skills/rea-update/scripts/update.sh",
+      "destination_sha256": "72bed51863b9256f7a48f6b23cc330e5652f63d5b5d76db2015fdfef09337a85",
+      "transform": "script"
+    },
+    {
+      "source": "tools/atlas-codex/atlas-read-chunk.py",
+      "source_sha256": "bb431cb53add34d36c5c945938bc133c69444363bdb18d3e0168e556319051a2",
+      "destination": "global/.agents/skills/graphify/atlas-read-chunk.py",
+      "destination_sha256": "bb431cb53add34d36c5c945938bc133c69444363bdb18d3e0168e556319051a2",
+      "transform": "kit-native"
+    },
+    {
+      "source": "tools/atlas-codex/atlas-read-chunk.sh",
+      "source_sha256": "1c7f130291ec2e5dd47168f3b68bfb908a2bd7dbacf12296ed38f8e80bfce3a1",
+      "destination": "global/.agents/skills/graphify/atlas-read-chunk.sh",
+      "destination_sha256": "04903dcc94e0c69dfe6145dfac55c39501b5bd8e97bf9b042e1836a318e77443",
+      "transform": "kit-native"
+    }
+  ]
+}

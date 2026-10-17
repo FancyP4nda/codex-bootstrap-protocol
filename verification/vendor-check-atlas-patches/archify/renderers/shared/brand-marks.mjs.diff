@@ -1,0 +1,15 @@
+--- a/archify/renderers/shared/brand-marks.mjs
++++ b/global/.claude/skills/archify/renderers/shared/brand-marks.mjs
+@@ -499,6 +499,12 @@
+     sourceUrl: publicSourceUrl,
+     reason,
+   });
++  // claude-bootstrap atlas pack, recorded local patch (FR-030): the switch
++  // stops the object-brand fetch and brands capture before any DNS lookup or
++  // connection.
++  if (process.env.ARCHIFY_BRAND_CAPTURE_DISABLED === '1') {
++    return fallback('remote brand capture is disabled (ARCHIFY_BRAND_CAPTURE_DISABLED=1)');
++  }
+   try {
+     const page = await checkedFetch(sourceUrl, 'text/html,application/xhtml+xml,image/*;q=0.8', deadline);
+     const pageType = (page.response.headers.get('content-type') || '').toLocaleLowerCase('en-US');

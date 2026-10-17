@@ -18,6 +18,7 @@
 | Falcon | Sandboxed worktrees, attempt-specific validated reports, audited hash-bound steering handoff/commit/recover; local stoppable monitor |
 | Herald | Native design/prototype/accessibility/review skill and four TOML specialists |
 | Impeccable / Taste | Full vendored subset, native helpers, licenses, explicit unverified opt-in |
+| Atlas pack (Archify, Graphify, REA Commands) | Global pack: all 16 Commands derived from the Claude kit by `tools/migrate-atlas.mjs`, two vendored skills, all user-only (`agents/openai.yaml`); `$atlas-doctor` checks `multi_agent`; live implicit-invocation check pending (A-011) |
 | Pack validation/updating | 28 validator and 8 updater checks; truthful missing-evidence rejection |
 
 Skill instructions express workflow intent; only native sandbox/approval controls enforce tool permissions. Global/project duplicate orientation handlers are avoided. No persistent Falcon service, Claude background runtime, automatic hook trust or hardcoded model default is shipped.
