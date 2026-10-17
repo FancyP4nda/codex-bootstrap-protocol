@@ -106,6 +106,10 @@ serve operations the pack does not support and are not vendored.
   fixed command, `graphify/atlas-read-chunk.py <list> <index>`, which reads the
   list as data, checks the entry against the scan root again and prints the
   file, so no file name reaches a shell and no file-reading tool is needed.
+  The Claude kit's Step B0 and B1 also refuse a file name that holds a double
+  quote or a backslash, because its workers get the list as JSON text in a
+  prompt; here the delta file puts the looser check back, since the reader
+  reads the list as data and handles those names.
   Upstream's Part B names a Task tool and
   agent types that Codex does not have. The recorded diff of `SKILL.md`
   against upstream's `skill-agents.md` is

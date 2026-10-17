@@ -270,12 +270,10 @@ export GRAPHIFY_SPEC_PATH
 import os
 from pathlib import Path
 ROOT = os.fsdecode(Path('graphify-out/.graphify_root').read_bytes())  # the scan root Step 1 recorded
-import json
-from graphify.cache import check_semantic_cache
 import re
 import unicodedata
 # The two copies of this check (Step B0 and Step B1) must stay identical.
-BAD = re.compile(r'[\x00-\x1f\x7f-\x9f\u2028\u2029\ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
+BAD = re.compile(r'[\x00-\x1f\x7f-\x9f  \ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
 LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8\u2216\u2571\u27cb\u1735\uff3c\u29f5\u29f9'  # characters that pass for a slash or a dot
 BLANK = '\u3164\uffa0\u115f\u1160\u2800\u034f\u17b4\u17b5'  # characters that render as nothing
 def odd(c):
@@ -293,6 +291,8 @@ def check_input(f):
     if os.path.commonpath([real, ROOT_REAL]) != ROOT_REAL:
         print(f'STOP: refusing {f!r}: it resolves to {real!r}, outside the scan root {ROOT!r}. The user must remove that file or link before the run is repeated.')
         raise SystemExit(1)
+import json
+from graphify.cache import check_semantic_cache
 from pathlib import Path
 
 detect = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encoding="utf-8"))
@@ -301,6 +301,11 @@ detect = json.loads(Path('graphify-out/.graphify_detect.json').read_text(encodin
 # every source file (#1392). Video is not extracted in the atlas pack.
 all_files = [f for cat in ('document', 'paper', 'image') for f in detect['files'].get(cat, [])]
 
+Path('graphify-out/.graphify_uncached.json').unlink(missing_ok=True)  # a refusal must not leave an earlier run's list behind
+for stale in Path('graphify-out').glob('.graphify_chunk_*'):  # lists, total and results of an earlier run: cleared before any check can refuse
+    stale.unlink()
+for f in all_files:  # a repository file name is attacker-controlled: check every one before any list is written or file read
+    check_input(f)
 Path('graphify-out/.graphify_uncached.json').unlink(missing_ok=True)  # a refusal must not leave an earlier run's list behind
 for stale in Path('graphify-out').glob('.graphify_chunk_*'):  # lists, total and results of an earlier run: cleared before any check can refuse
     stale.unlink()
@@ -315,11 +320,7 @@ if cached_nodes or cached_edges or cached_hyperedges:
 else:
     Path('graphify-out/.graphify_cached.json').unlink(missing_ok=True)
 Path('graphify-out/.graphify_uncached.txt').unlink(missing_ok=True)  # the line-based list of an older run
-Path('graphify-out/.graphify_uncached.json').write_text(json.dumps(uncached, ensure_ascii=False), encoding="utf-8")  # JSON, since a file name may hold a line break
-# Nothing has been dispatched yet, so any chunk file on disk is a leftover from an
-# interrupted run, and Step B3 merges every .graphify_chunk_*.json it finds.
-for stale in Path('graphify-out').glob('.graphify_chunk_*'):  # lists, total and results of an earlier run
-    stale.unlink()
+Path('graphify-out/.graphify_uncached.json').write_text(json.dumps(uncached, ensure_ascii=False), encoding="utf-8")  # a JSON array, never one path per line: a name may hold a line break
 print(f'Cache: {len(all_files)-len(uncached)} files hit, {len(uncached)} files need extraction')
 GRAPHIFY_PY
 ```
@@ -328,7 +329,7 @@ If the block prints a line that starts with `STOP`, show it to the user exactly 
 
 **Step B1 - Split into chunks**
 
-Load files from `graphify-out/.graphify_uncached.json` (a JSON array of paths) and split them into chunks of 20-25 files each; each image gets its own chunk (vision needs separate context), and files of one directory stay together so related artifacts land in the same chunk. Write every chunk to its own list file, `graphify-out/.graphify_chunk_NN.files` (a JSON array of paths, never one path per line, since a file name may hold a line break; NN from 01. Step B1 checked each path when it wrote the list; a worker still reads a file only through the reader command of Step B2 and never builds a shell command from its name), and the chunk count to `graphify-out/.graphify_chunk_total`. This block does the split (it also removes the leftovers of an interrupted run):
+Load files from `graphify-out/.graphify_uncached.json` (a JSON array of paths) and split them into chunks of 20-25 files each; each image gets its own chunk (vision needs separate context), and files of one directory stay together so related artifacts land in the same chunk and cross-file relationships are more likely to be extracted. Write every chunk to its own list file, `graphify-out/.graphify_chunk_NN.files` (a JSON array of paths, never one path per line, since a file name may hold a line break; NN from 01; a worker reads a file only through the reader command of Step B2 and never builds a shell command from its name), and the chunk count to `graphify-out/.graphify_chunk_total`. This block does the split; it checks every path again and removes the leftovers of an interrupted run first:
 ```bash
 export GRAPHIFY_NO_AUTO_REFRESH=1
 export GIT_NO_LAZY_FETCH=1 GIT_PROTOCOL_FROM_USER=0 GIT_ALLOW_PROTOCOL=
@@ -344,7 +345,7 @@ ROOT = os.fsdecode((out/'.graphify_root').read_bytes())  # the scan root Step 1 
 import re
 import unicodedata
 # The two copies of this check (Step B0 and Step B1) must stay identical.
-BAD = re.compile(r'[\x00-\x1f\x7f-\x9f\u2028\u2029\ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
+BAD = re.compile(r'[\x00-\x1f\x7f-\x9f  \ud800-\udfff]')  # control, line-separator and unpaired-surrogate characters: a line reader would split the name, and a surrogate cannot be written
 LOOKALIKE = '\u2215\u2044\uff0f\uff0e\u29f8\u2216\u2571\u27cb\u1735\uff3c\u29f5\u29f9'  # characters that pass for a slash or a dot
 BLANK = '\u3164\uffa0\u115f\u1160\u2800\u034f\u17b4\u17b5'  # characters that render as nothing
 def odd(c):
@@ -364,7 +365,7 @@ def check_input(f):
         raise SystemExit(1)
 files = json.loads((out/'.graphify_uncached.json').read_text(encoding="utf-8"))
 if not isinstance(files, list):
-    print('STOP: .graphify_uncached.json is not a JSON array of paths; run Step B0 again.')
+    print('STOP: .graphify_uncached.json is not a JSON array of paths; the user must have Step B0 run again.')
     raise SystemExit(1)
 for f in files:  # every worker input is checked here, before any chunk file exists
     check_input(f)
@@ -389,7 +390,7 @@ GRAPHIFY_PY
 
 If the block prints a line that starts with `STOP`, show it to the user exactly as printed and stop: run no later step, and rename, move or delete no file yourself.
 
-The chunk files are the only hand-off between this step, the workers of Step B2 and Step B3.
+The chunk files are the only hand-off between this step and the subagents of Step B2: FILE_LIST is the JSON array in that chunk's `.graphify_chunk_NN.files`, passed as it is, never one path per line.
 
 **Step B2 - Extract every chunk (native subagents, or this session in turn)**
 
@@ -939,7 +940,7 @@ print(f'This run: {input_tok:,} input tokens, {output_tok:,} output tokens')
 print(f'All time: {cost["total_input_tokens"]:,} input, {cost["total_output_tokens"]:,} output ({len(cost["runs"])} runs)')
 GRAPHIFY_PY
 rm -f graphify-out/.graphify_detect.json graphify-out/.graphify_extract.json graphify-out/.graphify_ast.json graphify-out/.graphify_semantic.json graphify-out/.graphify_analysis.json
-find graphify-out -maxdepth 1 -name '.graphify_chunk_*.json' -delete 2>/dev/null
+find graphify-out -maxdepth 1 -name '.graphify_chunk_*' -delete 2>/dev/null
 rm -f graphify-out/.needs_update 2>/dev/null || true
 ```
 

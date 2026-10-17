@@ -632,21 +632,91 @@ _rea_cand_trim() {
 }
 # _rea_value_hit <value>: true when the whole value, or an entry of it
 # between ":", names a path inside; nothing else is split or expanded, and
-# a space is part of a path. PATH (_REEN) is the one executable search
-# path REA 6.4.0 and the tools it starts walk, so there every entry is a
-# path (_REESR), bare words included, and an empty one is ".". Any other
-# name ending in PATH is a list (MANPATH, INFOPATH, NIX_PATH): an empty
-# entry is a default marker, not the working directory, and a name=path
-# entry is checked by its path part too.
+# a space is part of a path. Lists of directories are default-deny: a tool
+# REA starts may search or load code from any of them (Qt's plugin
+# directories, Lua's module paths), resolving a relative entry from its
+# working directory. So PATH, every name ending in PATH or with PATH_
+# (GST_PLUGIN_PATH_1_0), every *_DIRS name and GLib's module directories
+# (GIO_EXTRA_MODULES, GIO_MODULE_DIR) get PATH's rule (_REESR): every
+# entry is a path, bare words included, an empty one is ".", and each ":"
+# entry, each ";" entry (Lua's lists) and each piece split at both is a
+# candidate of its own. The Perl and Ruby library lists are
+# refused above as code-loading; they are named here too so that leaving
+# that list would still keep them strict. Only four names are relaxed
+# (_REELS), each because nothing loads code from it: MANPATH (man pages),
+# INFOPATH (info pages), NIX_PATH (Nix expressions, evaluated by nix, which
+# REA never runs) and WINDOWPATH (X virtual-terminal numbers, not
+# directories, exported by xinit and display managers). There an empty
+# entry is a default marker (manpath(5)), not the working directory, and a
+# name=path entry is checked by its path part.
+# _rea_split_hit <value> <":" or ";">: true when an entry of the value
+# between that separator names a path inside, by PATH's rule (_REESR set):
+# an empty entry is ".".
+_rea_split_hit() {
+    _REESD="$1$2"
+    while [ -n "$_REESD" ]; do
+        case "$2" in
+            :)
+                _REEV=${_REESD%%:*}
+                _REESD=${_REESD#*:}
+                ;;
+            *)
+                _REEV=${_REESD%%;*}
+                _REESD=${_REESD#*;}
+                ;;
+        esac
+        [ -n "$_REEV" ] || _REEV=.
+        _rea_cand_trim "$_REEV" && return 0
+    done
+    return 1
+}
 _rea_value_hit() {
     _REESR=""
     _rea_cand_trim "$1" && return 0
     _REELS=""
     case "$_REEN" in
-        PATH) _REESR=1 ;;
-        *PATH) _REELS=1 ;;
+        MANPATH | INFOPATH | NIX_PATH) _REELS=1 ;;
+        # Only in its own shape, digits and ":", is WINDOWPATH relaxed.
+        WINDOWPATH)
+            case "$1" in
+                *[!0-9:]*) _REESR=1 ;;
+                *) _REELS=1 ;;
+            esac
+            ;;
+        *PATH | *PATH_* | *_DIRS | PERL5LIB | PERLLIB | RUBYLIB | GIO_EXTRA_MODULES | GIO_MODULE_DIR) _REESR=1 ;;
     esac
+    # Outside PATH an empty value sets no entries: unset, the default (the
+    # XDG spec; VS Code's snap exports GTK_PATH_VSCODE_SNAP_ORIG= empty).
+    if [ -z "$1" ] && [ "$_REEN" != PATH ]; then
+        _REESR=""
+        return 1
+    fi
     _REEU="$1:"
+    if [ -n "$_REESR" ]; then
+        # Every splitting a tool might use adds candidates, none replaces
+        # another: each ":" entry whole (a tool that splits only at ":" and
+        # joins by text: in /proc/self/cwdx;/../cwd/bin the ".." pops
+        # "cwdx;"), each ";" entry whole (Lua), then the pieces split at
+        # both, below.
+        if _rea_split_hit "$1" : || _rea_split_hit "$1" ';'; then
+            _REESR=""
+            return 0
+        fi
+        _REESC=$_REEU
+        _REEU=""
+        while :; do
+            case "$_REESC" in
+                *';'*)
+                    _REEU="$_REEU${_REESC%%;*}:"
+                    _REESC=${_REESC#*;}
+                    ;;
+                *)
+                    _REEU="$_REEU$_REESC"
+                    break
+                    ;;
+            esac
+        done
+    fi
     while [ -n "$_REEU" ]; do
         _REEV=${_REEU%%:*}
         _REEU=${_REEU#*:}
@@ -719,7 +789,8 @@ _rea_env_scan() {
                 LD_PRELOAD | LD_AUDIT | LD_LIBRARY_PATH | GCONV_PATH | \
                 DYLD_INSERT_LIBRARIES | DYLD_LIBRARY_PATH | DYLD_FRAMEWORK_PATH | DYLD_FALLBACK_LIBRARY_PATH | \
                 PYTHONPATH | PYTHONSTARTUP | PYTHONHOME | PYTHONUSERBASE | \
-                PERL5OPT | PERL5LIB | PERLLIB | RUBYOPT | RUBYLIB)
+                PERL5OPT | PERL5LIB | PERLLIB | RUBYOPT | RUBYLIB | \
+                QT_PLUGIN_PATH | QT_QPA_PLATFORM_PLUGIN_PATH)
                 if [ -n "$_REEG" ]; then
                     _rea_refuse_code
                     _REEBAD=1
