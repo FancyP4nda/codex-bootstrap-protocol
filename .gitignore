@@ -12,3 +12,7 @@ __pycache__/
 .beads/*.lock
 .beads/.auto-import-issues.jsonl
 bootstrap-backups/
+
+# Graphify and Archify scratch output (atlas pack)
+graphify-out/
+.archify/
