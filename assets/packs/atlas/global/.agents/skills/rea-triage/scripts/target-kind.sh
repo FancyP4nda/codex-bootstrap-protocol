@@ -8,8 +8,9 @@
 #
 # It prints one line, "kind: <kind>", for a local path or a URL, where <kind>
 # is native, electron-js, dotnet, apk, firmware, website, har or unknown. It
-# only reads: file names, the first bytes of a file and, for a .NET
-# assembly, a search of the file for the metadata signature. It never
+# only reads: file names, the first bytes of a file, for a .NET assembly a
+# search of the file for the metadata signature, and for a directory its
+# package.json and a search of the main file that names. It never
 # executes the target, never opens a special file (a fifo, a device or a
 # socket is refused), and never fetches a URL: an http or https URL is a
 # website by its text alone. The target is data, never a command.
@@ -85,6 +86,22 @@ kind_of_file() {
     echo unknown
 }
 
+# main_requires_electron <dir>: package.json's first "main" value, a
+# relative path without a ".." step, names a regular file in the directory
+# (as written, or with .js added, as Node resolves it) that holds
+# require('electron'), import ... from 'electron' or import('electron'),
+# in either quote. The file is only searched, never run.
+main_requires_electron() {
+    main=$(sed -n 's/.*"main"[[:space:]]*:[[:space:]]*"\([^"]*\)".*/\1/p' "$1/package.json" 2>/dev/null | head -n 1)
+    case "$main" in
+        '' | /* | .. | ../* | */.. | */../*) return 1 ;;
+    esac
+    entry="$1/$main"
+    [ -f "$entry" ] || entry="$entry.js"
+    [ -f "$entry" ] || return 1
+    grep -aqE "(require|import)[[:space:]]*\([[:space:]]*['\"]electron['\"][[:space:]]*\)|from[[:space:]]*['\"]electron['\"]" "$entry" 2>/dev/null
+}
+
 # kind_of_dir <dir>
 kind_of_dir() {
     d=$1
@@ -101,6 +118,13 @@ kind_of_dir() {
         return
     fi
     if [ -f "$d/package.json" ] && has_text "$d/package.json" '"electron"'; then
+        echo electron-js
+        return
+    fi
+    # An unpacked app (an extracted app.asar) often lists no electron
+    # dependency: its package.json main names a file inside the directory
+    # that requires or imports electron.
+    if [ -f "$d/package.json" ] && main_requires_electron "$d"; then
         echo electron-js
         return
     fi

@@ -12,7 +12,8 @@
 #
 # It does, in this order, and stops at the first miss:
 #   1. the runner's checks (atlas-graphify.sh --resolve, beside this file):
-#      GRAPHIFY_OUT unset or empty; the graphify executable and the
+#      no inherited GRAPHIFY_* variable but GRAPHIFY_NO_AUTO_REFRESH and
+#      GRAPHIFY_QUERY_LOG_DISABLE (refused by name, never by value); the graphify executable and the
 #      interpreter beside it outside the untrusted area (FR-031); and the pin,
 #      through that interpreter ("$PY" -I -m graphify --version must print
 #      exactly "graphify 0.9.85", a newer CLI being a mismatch), else the
@@ -41,7 +42,16 @@
 #      sit below a symlink, and must resolve inside the working directory.
 #      graphify-out/.graphify_python, .graphify_root and each output root's
 #      .graphify_build.json are exempt from the symlink scan, since step 3
-#      removes them; a directory at a .graphify_build.json is a stop;
+#      removes them; a directory at a .graphify_build.json is a stop. Then
+#      the symlink gate (FR-031, "Symlinked inputs"; AC-125): each scan root
+#      is walked whole, its output roots skipped, and every symlink there
+#      that Graphify's ignored_predicate doesn't exclude must resolve to a
+#      regular file under the scan root that git tracks (mode 100644 or
+#      100755) and that Graphify reads on its own (not excluded, not
+#      _is_sensitive, typed by classify_file, no Google Workspace
+#      shortcut). Each other link gets one line, naming it from the scan
+#      root and never its target; outside a git work tree, or without git,
+#      every link does;
 #   3. the run-local state files: it creates graphify-out/.graphify_python
 #      and graphify-out/.graphify_root exclusively, with this run's
 #      interpreter and the first scan root, resolved, and empties
@@ -53,15 +63,17 @@
 #      below), so Graphify skips every .archify/ directory and a
 #      repository's own config never shapes the corpus (FR-031, AC-118).
 # Before any check, it removes graphify-out/.graphify_python,
-# graphify-out/.graphify_root and graphify-out/.graphify_build.json (a
+# graphify-out/.graphify_root, graphify-out/.graphify_build.json and the
+# detection results .graphify_detect.json and .graphify_incremental.json (a
 # symlink included) when ./graphify-out is a real directory, so a stop never
-# leaves a repository's own state files there for a later block to run. A
+# leaves a repository's own state files, or an earlier run's detection, there
+# for a later block to run. --links removes nothing. A
 # scan root's own graphify-out/.graphify_build.json is replaced only in
 # step 3, once that root has passed the checks: removing it earlier would
 # act on a path not yet checked for symlinks. Nothing else is written before
-# every check has passed. On a stop it prints one line, which the skill
-# tells the agent to show as printed, and exits 1. On success it prints
-# nothing and exits 0.
+# every check has passed. On a stop it prints one line (the gate, one per
+# link), which the skill tells the agent to show as printed, and exits 1.
+# On success it prints nothing and exits 0.
 #
 # The runner finds the interpreter beside the real graphify executable (uv
 # tool, pipx or a venv), following its symlinks; the executable's first line
@@ -80,6 +92,12 @@
 #   <scan root>
 #   [<further scan root> ...]
 #   GRAPHIFY_ROOTS_EOF
+# With --links (the runner's call before every update), the same scan roots
+# on stdin get step 1, the checks of step 2 and the gate, and nothing is
+# written or removed; it prints nothing and exits 0 when the gate passes.
+# Before the gate, it stops unless each scan root's
+# graphify-out/.graphify_build.json, which the update of Graphify reads, is
+# BUILD_CONFIG byte for byte, so the gate and Graphify skip the same files.
 
 export GRAPHIFY_NO_AUTO_REFRESH=1
 # No helper, no lazy fetch and no transport for this script's git calls and
@@ -99,14 +117,27 @@ if ! PATH=$(/bin/sh "$_GHERE/atlas-graphify.sh" --path </dev/null) || [ -z "$PAT
 fi
 export PATH
 
+# --links: the symlink gate alone (FR-031, "Symlinked inputs"): step 1,
+# the checks of step 2 and the gate, with nothing written, the removal
+# below included. The runner runs it before every update.
+_GLINKS=""
+if [ "${1:-}" = --links ]; then
+    if [ "$#" -ne 1 ]; then
+        printf '%s\n' "atlas-preflight.sh: --links takes nothing else." >&2
+        exit 2
+    fi
+    _GLINKS=--links
+    shift
+fi
+
 # The state files are this run's or none: a check that stops below must not
 # leave the repository's own for a later block (or a fallback the agent
 # reaches for) to run. rm -f removes a symlink, never its target. The
 # --update flow's pending manifest goes too: only this flow's merge, after
 # this preflight, may write the one its Step 4 reads.
-if [ -d graphify-out ] && [ ! -L graphify-out ]; then
+if [ -z "$_GLINKS" ] && [ -d graphify-out ] && [ ! -L graphify-out ]; then
     rm -f graphify-out/.graphify_python graphify-out/.graphify_root graphify-out/.graphify_update_pending.json \
-        graphify-out/.graphify_build.json 2>/dev/null
+        graphify-out/.graphify_build.json graphify-out/.graphify_detect.json graphify-out/.graphify_incremental.json 2>/dev/null
 fi
 
 if [ "$#" -ne 0 ]; then
@@ -115,8 +146,8 @@ if [ "$#" -ne 0 ]; then
 fi
 
 # The pinned-version check, the interpreter resolution and the refusals of
-# a graphify or interpreter inside the untrusted area and of a set
-# GRAPHIFY_OUT are the runner's (atlas-graphify.sh, beside this file), so the
+# a graphify or interpreter inside the untrusted area and of an inherited
+# GRAPHIFY_* variable are the runner's (atlas-graphify.sh, beside this file), so the
 # version checked here is the code every later operation runs. It prints
 # the interpreter, or the one line to show, which this script passes on.
 if ! PYTHON=$(/bin/sh "$_GHERE/atlas-graphify.sh" --resolve </dev/null) || [ -z "$PYTHON" ]; then
@@ -137,9 +168,14 @@ import json, os, sys
 # atlas-check.sh leaves out of the provenance capture and state diff, minus
 # graphify-out/, which Graphify skips itself; a static check holds the two
 # equal (verification/atlas-build-config-check.py). gitignore true keeps a
-# committed config from making Graphify read git-ignored files.
+# committed config from making Graphify read git-ignored files. The symlink
+# gate judges links under these same two constants, and --links runs only
+# when the config on disk is BUILD_CONFIG, so the gate and Graphify skip the
+# same files (the same check holds that).
 BUILD_EXCLUDES = [".archify/"]
-BUILD_CONFIG = json.dumps({"excludes": BUILD_EXCLUDES, "gitignore": True})
+BUILD_GITIGNORE = True
+BUILD_CONFIG = json.dumps({"excludes": BUILD_EXCLUDES, "gitignore": BUILD_GITIGNORE})
+LINKS = sys.argv[1:] == ["--links"]
 
 def stop(message):
     sys.stdout.write(message + "\n")
@@ -326,9 +362,12 @@ outputs = []
 for root in [out] + [os.path.join(s, "graphify-out") for s in scan]:
     if root not in outputs:
         outputs.append(root)
-# Removed and written afresh below, so a symlink at any of them is no stop.
+# Removed and written afresh below, so a symlink at any of them is no stop;
+# --links writes nothing, so there every symlink is one.
 state = {os.path.join(out, ".graphify_python"), os.path.join(out, ".graphify_root")}
 state |= {os.path.join(root, ".graphify_build.json") for root in outputs}
+if LINKS:
+    state = set()
 for root in outputs:
     chain(shown(root))
     if not os.path.lexists(root):
@@ -347,6 +386,153 @@ for root in outputs:
     config = os.path.join(root, ".graphify_build.json")
     if os.path.isdir(config) and not os.path.islink(config):
         stop("%s is a directory; remove it, then run /graphify again." % shown(config))
+
+# The symlink gate (FR-031, "Symlinked inputs"; AC-125). Graphify 0.9.85
+# runs its ignore, sensitivity and type checks on the path of a link, never
+# on its target, and reads files inside detect itself (Office conversion,
+# word counts) and inside its update. So, before anything is written or
+# detected, each scan root is walked (os.walk, links not followed), skipping
+# only the output roots. No directory is pruned by the ignored_predicate of
+# Graphify: it also excludes a path by its name alone (_SKIP_FILES such as
+# yarn.lock, an installed graphify.mdc), a directory included, where detect
+# still walks that directory. Instead the predicate, under the build config
+# of the pack, judges each symlink, ancestors included, as detect would.
+# Every symlink it does not exclude is a candidate, a link to a directory and
+# a dangling one included. A candidate passes only when its resolved target is
+# a regular file under the scan root that git tracks as one (mode 100644 or
+# 100755) and that Graphify would read on its own: not excluded, not
+# sensitive, typed by classify_file, and no Google Workspace shortcut. Any
+# other gets one line, naming the link from the scan root and never its
+# target, and the run stops. A re-pin re-checks these Graphify functions.
+GATE_GIT = "%s is a symlink to a file atlas won\x27t read through; remove the link, or add it to .graphifyignore."
+GATE_NO_GIT = "%s is a symlink, and atlas follows none outside a git work tree; remove the link, or add it to .graphifyignore."
+
+def printable(text):
+    return "".join(c if c.isprintable() else "?" for c in text)
+
+def git_tracked(root):
+    """The paths under root, relative to it, that git tracks as regular
+    files, from one git ls-files -s -z (no pathspec); None outside a git
+    work tree or without a usable git. git comes from the cut PATH and runs
+    as the shared script runs it: no optional locks, no fsmonitor."""
+    import shutil, subprocess
+    git = shutil.which("git")
+    if not git:
+        return None
+    base = [git, "-C", root, "-c", "core.fsmonitor=false"]
+    opts = {"stdin": subprocess.DEVNULL, "stdout": subprocess.PIPE, "stderr": subprocess.DEVNULL,
+            "env": dict(os.environ, GIT_OPTIONAL_LOCKS="0")}
+    try:
+        probe = subprocess.run(base + ["rev-parse", "--is-inside-work-tree"], **opts)
+        if probe.returncode != 0 or probe.stdout.strip() != b"true":
+            return None
+        listing = subprocess.run(base + ["ls-files", "-s", "-z"], **opts)
+    except OSError:
+        return None
+    if listing.returncode != 0:
+        return None
+    tracked = set()
+    for entry in listing.stdout.split(b"\0"):
+        meta, tab, name = entry.partition(b"\t")
+        if tab and meta.split(b" ", 1)[0] in (b"100644", b"100755"):
+            tracked.add(name)
+    return tracked
+
+def symlinks(root, skip):
+    """Every symlink under root, links not followed, outside the directories
+    in skip."""
+    links = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        kept = []
+        for name in dirnames:
+            path = os.path.join(dirpath, name)
+            if os.path.islink(path):
+                links.append(path)
+            elif path not in skip:
+                kept.append(name)
+        dirnames[:] = kept
+        links += [p for p in (os.path.join(dirpath, n) for n in filenames) if os.path.islink(p)]
+    return links
+
+def gate():
+    import stat
+    from pathlib import Path
+    skip = {os.path.realpath(o) for o in outputs}
+    lines = []
+    for given in scan:
+        root = os.path.realpath(given)
+        links = symlinks(root, skip)
+        # A tree with no symlink passes without importing Graphify.
+        if not links:
+            continue
+        try:
+            from graphify.detect import GOOGLE_WORKSPACE_EXTENSIONS, _is_sensitive, classify_file, ignored_predicate
+        except ImportError as exc:
+            stop("the symlink gate cannot import what it needs from graphify.detect (%s); run \$atlas-doctor for the Graphify install line, then run /graphify again." % exc)
+        predicate = ignored_predicate(Path(root), extra_excludes=list(BUILD_EXCLUDES), gitignore=BUILD_GITIGNORE)
+
+        def excluded(path):
+            return predicate(Path(path))
+
+        links = [link for link in links if not excluded(link)]
+        if not links:
+            continue
+        tracked = git_tracked(root)
+
+        def passes(link):
+            target = os.path.realpath(link)
+            if tracked is None or target == root or os.path.commonpath([root, target]) != root:
+                return False
+            try:
+                if not stat.S_ISREG(os.stat(target).st_mode):
+                    return False
+            except OSError:
+                return False
+            if os.fsencode(os.path.relpath(target, root)) not in tracked:
+                return False
+            t = Path(target)
+            # classify_file last: it may read the opening text of the file.
+            return (not excluded(t) and not _is_sensitive(t)
+                    and t.suffix.lower() not in GOOGLE_WORKSPACE_EXTENSIONS and classify_file(t) is not None)
+
+        line = GATE_NO_GIT if tracked is None else GATE_GIT
+        lines += [line % printable(os.path.relpath(link, root)) for link in sorted(links) if not passes(link)]
+    if lines:
+        stop("\n".join(lines))
+
+# --links runs before the update of the runner, and the update of Graphify
+# 0.9.85 reads <path>/graphify-out/.graphify_build.json from disk (no file:
+# no extra excludes), while the gate judges links under BUILD_CONFIG. So the
+# update runs only on that config, byte for byte, as a full build or the
+# --update guard leaves it; else a link the gate skips as excluded (under
+# .archify/) could reach Graphify. Step 2 has already stopped on a symlink
+# or a directory there.
+CONFIG_LINE = ("%s is missing or isn\x27t the build config the atlas pack writes, so Graphify could skip other "
+               "files than the symlink gate checked; run \$map-repo --update, which writes it first.")
+
+def config_matches(path):
+    import stat
+    want = os.fsencode(BUILD_CONFIG)
+    try:
+        if not stat.S_ISREG(os.lstat(path).st_mode):
+            return False
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK | getattr(os, "O_NOFOLLOW", 0))
+        try:
+            return os.read(fd, len(want) + 1) == want
+        finally:
+            os.close(fd)
+    except OSError:
+        return False
+
+if LINKS:
+    for given in scan:
+        config = os.path.join(given, "graphify-out", ".graphify_build.json")
+        if not config_matches(config):
+            stop(CONFIG_LINE % printable(shown(config)))
+
+gate()
+if LINKS:
+    sys.exit(0)
 
 try:
     for root in outputs:
@@ -377,4 +563,4 @@ try:
         os.close(fd)
 except OSError as exc:
     stop("cannot write the run-local state files in graphify-out (%s); fix it, then run /graphify again." % exc.strerror)
-'
+' $_GLINKS

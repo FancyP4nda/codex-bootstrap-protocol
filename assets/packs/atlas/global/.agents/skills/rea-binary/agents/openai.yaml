@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Binary"
+  short_description: "Overview, key functions and decompilation of a native binary with REA"
+policy:
+  allow_implicit_invocation: false

@@ -34,9 +34,12 @@
 #      PYTHONPATH unset, PYTHONSAFEPATH=1 and PYTHONHASHSEED=0. The last one
 #      stops 0.9.85's update from re-executing itself as "python -m
 #      graphify" without -I, which would import a graphify/ package from the
-#      working directory. GRAPHIFY_OUT set to anything but "" is refused,
-#      naming its value: it would move Graphify's output away from the
-#      checked paths;
+#      working directory. Before all of this, any inherited GRAPHIFY_*
+#      variable but those two is refused, naming the variable and never its
+#      value (GRAPHIFY_OUT would move Graphify's output, GRAPHIFY_REPO_ROOT
+#      would send its update into another directory); the operation's child
+#      process gets no GRAPHIFY_* variable but those two, whatever the
+#      environment held;
 #   2. the operation: one of the five above, or the unsupported-operation
 #      line; then (for every operation and --resolve, not --path) the git
 #      environment rule: a git-steering variable set non-empty (GIT_CONFIG*,
@@ -61,7 +64,11 @@
 #      the operation writes (its listed defaults): inside the working
 #      directory, not "..", and not being, containing or sitting below a
 #      symlink. Then it runs "$PY" -I -m graphify <operation> ... in the
-#      fixed environment.
+#      fixed environment. Before an update, the preflight's symlink gate
+#      (--links; FR-031, "Symlinked inputs") checks the update path and
+#      refuses the update when any link there fails it, or when the build
+#      config Graphify's update reads (<path>/graphify-out/
+#      .graphify_build.json) isn't the preflight's, byte for byte.
 #
 # Usage (from a skill block; values only after the runner's own "--"):
 #   /bin/sh atlas-graphify.sh <operation> [<option> ...] [-- <value> ...]
@@ -74,15 +81,36 @@
 # "-": at 0.9.85 no operation the skill uses honours "--", so such a value
 # could be read as an option.
 
+# The inherited environment, before any other step: Graphify 0.9.85 reads
+# many GRAPHIFY_* variables (GRAPHIFY_REPO_ROOT makes its update change into
+# another directory after the checks below; GRAPHIFY_OUT moves its output),
+# so any inherited one but the two the pack sets is refused, naming the
+# variable and never its value. Builtins only: set lists the shell's
+# variables, and a first word that is not a plain name (a line of a
+# multi-line value) is skipped.
+_GBAD=$(set | while IFS= read -r _GL; do
+    _GN="${_GL%%=*}"
+    case "$_GN" in *[!A-Za-z0-9_]* | "$_GL") continue ;; esac
+    case "$_GN" in
+        GRAPHIFY_NO_AUTO_REFRESH | GRAPHIFY_QUERY_LOG_DISABLE) ;;
+        GRAPHIFY_*) printf '%s' "$_GN"; break ;;
+    esac
+done)
+if [ -n "$_GBAD" ]; then
+    printf '%s\n' "$_GBAD is set, which would redirect or reconfigure Graphify away from the checked paths; unset it, then run /graphify again."
+    exit 1
+fi
+
 GRAPHIFY_PIN="0.9.85"
 
 # Builtins only (pwd, cd, case, command, printf, [, set, for, while) until
 # PATH is fixed below.
 # ATLAS-BOUNDARY-BEGIN
-# FR-031's untrusted area, shared by skills/graphify/atlas-graphify.sh,
-# skills/atlas-doctor/scripts/atlas-check.sh and
-# skills/atlas-doctor/scripts/atlas-archify.sh: this block is
-# byte-identical in all three (a static check, AC-114), POSIX sh so that
+# FR-031's untrusted area, shared by the Graphify runner, the shared
+# precondition script and the Archify wrapper (each kit-authored, under
+# their skills), rea-android's tool helper and rea-binary's provider helper:
+# this block is byte-identical in all five (a static check, AC-114), POSIX
+# sh so that
 # the sh scripts and the bash script run the same text, and none sources it
 # from a file, since each must stand alone before PATH is trusted. The
 # area is the outermost directory around the working directory that holds
@@ -348,11 +376,6 @@ unset PYTHONPATH
 export PYTHONSAFEPATH=1
 export PYTHONHASHSEED=0
 
-if [ -n "${GRAPHIFY_OUT:-}" ]; then
-    printf '%s\n' "GRAPHIFY_OUT is set (to $GRAPHIFY_OUT), which would move Graphify's output away from the checked paths; unset it, then run /graphify again."
-    exit 1
-fi
-unset GRAPHIFY_OUT
 
 # _follow: _GF with its symlinks followed (at most 40), in place.
 _follow() {
@@ -412,6 +435,14 @@ if [ "${1:-}" = --resolve ]; then
     printf '%s\n' "$PYTHON"
     exit 0
 fi
+
+# update: Graphify walks the scan root itself and reads what it lists,
+# through any symlink there. So, after the checks below, the program runs
+# the preflight's symlink gate (--links; FR-031, "Symlinked inputs") on the
+# update path, which writes nothing; when the gate refuses, its lines are
+# printed and Graphify does not run.
+case "$0" in */*) ATLAS_PREFLIGHT="${0%/*}/atlas-preflight.sh" ;; *) ATLAS_PREFLIGHT=./atlas-preflight.sh ;; esac
+export ATLAS_PREFLIGHT
 
 # The operation, in the pinned interpreter, isolated. Its arguments arrive
 # as argv and are never part of any shell or Python source. The program
@@ -522,6 +553,23 @@ for d in spec["writes"]:
         checked.add(os.path.normpath(os.path.join(cwd, d)))
         destination(d)
 
+preflight = os.environ.pop("ATLAS_PREFLIGHT", "")
+if op == "update":
+    # The symlink gate on the update path, which the preflight reads as its
+    # one scan root; its lines are the refusal.
+    import subprocess
+    if "\n" in own_values[0]:
+        stop("atlas-graphify.sh: update value 1 (the path) holds a line break; refused.")
+    sys.stdout.flush()
+    if subprocess.run(["/bin/sh", preflight, "--links"], input=os.fsencode(own_values[0]) + b"\n").returncode != 0:
+        sys.exit(1)
+
+if op == "update":
+    # The validated absolute scan path, never the relative spelling.
+    own_values = [os.path.normpath(os.path.join(cwd, own_values[0]))]
+for name in [n for n in os.environ if n.startswith("GRAPHIFY_")
+             and n not in ("GRAPHIFY_NO_AUTO_REFRESH", "GRAPHIFY_QUERY_LOG_DISABLE")]:
+    del os.environ[name]
 argv = [sys.executable, "-I", "-m", "graphify"] + op.split(" ") + own_values
 for o, v in zip(options, opt_values):
     argv += [o, v]

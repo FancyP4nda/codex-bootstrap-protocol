@@ -72,7 +72,8 @@ REA_NONCE_1
 
 It prints `kind: <kind>` (`native`, `electron-js`, `dotnet`, `apk`,
 `firmware`, `website`, `har` or `unknown`) after reading only the target's
-name and first bytes: it runs nothing and fetches no URL. A line starting
+name and first bytes (for a directory, also its `package.json` and the main
+file that names): it runs nothing and fetches no URL. A line starting
 with `target-kind:` is a refusal: show it and stop. For `unknown`, ask the
 user what the target is.
 

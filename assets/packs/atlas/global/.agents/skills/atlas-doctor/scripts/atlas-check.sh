@@ -55,6 +55,14 @@
 #     then a plain rea doctor's verdict on the configured providers. Neither
 #     runs rea setup or rea update; both only read.
 #
+# FR-038's environment rule (the ATLAS-REA-ENV block below) runs before any
+# rea call: on this process's own environment before check rea runs rea
+# --version and before rea-setup and rea-doctor run rea doctor, and for
+# rea-setup also on the environment of REA's MCP server. A refusal prints
+# "[missing] rea" (check) or "[missing] rea-env" (the two modes) and the
+# refusal line, exits 1 and makes no rea call; the doctor shows it as
+# "[warn] rea-env" instead.
+#
 # Both exit 0 on a report, 1 after a line on a refusal or failure, 2 on a
 # usage error. git is found like the tools checked here (an in-repo git is
 # refused) and runs without optional locks or the fsmonitor hook; neither
@@ -118,6 +126,11 @@
 # finds bash on the runner's PATH and passes the PATH unchanged (SKILL.md).
 
 ATLAS_IDS="graphify uv rea node-archify node-rea browser"
+# ATLAS_REA_ENV_WARN is set only by doctor.sh, after it sources this file,
+# and ATLAS_REA_SERVER_SCAN only by the rea-setup dispatch below: a value
+# inherited from the environment must not downgrade or skip a refusal.
+ATLAS_REA_ENV_WARN=""
+ATLAS_REA_SERVER_SCAN=""
 ATLAS_REA_PIN="6.4.0"
 ATLAS_NODE_ARCHIFY_FLOOR="18"
 ATLAS_NODE_REA_RANGE="^22.19.0 || ^24.11.0 || >=26.0.0"
@@ -189,10 +202,11 @@ atlas_fix_line() {
 }
 
 # ATLAS-BOUNDARY-BEGIN
-# FR-031's untrusted area, shared by skills/graphify/atlas-graphify.sh,
-# skills/atlas-doctor/scripts/atlas-check.sh and
-# skills/atlas-doctor/scripts/atlas-archify.sh: this block is
-# byte-identical in all three (a static check, AC-114), POSIX sh so that
+# FR-031's untrusted area, shared by the Graphify runner, the shared
+# precondition script and the Archify wrapper (each kit-authored, under
+# their skills), rea-android's tool helper and rea-binary's provider helper:
+# this block is byte-identical in all five (a static check, AC-114), POSIX
+# sh so that
 # the sh scripts and the bash script run the same text, and none sources it
 # from a file, since each must stand alone before PATH is trusted. The
 # area is the outermost directory around the working directory that holds
@@ -332,6 +346,484 @@ _untrusted_line() {
     printf '%s\n' "$1 lies inside $_ABV, which atlas treats as the repository, so the repository could supply it; take that directory off PATH, or run this from the project directory."
 }
 # ATLAS-BOUNDARY-END
+
+# ATLAS-REA-ENV-BEGIN
+# FR-038's environment rule: REA passes its environment to every tool it
+# starts (Java, apktool, Ghidra's and JADX's launchers, shells), and those
+# runtimes load code named in it. So no REA call runs until the two
+# environments REA and its tools will see pass two rules: no variable that
+# loads code is set, and no variable names a path inside FR-031's untrusted
+# area (REA reads paths under names no list keeps up with, so every
+# variable is a possible path; only four names are exempt). For the
+# server's environment that area is the union of this process's and the
+# one around the server's own working directory. This block is
+# byte-identical in the shared precondition script,
+# rea-binary's provider helper and rea-android's tool helper (a static
+# check, AC-114), POSIX sh, and uses the ATLAS-BOUNDARY block's functions,
+# so a caller runs _atlas_area_init before any of it. Every _REE variable
+# belongs to this block; _REETAG, set by the caller, prefixes the reasons a
+# fail-closed stop prints.
+#
+# The two environments:
+#   _rea_env_self    this process's own, as env prints it once PATH is cut
+#                    (what a rea it starts receives), in _REE, and its
+#                    working directory in _REECWD.
+#   _rea_env_server  the environment of the one "rea mcp" child of the
+#                    agent (CLAUDE_PID, an ancestor of this process), from
+#                    /proc/<pid>/environ, in _REE, its working directory
+#                    in _REECWD, and the area around that directory, by
+#                    its physical name and by the snapshot's PWD when
+#                    that names it, in _REESP and _REESL. It prints why
+#                    and returns 1
+#                    when it cannot be read with certainty: no /proc,
+#                    CLAUDE_PID not an ancestor, no such server or more
+#                    than one, an unreadable environment, a value holding
+#                    a line break.
+# _rea_env_scan then checks _REE, as the reader just before it left it, and
+# prints one refusal line per variable, naming it and never its value; it
+# returns 1 on a refusal and, with the reason, on a name set twice or, for
+# this process's own environment, a line that is not NAME=value (a value
+# holding a line break). It also checks the Java executable a REA call in
+# that environment can probe, naming JAVA_HOME or PATH. _rea_java checks
+# that Java exists, where REA needs one. Nothing here runs a tool apart
+# from env, tr and readlink, from the cut PATH.
+_rea_say() {
+    printf '%s: %s\n' "${_REETAG:-rea-env}" "$1"
+}
+_rea_env_self() {
+    _REEKIND=self
+    _REEW="this shell's environment"
+    _REELB=""
+    # Relative values and empty PATH entries resolve from here.
+    _REECWD=$(pwd -P 2>/dev/null)
+    case "$_REECWD" in
+        /*) ;;
+        *)
+            _rea_say "can't read this shell's working directory, so what REA would see can't be checked; nothing run."
+            return 1
+            ;;
+    esac
+    _REE=$(env 2>/dev/null) || {
+        _rea_say "can't read this shell's environment (env failed), so what REA would see can't be checked; nothing run."
+        return 1
+    }
+    # Where env -0 works, a value holding a line break is seen exactly, as
+    # the server's is. Elsewhere _rea_env_scan refuses a line of env's text
+    # that is not NAME=value.
+    _REER=$({ env -0 | tr -d '\000'; } 2>/dev/null)
+    case "$_REER" in
+        *'
+'*) _REELB=1 ;;
+    esac
+}
+# _rea_ppid <pid>: its parent in _REEQ, from /proc/<pid>/stat (the name
+# field, which may hold spaces or parentheses, ends at the last ") ").
+_rea_ppid() {
+    IFS= read -r _REES 2>/dev/null <"/proc/$1/stat" || return 1
+    _REES=${_REES##*) }
+    _REEQ=${_REES#* }
+    _REEQ=${_REEQ%% *}
+    case "$_REEQ" in '' | *[!0-9]*) return 1 ;; esac
+}
+# _rea_is_mcp <pid>: its command line is rea then mcp, run directly or by
+# an interpreter (node .../bin/rea mcp, as REA's setup registers it). Any
+# other form is not recognised, and the reader then fails closed.
+_rea_is_mcp() {
+    _REEC=$(tr '\000' '\n' 2>/dev/null <"/proc/$1/cmdline") || return 1
+    _REE0=""
+    _REE1=""
+    _REE2=""
+    {
+        IFS= read -r _REE0
+        IFS= read -r _REE1
+        IFS= read -r _REE2
+    } <<EOF
+$_REEC
+EOF
+    [ "${_REE0##*/}:$_REE1" = rea:mcp ] && return 0
+    [ "${_REE1##*/}:$_REE2" = rea:mcp ] && return 0
+    return 1
+}
+_rea_env_server() {
+    _REEKIND=server
+    _REEW="the environment of REA's MCP server"
+    _REECWD=""
+    _REELB=""
+    _REENL='
+'
+    [ -r /proc/self/stat ] || {
+        _rea_say "this system has no /proc, so the environment REA's MCP server runs its tools with can't be read; nothing checked."
+        return 1
+    }
+    _REEA=${CLAUDE_PID-}
+    case "$_REEA" in
+        '' | *[!0-9]*)
+            _rea_say "CLAUDE_PID does not name the agent this runs under, so REA's MCP server can't be found; nothing checked. Run this from Codex."
+            return 1
+            ;;
+    esac
+    _REEP=$$
+    while [ "$_REEP" != "$_REEA" ]; do
+        if ! _rea_ppid "$_REEP" || [ "$_REEP" = 1 ] || [ "$_REEQ" = 0 ]; then
+            _rea_say "CLAUDE_PID ($_REEA) is not the agent this runs under, so REA's MCP server can't be found; nothing checked. Run this from Codex."
+            return 1
+        fi
+        _REEP=$_REEQ
+    done
+    _REEM=""
+    for _REEF in /proc/[0-9]*/stat; do
+        _REEP=${_REEF#/proc/}
+        _REEP=${_REEP%/stat}
+        _rea_ppid "$_REEP" || continue
+        [ "$_REEQ" = "$_REEA" ] || continue
+        _rea_is_mcp "$_REEP" || continue
+        [ -z "$_REEM" ] || {
+            _rea_say "found more than one REA MCP server started by this session, so which one REA's tools run under is unknown; nothing checked."
+            return 1
+        }
+        _REEM=$_REEP
+    done
+    [ -n "$_REEM" ] || {
+        _rea_say "found no REA MCP server started by this session (a \"rea mcp\" child of CLAUDE_PID $_REEA); run \$rea-doctor; nothing checked."
+        return 1
+    }
+    _REER=$(tr -d '\000' 2>/dev/null <"/proc/$_REEM/environ") \
+        && _REE=$(tr '\000' '\n' 2>/dev/null <"/proc/$_REEM/environ") \
+        && _REECWD=$(readlink "/proc/$_REEM/cwd" 2>/dev/null) \
+        && [ -n "$_REECWD" ] || {
+        _rea_say "can't read the environment or working directory of REA's MCP server (process $_REEM); nothing checked."
+        return 1
+    }
+    case "$_REER" in
+        *"$_REENL"*)
+            _rea_say "a value in the environment of REA's MCP server holds a line break, so what REA reads can't be checked; nothing checked. Change it where Codex started the server (or in the env of REA's MCP registration), then restart Codex."
+            return 1
+            ;;
+    esac
+    # A removed working directory reads as "<path> (deleted)": its area,
+    # and what relative values name, are unknown.
+    case "$_REECWD" in
+        *' (deleted)' | [!/]*)
+            _rea_say "the working directory of REA's MCP server (process $_REEM) was removed or can't be read as a path, so the area around it is unknown; nothing checked. Restart Codex from the project directory."
+            return 1
+            ;;
+    esac
+    # The server's own area, from both names of its working directory: a
+    # server started in another checkout must not run that checkout's tools.
+    _atlas_slash "$_REECWD"
+    _atlas_walk "$_ABS"
+    _REESP=$_ABW
+    _REESL=$_REESP
+    # The snapshot's PWD is its logical name only when it names that same
+    # directory, as a shell checks before trusting PWD: a launcher can leave
+    # a stale one (/, $HOME) that names another and would widen the area.
+    if _rea_env_get PWD; then
+        case "$_REEG" in
+            /*)
+                if _REEX=$(cd -P "$_REEG" 2>/dev/null && pwd -P) && [ "$_REEX" = "$_REECWD" ]; then
+                    _atlas_slash "$_REEG"
+                    _atlas_walk "$_ABS"
+                    _REESL=$_ABW
+                fi
+                ;;
+        esac
+    fi
+}
+# _rea_env_get <name>: true when _REE sets it (the first line that does);
+# the value in _REEG.
+_rea_env_get() {
+    while IFS= read -r _REEL; do
+        case "$_REEL" in
+            "$1="*)
+                _REEG=${_REEL#*=}
+                return 0
+                ;;
+        esac
+    done <<EOF
+$_REE
+EOF
+    return 1
+}
+# _rea_norm <absolute path>: the path with its "." and ".." segments
+# removed by their text, as Node's path.normalize and REA's path joins
+# remove them, in _REEO.
+_rea_norm() {
+    _REEO=""
+    _REEY="${1#/}/"
+    while [ -n "$_REEY" ]; do
+        _REEK=${_REEY%%/*}
+        _REEY=${_REEY#*/}
+        case "$_REEK" in
+            '' | .) ;;
+            ..) _REEO=${_REEO%/*} ;;
+            *) _REEO="$_REEO/$_REEK" ;;
+        esac
+    done
+    [ -n "$_REEO" ] || _REEO=/
+}
+# _rea_hit_form <absolute path>: true when it lies inside the areas
+# _inside checks: by its name, by its directory resolved or a step of its
+# symlinks, or, for a directory, resolved itself. _REEH is then the area.
+_rea_hit_form() {
+    if _inside_path "$1"; then
+        _REEH=$_ABHIT
+        return 0
+    fi
+    if [ -d "$1" ] && _REEX=$(cd -P "$1" 2>/dev/null && pwd -P) && _inside "$_REEX"; then
+        _REEH=$_ABHIT
+        return 0
+    fi
+    return 1
+}
+# _rea_hit_here: _REEA2, an absolute path, in two forms, each given the
+# whole check: as written, which the kernel resolves, and with "." and ".."
+# removed by their text, which REA runs (/proc/self/status/../cwd is
+# /proc/self/cwd to REA, and a missing directory before ".." can hide a
+# link).
+_rea_hit_here() {
+    _rea_hit_form "$_REEA2" && return 0
+    _rea_norm "$_REEA2"
+    [ "$_REEO" != "$_REEA2" ] && _rea_hit_form "$_REEO"
+}
+# _rea_cand_hit <candidate>: true when it names a path inside the area, in
+# _REEH. One starting with / is absolute. Any other is resolved from the
+# environment's working directory (_REECWD): in a search path (_REESR set),
+# every entry, whether it names anything or not; elsewhere only one holding
+# a / or starting with "." that names an existing path in either form, so
+# a bare word (CLAUDE_CODE_ENTRYPOINT=cli, LANG=C.UTF-8) is never a path
+# there. The server's environment is held to the union of this process's
+# area and the server's own (_REESP, _REESL).
+_rea_cand_hit() {
+    case "$1" in
+        '') return 1 ;;
+        /*) _REEA2=$1 ;;
+        *)
+            if [ -z "${_REESR:-}" ]; then
+                case "$1" in */* | .*) ;; *) return 1 ;; esac
+                if ! [ -e "$_REECWD/$1" ] && ! [ -L "$_REECWD/$1" ]; then
+                    # As written it may name nothing (a missing directory
+                    # or a file before ".."), while its normal form does.
+                    _rea_norm "$_REECWD/$1"
+                    [ -e "$_REEO" ] || [ -L "$_REEO" ] || return 1
+                fi
+            fi
+            _REEA2="$_REECWD/$1"
+            ;;
+    esac
+    _rea_hit_here && return 0
+    [ "$_REEKIND" = server ] || return 1
+    _REEP0=$_ABP
+    _REEL0=$_ABL
+    _ABP=$_REESP
+    _ABL=$_REESL
+    _rea_hit_here
+    _REEX=$?
+    _ABP=$_REEP0
+    _ABL=$_REEL0
+    return "$_REEX"
+}
+# _rea_cand_trim <candidate>: the candidate, then, since REA trims some
+# values before use, its form without leading and trailing white space.
+_rea_cand_trim() {
+    _rea_cand_hit "$1" && return 0
+    _REET=${1#"${1%%[![:space:]]*}"}
+    _REET=${_REET%"${_REET##*[![:space:]]}"}
+    [ "$_REET" != "$1" ] && _rea_cand_hit "$_REET"
+}
+# _rea_value_hit <value>: true when the whole value, or an entry of it
+# between ":", names a path inside; nothing else is split or expanded, and
+# a space is part of a path. PATH (_REEN) is the one executable search
+# path REA 6.4.0 and the tools it starts walk, so there every entry is a
+# path (_REESR), bare words included, and an empty one is ".". Any other
+# name ending in PATH is a list (MANPATH, INFOPATH, NIX_PATH): an empty
+# entry is a default marker, not the working directory, and a name=path
+# entry is checked by its path part too.
+_rea_value_hit() {
+    _REESR=""
+    _rea_cand_trim "$1" && return 0
+    _REELS=""
+    case "$_REEN" in
+        PATH) _REESR=1 ;;
+        *PATH) _REELS=1 ;;
+    esac
+    _REEU="$1:"
+    while [ -n "$_REEU" ]; do
+        _REEV=${_REEU%%:*}
+        _REEU=${_REEU#*:}
+        [ -n "$_REEV" ] || [ -z "$_REESR" ] || _REEV=.
+        if _rea_cand_trim "$_REEV"; then
+            _REESR=""
+            return 0
+        fi
+        if [ -n "$_REELS" ]; then
+            _REEK=${_REEV%%=*}
+            case "$_REEK" in
+                "$_REEV" | */*) ;;
+                *) _rea_cand_trim "${_REEV#*=}" && return 0 ;;
+            esac
+        fi
+    done
+    _REESR=""
+    return 1
+}
+# The two refusal lines (FR-038), by variable name in _REEN.
+_rea_refuse_code() {
+    _atlas_shown "$_REEN"
+    _REEZ=$_ABV
+    printf '%s is set in %s, and it makes a runtime REA starts load code; unset it there, or set it empty in the env of REA'"'"'s MCP registration, then restart Codex.\n' "$_REEZ" "$_REEW"
+}
+_rea_refuse_path() {
+    _atlas_shown "$_REEN"
+    _REEZ=$_ABV
+    _atlas_shown "$_REEH"
+    printf '%s in %s names a path inside %s, which atlas treats as a repository, so it could supply what REA or a tool it starts runs; unset it or point it outside the repository there, then restart Codex.\n' "$_REEZ" "$_REEW" "$_ABV"
+}
+_rea_env_scan() {
+    _REEBAD=0
+    _REESR=""
+    _REESEEN='
+'
+    _REEREF='
+'
+    while IFS= read -r _REEL; do
+        case "$_REEL" in
+            [A-Za-z_]*=*) ;;
+            *)
+                # This process's own environment comes from env's text, where a
+                # value holding a line break could hide a variable.
+                [ "$_REEKIND" != self ] || _REELB=1
+                continue
+                ;;
+        esac
+        _REEN=${_REEL%%=*}
+        _REEG=${_REEL#*=}
+        [ -n "$_REEN" ] || continue
+        case "$_REESEEN" in
+            *'
+'"$_REEN"'
+'*)
+                _atlas_shown "$_REEN"
+                _rea_say "$_REEW sets $_ABV more than once, so which value is read is unknown; nothing checked."
+                return 1
+                ;;
+        esac
+        _REESEEN="$_REESEEN$_REEN
+"
+        # Exempt by name: they name the working directory by convention and
+        # no tool loads code from them. Nothing else is exempt.
+        case "$_REEN" in PWD | OLDPWD | CLAUDE_PROJECT_DIR | _) continue ;; esac
+        case "$_REEN" in
+            BASH_ENV | ENV | SHELLOPTS | BASHOPTS | PS4 | BASH_FUNC_* | \
+                JAVA_TOOL_OPTIONS | _JAVA_OPTIONS | JDK_JAVA_OPTIONS | JAVA_OPTS | CLASSPATH | \
+                NODE_OPTIONS | NODE_PATH | \
+                LD_PRELOAD | LD_AUDIT | LD_LIBRARY_PATH | GCONV_PATH | \
+                DYLD_INSERT_LIBRARIES | DYLD_LIBRARY_PATH | DYLD_FRAMEWORK_PATH | DYLD_FALLBACK_LIBRARY_PATH | \
+                PYTHONPATH | PYTHONSTARTUP | PYTHONHOME | PYTHONUSERBASE | \
+                PERL5OPT | PERL5LIB | PERLLIB | RUBYOPT | RUBYLIB)
+                if [ -n "$_REEG" ]; then
+                    _rea_refuse_code
+                    _REEBAD=1
+                fi
+                continue
+                ;;
+        esac
+        # Paths, in every other variable: no name list exists for them.
+        if _rea_value_hit "$_REEG"; then
+            _rea_refuse_path
+            _REEBAD=1
+            _REEREF="$_REEREF$_REEN
+"
+        fi
+    done <<EOF
+$_REE
+EOF
+    # The Java a REA call can probe, by the executable itself: a JAVA_HOME,
+    # or a PATH directory, outside the area can hold a bin/java that leads
+    # into it. Named by the variable that selects it, unless that variable
+    # was refused above.
+    _rea_java_find || :
+    if [ -n "$_REEJR" ]; then
+        case "$_REEREF" in
+            *'
+'"$_REEJN"'
+'*) ;;
+            *)
+                _REEN=$_REEJN
+                if _rea_cand_hit "$_REEJR"; then
+                    _rea_refuse_path
+                    _REEBAD=1
+                fi
+                ;;
+        esac
+    fi
+    # After the per-variable lines, so that a refusal is never lost to it.
+    if [ -n "${_REELB:-}" ]; then
+        _rea_say "a value in $_REEW holds a line break, so what REA reads can't be checked; nothing checked."
+        _REEBAD=1
+    fi
+    [ "$_REEBAD" = 0 ]
+}
+# _rea_java_find: the Java REA will select in the environment last read by
+# _rea_env_self or _rea_env_server. With JAVA_HOME set, $JAVA_HOME/bin/java
+# (_REEJN=JAVA_HOME): _REEJR as written, _REEJ with "." and ".." removed,
+# which is what REA runs. Else the first executable regular java on that
+# PATH (/bin:/usr/bin when unset; an empty or relative entry resolves from
+# the working directory), in both (_REEJN=PATH). Returns 2, both empty, for
+# a set JAVA_HOME that isn't absolute, which REA's parser
+# (JadxConfiguration.js) rejects, empty and white space included; 1 when
+# PATH holds none.
+_rea_java_find() {
+    _REEJ=""
+    _REEJR=""
+    if _rea_env_get JAVA_HOME; then
+        _REEJN=JAVA_HOME
+        case "$_REEG" in
+            /*) ;;
+            *) return 2 ;;
+        esac
+        _REEJR="${_REEG%/}/bin/java"
+        _rea_norm "$_REEJR"
+        _REEJ=$_REEO
+        return 0
+    fi
+    _REEJN=PATH
+    _rea_env_get PATH || _REEG=/bin:/usr/bin
+    _REEU="$_REEG:"
+    while [ -n "$_REEU" ]; do
+        _REEV=${_REEU%%:*}
+        _REEU=${_REEU#*:}
+        case "$_REEV" in
+            /*) ;;
+            '') _REEV=$_REECWD ;;
+            *) _REEV="$_REECWD/$_REEV" ;;
+        esac
+        if [ -f "$_REEV/java" ] && [ -x "$_REEV/java" ]; then
+            _REEJ="$_REEV/java"
+            _REEJR=$_REEJ
+            return 0
+        fi
+    done
+    return 1
+}
+# _rea_java: that Java, where REA needs one. A set JAVA_HOME that isn't
+# absolute prints the not-absolute [missing] java line. Otherwise the
+# executable REA runs must exist and be an executable regular file, and
+# both its forms must lie outside the area, resolved; else it prints the
+# [missing] java line. Either line returns 1.
+_rea_java() {
+    _REESR=""
+    _rea_java_find
+    if [ "$?" = 2 ]; then
+        printf '%s\n' '[missing] java: JAVA_HOME is set but isn'"'"'t an absolute path, which REA rejects. Set it to a JDK'"'"'s absolute path outside the repository, or unset it to use java on PATH (in the env of REA'"'"'s MCP registration, and in the environment Codex starts from), then restart Codex.'
+        return 1
+    fi
+    case "$_REEJ" in
+        /*) [ -f "$_REEJ" ] && [ -x "$_REEJ" ] && ! _rea_cand_hit "$_REEJR" && return 0 ;;
+    esac
+    printf '%s\n' '[missing] java: REA runs $JAVA_HOME/bin/java, or java on its PATH, and found none it can use. Install a JDK outside the repository and set JAVA_HOME to it (in the env of REA'"'"'s MCP registration, and in the environment Codex starts from), then restart Codex.'
+    return 1
+}
+# ATLAS-REA-ENV-END
 
 # _atlas_noglob / _atlas_glob: set -f for a word-splitting loop, then back to
 # the caller's setting (a sourcing caller may run with set -f).
@@ -500,6 +992,28 @@ _atlas_check_uv() {
     return 1
 }
 
+# FR-038's environment rule on this process's own environment, the one a
+# rea it starts receives (the ATLAS-REA-ENV block above), run at most once:
+# the result is kept in _ATLAS_REAENV_RC (0 passed, 1 refused) and the
+# refusal lines in _ATLAS_REAENV_OUT. _atlas_rea_env_show prints them once
+# under a label. No rea call runs while it is refused.
+_ATLAS_REAENV_RC=""
+_ATLAS_REAENV_OUT=""
+_ATLAS_REAENV_SHOWN=""
+_ATLAS_REAENV_BAD=""
+_atlas_rea_env_own() {
+    if [ -z "$_ATLAS_REAENV_RC" ]; then
+        _ATLAS_REAENV_RC=0
+        _ATLAS_REAENV_OUT="$(_REETAG=atlas-check; _rea_env_self && _rea_env_scan)" || _ATLAS_REAENV_RC=1
+    fi
+    [ "$_ATLAS_REAENV_RC" = 0 ]
+}
+_atlas_rea_env_show() {
+    [ -z "$_ATLAS_REAENV_SHOWN" ] || return 0
+    _ATLAS_REAENV_SHOWN=1
+    printf '%s\n%s\n' "$1" "$_ATLAS_REAENV_OUT"
+}
+
 _atlas_check_rea() {
     local st=0
     _atlas_locate rea rea || st=$?
@@ -507,6 +1021,16 @@ _atlas_check_rea() {
     if [ "$st" -ne 0 ]; then
         printf '[missing] rea\n'
         atlas_fix_line rea missing
+        return 1
+    fi
+    # rea --version below starts rea, which passes its environment on: the
+    # doctor (ATLAS_REA_ENV_WARN) shows a refusal as a warning instead.
+    if ! _atlas_rea_env_own; then
+        if [ -n "${ATLAS_REA_ENV_WARN:-}" ]; then
+            _atlas_rea_env_show '[warn] rea-env'
+            return 0
+        fi
+        _atlas_rea_env_show '[missing] rea'
         return 1
     fi
     _atlas_version "$_AF"
@@ -589,7 +1113,7 @@ ATLAS_REA_DOCTOR_LINES=200
 # empty (nothing ran then). Returns 1 when either is missing. It runs
 # rea doctor only, never rea setup.
 _atlas_rea_setup() {
-    local st=0 client bad=0
+    local st=0 client bad=0 srv
     _ATLAS_REA_BIN=""
     client="$(atlas_rea_client "${ATLAS_CLIENT:-codex}")" || return 1
     _atlas_locate rea rea >/dev/null || st=$?
@@ -597,6 +1121,27 @@ _atlas_rea_setup() {
         printf '[missing] rea-mcp\n%s\n' "$(atlas_fix_line mcp missing)"
         printf '[missing] rea-skill\n%s\n' "$(atlas_fix_line mcp missing)"
         return 1
+    fi
+    # FR-038: no rea call runs until the environments pass the rule: this
+    # process's own, and (ATLAS_REA_SERVER_SCAN, set for rea-setup) REA's
+    # MCP server's. The doctor (ATLAS_REA_ENV_WARN) shows a refusal as a
+    # warning and still reports the rest.
+    _ATLAS_REAENV_BAD=""
+    if ! _atlas_rea_env_own; then
+        _ATLAS_REAENV_BAD=1
+        if [ -n "${ATLAS_REA_ENV_WARN:-}" ]; then
+            _atlas_rea_env_show '[warn] rea-env'
+            return 0
+        fi
+        _atlas_rea_env_show '[missing] rea-env'
+        return 1
+    fi
+    if [ -n "${ATLAS_REA_SERVER_SCAN:-}" ]; then
+        if ! srv="$(_REETAG=atlas-check; _rea_env_server && _rea_env_scan)"; then
+            _ATLAS_REAENV_BAD=1
+            printf '[missing] rea-env\n%s\n' "$srv"
+            return 1
+        fi
     fi
     _ATLAS_REA_BIN="$_AF"
     if "$_ATLAS_REA_BIN" doctor --client "$client" </dev/null >/dev/null 2>&1; then
@@ -621,7 +1166,10 @@ _atlas_rea_setup() {
 # not a failure. Returns 1 when the setup half did.
 _atlas_rea_report() {
     local status=0 out rc=0 n=0 l
+    _ATLAS_REAENV_BAD=""
     _atlas_rea_setup || status=1
+    # A refusal of the environment rule was already shown, and nothing ran.
+    [ -z "$_ATLAS_REAENV_BAD" ] || return "$status"
     if [ -z "$_ATLAS_REA_BIN" ]; then
         printf '[warn] rea-doctor\n%s\n' "rea doctor did not run: no usable rea (see the rea line above)."
         return 1
@@ -1590,7 +2138,7 @@ atlas_check_main() {
         check) ;;
         scratch) shift 2; _atlas_main_scratch "$@"; return ;;
         provenance) shift 2; _atlas_main_provenance "$@"; return ;;
-        rea-setup) ATLAS_REA_MODE=setup; shift 2; _atlas_main_rea "$@"; return ;;
+        rea-setup) ATLAS_REA_MODE=setup; ATLAS_REA_SERVER_SCAN=1; shift 2; _atlas_main_rea "$@"; return ;;
         rea-doctor) ATLAS_REA_MODE=doctor; shift 2; _atlas_main_rea "$@"; return ;;
         *) printf '%s\n' "$ATLAS_USAGE_CHECK" "$ATLAS_USAGE_SCRATCH" "$ATLAS_USAGE_PROVENANCE" "$ATLAS_USAGE_REA" >&2; return 2 ;;
     esac

@@ -1,0 +1,5 @@
+interface:
+  display_name: "REA Electron"
+  short_description: "Map an Electron app with REA: modules, IPC, routes and native add-ons"
+policy:
+  allow_implicit_invocation: false

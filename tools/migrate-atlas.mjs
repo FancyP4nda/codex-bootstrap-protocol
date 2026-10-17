@@ -214,11 +214,13 @@ const ADAPT = {
         return 2
     fi
     ATLAS_CLIENT=claude
+    ATLAS_REA_ENV_WARN=1
     ATLAS_CONFIG_DIR="\${CLAUDE_CONFIG_DIR:-$HOME/.claude}"`, `    if [ "$#" -ne 1 ] || [ "$1" != codex ]; then
         printf 'usage: doctor.sh codex\\n' >&2
         return 2
     fi
     ATLAS_CLIENT=codex
+    ATLAS_REA_ENV_WARN=1
     ATLAS_CONFIG_DIR="$HOME/.agents"
     case "$ATLAS_CONFIG_DIR" in
         /*) ;;

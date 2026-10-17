@@ -65,8 +65,8 @@ behaviour in full; the text installed here is that text with the `$` sigil.
   kept ones are copied, on a yes, to `docs/diagrams/<slug>.html` (D-7).
 - **`$rea-doctor`**, **`$rea-triage`**, **`$rea-feature`**, **`$rea-diagram`**,
   **`$rea-map`**, **`$rea-update`**: the REA Commands. Static by default.
-- **`$rea-binary`**, **`$rea-android`**, **`$rea-electron`**: derived when the
-  Claude kit's T048 merges. Until then the pack ships 13 Commands.
+- **`$rea-binary`**, **`$rea-android`**, **`$rea-electron`**: the REA target
+  Commands for native binaries, Android packages and Electron apps.
 
 ## Pins
 

@@ -1,12 +1,8 @@
 {
   "converter": "tools/migrate-atlas.mjs",
   "source_kit": "claude-bootstrap-protocol",
-  "source_commit": "510a1d16b0d08ac0265cca8f8f83bb33adf1617f",
-  "commands_not_yet_derived": [
-    "rea-binary",
-    "rea-android",
-    "rea-electron"
-  ],
+  "source_commit": "b150a12beae3a56fc055cfba6b71457ce5baadcd",
+  "commands_not_yet_derived": [],
   "files": [
     {
       "source": "assets/packs/atlas/global/.claude/skills/archify/LICENSE",
@@ -1102,23 +1098,23 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-archify.sh",
-      "source_sha256": "8dacbabe1e88b07ffdd4b77ae2c941099e7f04eb9663a88653ba7bd72a8f8b0a",
+      "source_sha256": "73c31129db19ac9a7137945653b654aa0c6c51d448edf5251e94476ec819efa8",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-archify.sh",
-      "destination_sha256": "b47c81859b5b4e935c489dc8be306bcb09c48b8d174411a1a6e839c28140c555",
+      "destination_sha256": "3811b0b9da4c3d0efe11c6f027c969f4636bd4a6068b72223de39dce19509aad",
       "transform": "script"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
-      "source_sha256": "99f94cdd0ef6d9661710749607d6651419e74f0580dee775f3fcb0c536913d34",
+      "source_sha256": "b0ad8cc8d72fbf00244c38b9d406b733d3308ed7b60ca586bdd8618ff24ddb87",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "9433a81d4be23774cf244f229726ba7a297a2ba0d86e38c134032b66c83b94d0",
+      "destination_sha256": "7fb25340b83932b1ef4e268d8c0ed852d2dc0206297a4015d86c61412bcc74aa",
       "transform": "script"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/doctor.sh",
-      "source_sha256": "0a3d84b1ad645eafeead2867a94a428aac35c7ec5514dbf41934f129c6c1e01a",
+      "source_sha256": "bc636b4b9f9be975907570378a757e70c15463afc8835e613a3161cb18717375",
       "destination": "global/.agents/skills/atlas-doctor/scripts/doctor.sh",
-      "destination_sha256": "462ee6be951da6638e34fb9c77d25488f6d163432b4d8cfe25238e7cc3ef0486",
+      "destination_sha256": "dd72d1366a3ec0356ea81cb6a4b4aa75a52cad4b492640264f53589894f55a64",
       "transform": "script"
     },
     {
@@ -1193,16 +1189,16 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/graphify/atlas-graphify.sh",
-      "source_sha256": "27c74a4385c4608fa15e121674aa2bb29eae874dc7971fc159512a276d7d1ea1",
+      "source_sha256": "dfa4507301114d71a034ac26327ed1e36e333b55b3f41e1475525bfbc493d133",
       "destination": "global/.agents/skills/graphify/atlas-graphify.sh",
-      "destination_sha256": "e53f5043ae48a43a74f73baea93812ea7caf145c42a2ab2682a60f997c74101d",
+      "destination_sha256": "7e4caf65e62b49e9e2f7386e8b737ada93bf75c7f3fc27984fd892206d969cdd",
       "transform": "script"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/graphify/atlas-preflight.sh",
-      "source_sha256": "e47a5e8a36980fd226b3a248678a31da26920669eafdd5e3a1dcde6790a5eaee",
+      "source_sha256": "c542c274968fdb9fcae8e5155d3a9a6fc9bf5e69d29f2b1394b5031411bec53a",
       "destination": "global/.agents/skills/graphify/atlas-preflight.sh",
-      "destination_sha256": "e47a5e8a36980fd226b3a248678a31da26920669eafdd5e3a1dcde6790a5eaee",
+      "destination_sha256": "bfef56d6574732ef93f21119381f2b28398aa08f6a6d29cbd45c5e82752d4ad5",
       "transform": "script"
     },
     {
@@ -1255,6 +1251,34 @@
       "transform": "command"
     },
     {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-android/SKILL.md",
+      "source_sha256": "fe5699f3436dfe655b4cd5f6aba6be135731268262d5d4f89afd98aedde117dd",
+      "destination": "global/.agents/skills/rea-android/SKILL.md",
+      "destination_sha256": "dbcd0ab00a26e85627f9d44e31a44903b8c009539119c3f7b4067438eb574cdb",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
+      "source_sha256": "76190c7b90b16654cc5a3fa1c471835c4641815fed7efa7fe25aae4d71ee40df",
+      "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
+      "destination_sha256": "22d1df4273320ae3d4968fabe1aae04589ce6b43f04ad446bc4bf53cca1b1c9b",
+      "transform": "script"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-binary/SKILL.md",
+      "source_sha256": "f4bc2e9d89282cdd59c3212cd3c7c66bb679d72833c2d24bf615e426d0d98a73",
+      "destination": "global/.agents/skills/rea-binary/SKILL.md",
+      "destination_sha256": "541d77435384f5eda7d0fd9a4e7b8bf79247486fa49e2bec202f7b28dcb8e2cf",
+      "transform": "command"
+    },
+    {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
+      "source_sha256": "67c635abd7f1af8a61f8162d9383490d308fef4fe7ce2283a3b7afbe153f35ea",
+      "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
+      "destination_sha256": "c2d5d324509bdba99f20bd5e76c45518672c452ca1ff3b47abd3ce0ae2a40bc2",
+      "transform": "script"
+    },
+    {
       "source": "assets/packs/atlas/global/.claude/skills/rea-diagram/SKILL.md",
       "source_sha256": "506517be81e5623b0aab5b0dc0e53b6b8c01e8ae03ed01abc7d8e90367218641",
       "destination": "global/.agents/skills/rea-diagram/SKILL.md",
@@ -1269,10 +1293,17 @@
       "transform": "command"
     },
     {
+      "source": "assets/packs/atlas/global/.claude/skills/rea-electron/SKILL.md",
+      "source_sha256": "25a822eb89c687ee0b14c0290a95f31322663ffce4d3f378b439dfa2f7958663",
+      "destination": "global/.agents/skills/rea-electron/SKILL.md",
+      "destination_sha256": "c573569b18226c8bd8c837019a7bd284fbb09fdbf53d94ab0360ef562fafeca2",
+      "transform": "command"
+    },
+    {
       "source": "assets/packs/atlas/global/.claude/skills/rea-feature/SKILL.md",
-      "source_sha256": "3c8402654fa0ce0e2e1f05be21f5164ab7dcf9a2d29be30d087e1feea8fbb141",
+      "source_sha256": "828f3c37c59af1611dfc9664666d22330a715461239988d2b28c3c4ae8f0fb71",
       "destination": "global/.agents/skills/rea-feature/SKILL.md",
-      "destination_sha256": "c067109ed079e97cd67ce68f6dec78e82b4b1451047ec22ed4ec9fe07afd4e60",
+      "destination_sha256": "aeff078b7ea3665eef31fae798e38df1fb7f95b0300d0c24c6c69330cc162f9d",
       "transform": "command"
     },
     {
@@ -1284,16 +1315,16 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-triage/SKILL.md",
-      "source_sha256": "56e72d67cc52efa2f1cb6c6545c13e465ef216e43b3381316443b4cca3bf3bc8",
+      "source_sha256": "5ebb7b306589b6b135dbc7294536bae863a86fa4a9c6b46710fb89bf19053cd0",
       "destination": "global/.agents/skills/rea-triage/SKILL.md",
-      "destination_sha256": "a15bda86d6edea24b1a5c30181e9bd5b7356a318936ec10e9c68335aefeb5507",
+      "destination_sha256": "1fcd32887c020dcedee14ee32bf1fcf33f0468798794eced92e08d03216be997",
       "transform": "command"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-triage/scripts/target-kind.sh",
-      "source_sha256": "04471fdfb98248ce29095bb8130f9a30803a33a7364f721709b1285b9b78588e",
+      "source_sha256": "3da981e822aa59ce9c6d7d845dcad610e6e4e1af1fa954b8865dfc2a803c7b38",
       "destination": "global/.agents/skills/rea-triage/scripts/target-kind.sh",
-      "destination_sha256": "9725814dc66ce1795e8db029f212fba0201bd41d7ae48ccfb6b2bf2e40d39d02",
+      "destination_sha256": "e37d3bafc292b99172f1fb9ef5fb647f3e205e6db5c8cdaf3bd1b451b5d227d6",
       "transform": "script"
     },
     {

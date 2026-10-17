@@ -432,7 +432,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(self.core_view(),core_before)
 
     ATLAS_COMMANDS=('map-repo','map-ask','map-impact','diagram','diagram-repo','diagram-flow','atlas-doctor','rea-doctor',
-                    'rea-triage','rea-feature','rea-diagram','rea-map','rea-update')
+                    'rea-triage','rea-feature','rea-binary','rea-android','rea-electron','rea-diagram','rea-map','rea-update')
 
     def test_atlas_global_pack(self):
         self.run_bootstrap('--global-only')

@@ -40,7 +40,7 @@ that local fixture; rejection is not silently skipped.
 ## Atlas pack (T053)
 
 The `atlas` global pack mirrors the Claude kit's. `verification/test_atlas.py` holds the pack to the
-decision brief: the 13 derived Commands and two vendored skills, each with `agents/openai.yaml` and
+decision brief: the 16 derived Commands and two vendored skills, each with `agents/openai.yaml` and
 `allow_implicit_invocation: false`; no Claude path or `/command` form left in derived text; the source map's hashes;
 `$atlas-doctor` against a stub home (`multi_agent`, `rea-config`, the unstamped-copy migration line, the hook and
 `AGENTS.md` traces, a byte-identical home and `config.toml` after a run); the pin agreement between `pack.yaml` and the

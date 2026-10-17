@@ -564,6 +564,7 @@ doctor_main() {
         return 2
     fi
     ATLAS_CLIENT=codex
+    ATLAS_REA_ENV_WARN=1
     ATLAS_CONFIG_DIR="$HOME/.agents"
     case "$ATLAS_CONFIG_DIR" in
         /*) ;;

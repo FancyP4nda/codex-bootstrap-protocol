@@ -44,10 +44,11 @@
 # Builtins only (pwd, cd, case, printf, [, set, for, while) until PATH is
 # fixed below.
 # ATLAS-BOUNDARY-BEGIN
-# FR-031's untrusted area, shared by skills/graphify/atlas-graphify.sh,
-# skills/atlas-doctor/scripts/atlas-check.sh and
-# skills/atlas-doctor/scripts/atlas-archify.sh: this block is
-# byte-identical in all three (a static check, AC-114), POSIX sh so that
+# FR-031's untrusted area, shared by the Graphify runner, the shared
+# precondition script and the Archify wrapper (each kit-authored, under
+# their skills), rea-android's tool helper and rea-binary's provider helper:
+# this block is byte-identical in all five (a static check, AC-114), POSIX
+# sh so that
 # the sh scripts and the bash script run the same text, and none sources it
 # from a file, since each must stand alone before PATH is trusted. The
 # area is the outermost directory around the working directory that holds

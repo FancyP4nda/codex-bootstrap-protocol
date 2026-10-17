@@ -11,10 +11,10 @@
 # keeps only name and description.
 #
 # Contents
-#   - 13 Commands today (16 once the Claude kit's T048 merges: rea-binary,
-#     rea-android, rea-electron), invoked with $: map-repo, map-ask,
-#     map-impact, diagram, diagram-repo, diagram-flow, atlas-doctor,
-#     rea-doctor, rea-triage, rea-feature, rea-diagram, rea-map, rea-update.
+#   - 16 Commands, invoked with $: map-repo, map-ask, map-impact, diagram,
+#     diagram-repo, diagram-flow, atlas-doctor, rea-doctor, rea-triage,
+#     rea-feature, rea-binary, rea-android, rea-electron, rea-diagram,
+#     rea-map, rea-update.
 #     Their text, their scripts and the two vendored skills' pack-authored
 #     scripts are DERIVED from the Claude kit's pack by tools/migrate-atlas.mjs
 #     (D-3); docs/atlas-source-map.json records the source commit and
@@ -40,8 +40,7 @@
 pack:
   name: atlas
   description: >-
-    Global mapping and diagramming pack: 13 Commands today (16 with the REA
-    binary, Android and Electron Commands), the vendored Archify skill
+    Global mapping and diagramming pack: 16 Commands, the vendored Archify skill
     (architecture, workflow, sequence, data-flow and lifecycle diagrams as
     standalone HTML) and the vendored Graphify skill (a knowledge graph of a
     codebase or corpus, cut to building, updating and querying), plus a notes
@@ -65,6 +64,9 @@ pack:
     - ".agents/skills/rea-doctor/"
     - ".agents/skills/rea-triage/"
     - ".agents/skills/rea-feature/"
+    - ".agents/skills/rea-binary/"
+    - ".agents/skills/rea-android/"
+    - ".agents/skills/rea-electron/"
     - ".agents/skills/rea-diagram/"
     - ".agents/skills/rea-map/"
     - ".agents/skills/rea-update/"
@@ -153,7 +155,7 @@ pack:
       on_newer: warn
       check: "rea --version"
       install_hint: "npm install --global rea-agents@6.4.0"
-      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-diagram, rea-update]
+      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-binary, rea-android, rea-electron, rea-diagram, rea-update]
       network: >-
         Static analysis is local; its dynamic captures (web pages, devices)
         and rea update reach the network. The REA Commands run it static by
@@ -179,7 +181,7 @@ pack:
       pin: {type: range, value: "^22.19.0 || ^24.11.0 || >=26.0.0"}
       check: "node --version"
       install_hint: "Install a matching Node"
-      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-diagram]
+      required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-binary, rea-android, rea-electron, rea-diagram]
       network: "None of its own; REA's network use is the rea entry's."
       accepted_risk: "Node itself is not scanned; the operator installs it."
     - id: browser

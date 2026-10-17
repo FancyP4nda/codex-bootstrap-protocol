@@ -21,9 +21,7 @@ SKILLS = PACK/'global/.agents/skills'
 ROSTER = ('map-repo', 'map-ask', 'map-impact', 'diagram', 'diagram-repo', 'diagram-flow', 'atlas-doctor',
           'rea-doctor', 'rea-triage', 'rea-feature', 'rea-binary', 'rea-android', 'rea-electron',
           'rea-diagram', 'rea-map', 'rea-update')
-# rea-binary, rea-android and rea-electron (Claude kit T048) are derived when that task merges.
-PENDING = ('rea-binary', 'rea-android', 'rea-electron')
-COMMANDS = tuple(name for name in ROSTER if name not in PENDING)
+COMMANDS = ROSTER
 VENDORED = ('archify', 'graphify')
 # No Graphify, REA, uv or browser on this PATH: the doctor's tool lines are all [missing] and quick, whatever the host has.
 HERMETIC_PATH = '/usr/bin:/bin'
@@ -63,10 +61,6 @@ class PackShape(unittest.TestCase):
                 self.assertRegex(text, r'(?m)^  display_name: "[^"\n]+"$')
                 self.assertRegex(text, r'(?m)^  short_description: "[^"\n]+"$')
                 self.assertEqual(frontmatter_keys(SKILLS/name/'SKILL.md'), ['name', 'description'])
-
-    def test_pending_commands_are_absent_until_derived(self):
-        for name in PENDING:
-            self.assertFalse((SKILLS/name).exists(), name)
 
     def test_commands_carry_no_claude_runtime_text(self):
         slash = re.compile(r'(?<![\w./$-])/(' + '|'.join(ROSTER) + r')\b')
