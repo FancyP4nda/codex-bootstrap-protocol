@@ -1,7 +1,7 @@
 {
   "converter": "tools/migrate-atlas.mjs",
   "source_kit": "claude-bootstrap-protocol",
-  "source_commit": "53ab697e9559f96ffc5d55b777425aa98edeee6f",
+  "source_commit": "bc90ee4f95a404f46d7a6c0869c2c61703e46b4f",
   "commands_not_yet_derived": [],
   "files": [
     {
@@ -1105,9 +1105,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
-      "source_sha256": "457990cb5ef1c79dea23df98a3df8a837af55ad8965f7caa158c1e4d7d00b2b7",
+      "source_sha256": "fbe8a0c0f693c7a11bcc9923ab4dbee51c25e5bb47556b6e4a5ec7e432074805",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "fd2b3e421e9a042d88eed927001d27590e5612ee09a521f2746bc2243eb0892b",
+      "destination_sha256": "0ecc708cb2c7b75662566246bc5c20ab196d3266a2ba15957e720ae401cd70b7",
       "transform": "script"
     },
     {
@@ -1259,9 +1259,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
-      "source_sha256": "dcc7ebf9c16160950dfab5365418176b099a20fcda2b3c86c998fb2120877012",
+      "source_sha256": "54cd6345af41759f2c8e2558a5378f6067ec311f8bf037257fe7006b0598846f",
       "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
-      "destination_sha256": "a695c3f17c1a3aba909b6e9394834f70dc1e0efb32570dc4b8e3a537136b4735",
+      "destination_sha256": "f97c8ee8beae87dff4e864fac1e2d8bf4588a2b77e788e86640794cc2efe2672",
       "transform": "script"
     },
     {
@@ -1273,9 +1273,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
-      "source_sha256": "b8004f507097a200714d2acdad15243e159ae0c86c68115d5b7b12eccd9133db",
+      "source_sha256": "a87eda7956a11859d8492cbffacd23581f3de00d2293f30cb2496a21049f21ee",
       "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
-      "destination_sha256": "d83e4db2286e6a3b03ceff9dc996a9713c1ab60ff6a45b485352bdbf8c2fe7c2",
+      "destination_sha256": "e78fdbcc5d37c426a4efa87ff29147c8f8c70106487122a823b5db60cef721ad",
       "transform": "script"
     },
     {

@@ -201,7 +201,8 @@ _untrusted_line() {
 # area (REA reads paths under names no list keeps up with, so every
 # variable is a possible path; only four names are exempt). For the
 # server's environment that area is the union of this process's and the
-# one around the server's own working directory. This block is
+# one around the server's own working directory, and its PATH must hold
+# absolute entries only (_rea_path_abs). This block is
 # byte-identical in the shared precondition script,
 # rea-binary's provider helper and rea-android's tool helper (a static
 # check, AC-114), POSIX sh, and uses the ATLAS-BOUNDARY block's functions,
@@ -851,6 +852,13 @@ EOF
     _atlas_slash "$_REECWD"
     _atlas_walk "$_ABS"
     _REESP=$_ABW
+    # A server started in / or in $HOME (or an ancestor of it) has no
+    # project around it: the walk never counts those as a repository, and
+    # as an area they would make every path, or every path of the user's,
+    # untrusted. The caller's area stands in.
+    if _rea_no_project "$_REESP"; then
+        _REESP=$_ABP
+    fi
     _REESL=$_REESP
     # The snapshot's PWD is its logical name only when it names that same
     # directory, as a shell checks before trusting PWD: a launcher can leave
@@ -862,10 +870,21 @@ EOF
                     _atlas_slash "$_REEG"
                     _atlas_walk "$_ABS"
                     _REESL=$_ABW
+                    if _rea_no_project "$_REESL"; then
+                        _REESL=$_ABP
+                    fi
                 fi
                 ;;
         esac
     fi
+}
+# _rea_no_project <area>: true when the area is / or $HOME or one of its
+# ancestors, by $HOME's name or its resolved name (_ABH, _ABHR).
+_rea_no_project() {
+    [ "$1" = / ] && return 0
+    case "$_ABH" in "$1" | "$1"/*) [ -n "$_ABH" ] && return 0 ;; esac
+    case "$_ABHR" in "$1" | "$1"/*) [ -n "$_ABHR" ] && return 0 ;; esac
+    return 1
 }
 # _rea_env_get <name>: true when _REE sets it (the first line that does);
 # the value in _REEG.
@@ -980,13 +999,14 @@ _rea_cand_trim() {
 # entry, each ";" entry (Lua's lists) and each piece split at both is a
 # candidate of its own. The Perl and Ruby library lists are
 # refused above as code-loading; they are named here too so that leaving
-# that list would still keep them strict. Only four names are relaxed
+# that list would still keep them strict. Only five names are relaxed
 # (_REELS), each because nothing loads code from it: MANPATH (man pages),
 # INFOPATH (info pages), NIX_PATH (Nix expressions, evaluated by nix, which
-# REA never runs) and WINDOWPATH (X virtual-terminal numbers, not
-# directories, exported by xinit and display managers). There an empty
-# entry is a default marker (manpath(5)), not the working directory, and a
-# name=path entry is checked by its path part.
+# REA never runs), TERMINFO_DIRS (compiled terminal descriptions, data)
+# and WINDOWPATH (X virtual-terminal numbers, not directories, exported by
+# xinit and display managers). There an empty entry is a default marker
+# (manpath(5); terminfo(5): the system directory), not the working
+# directory, and a name=path entry is checked by its path part.
 # _rea_split_hit <value> <":" or ";">: true when an entry of the value
 # between that separator names a path inside, by PATH's rule (_REESR set):
 # an empty entry is ".".
@@ -1013,7 +1033,7 @@ _rea_value_hit() {
     _rea_cand_trim "$1" && return 0
     _REELS=""
     case "$_REEN" in
-        MANPATH | INFOPATH | NIX_PATH) _REELS=1 ;;
+        MANPATH | INFOPATH | NIX_PATH | TERMINFO_DIRS) _REELS=1 ;;
         # Only in its own shape, digits and ":", is WINDOWPATH relaxed.
         WINDOWPATH)
             case "$1" in
@@ -1086,6 +1106,30 @@ _rea_refuse_path() {
     _atlas_shown "$_REEH"
     printf '%s in %s names a path inside %s, which atlas treats as a repository, so it could supply what REA or a tool it starts runs; unset it or point it outside the repository there, then restart Codex.\n' "$_REEZ" "$_REEW" "$_ABV"
 }
+# _rea_path_abs <value>: the server's PATH holds absolute entries only.
+# REA resolves an empty, relative or bare entry from the server's working
+# directory, and a helper from its own, so the two could find different
+# tools there. Prints one refusal line per such entry, naming it (a PATH
+# entry is a directory name, not a secret), and returns 1 on any.
+_rea_path_abs() {
+    _REEAB=0
+    _REEU="$1:"
+    while [ -n "$_REEU" ]; do
+        _REEV=${_REEU%%:*}
+        _REEU=${_REEU#*:}
+        case "$_REEV" in
+            /*) continue ;;
+            '') _REEZ="an empty entry" ;;
+            *)
+                _atlas_shown "$_REEV"
+                _REEZ="\"$_ABV\""
+                ;;
+        esac
+        printf 'PATH in %s holds %s, which isn'"'"'t an absolute directory, so REA (from its own working directory) and this check could find different tools there; make every entry of PATH absolute in the env of REA'"'"'s MCP registration (or the environment Codex starts from), then restart Codex.\n' "$_REEW" "$_REEZ"
+        _REEAB=1
+    done
+    [ "$_REEAB" = 0 ]
+}
 _rea_env_scan() {
     _REEBAD=0
     _REESR=""
@@ -1143,6 +1187,11 @@ _rea_env_scan() {
             _REEREF="$_REEREF$_REEN
 "
         fi
+        if [ "$_REEKIND" = server ] && [ "$_REEN" = PATH ] && ! _rea_path_abs "$_REEG"; then
+            _REEBAD=1
+            _REEREF="$_REEREF$_REEN
+"
+        fi
     done <<EOF
 $_REE
 EOF
@@ -1176,8 +1225,10 @@ EOF
 # _rea_env_self or _rea_env_server. With JAVA_HOME set, $JAVA_HOME/bin/java
 # (_REEJN=JAVA_HOME): _REEJR as written, _REEJ with "." and ".." removed,
 # which is what REA runs. Else the first executable regular java on that
-# PATH (/bin:/usr/bin when unset; an empty or relative entry resolves from
-# the working directory), in both (_REEJN=PATH). Returns 2, both empty, for
+# PATH (/bin:/usr/bin when unset), in both (_REEJN=PATH). Only absolute
+# entries are searched: the scan refuses any other in the server's PATH,
+# and in this process's own one resolves inside the area and is refused
+# too. Returns 2, both empty, for
 # a set JAVA_HOME that isn't absolute, which REA's parser
 # (JadxConfiguration.js) rejects, empty and white space included; 1 when
 # PATH holds none.
@@ -1201,11 +1252,7 @@ _rea_java_find() {
     while [ -n "$_REEU" ]; do
         _REEV=${_REEU%%:*}
         _REEU=${_REEU#*:}
-        case "$_REEV" in
-            /*) ;;
-            '') _REEV=$_REECWD ;;
-            *) _REEV="$_REECWD/$_REEV" ;;
-        esac
+        case "$_REEV" in /*) ;; *) continue ;; esac
         if [ -f "$_REEV/java" ] && [ -x "$_REEV/java" ]; then
             _REEJ="$_REEV/java"
             _REEJR=$_REEJ
