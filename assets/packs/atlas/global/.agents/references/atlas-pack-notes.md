@@ -53,6 +53,17 @@ behaviour in full; the text installed here is that text with the `$` sigil.
     without it the extraction runs serially (D-5).
   - `rea-config`: `[ok]` when the same file has an `[mcp_servers.rea]` entry;
     otherwise `[warn]` with `rea setup` (D-6).
+  - REA's MCP server, for the REA Commands' environment checks, is read as
+    Codex configures it: `config.toml` in `$CODEX_HOME`, then the
+    `.codex/config.toml` of each directory from the project root (the nearest
+    `.git`, or `project_root_markers`) down to the working directory, merged
+    per key (env tables name by name, arrays replaced), and a project layer
+    counts only when `[projects."<root>"]` in the user's file has
+    `trust_level = "trusted"`. The merged command and args must be a
+    registration `rea-agents@6.4.0` writes (`rea mcp`, `<path>/scripts/rea.mjs
+    mcp`, `node <path>/scripts/rea.mjs mcp` or `npx -y rea-agents@6.4.0 mcp`).
+    When the entry cannot be established the check stops with a line naming
+    the file.
   - `migration-unstamped-archify` and `migration-unstamped-graphify`: a skill
     directory under `~/.agents/skills` that the install record does not list,
     with the line that moves it out (D-4).
@@ -103,11 +114,17 @@ serve operations the pack does not support and are not vendored.
   `multi_agent` is on, a serial path (the session extracts each chunk in turn)
   when it is off, and a collection check that sets aside invalid chunk files and
   retries failed chunks serially. Workers read a chunk's files through one
-  fixed command, `graphify/atlas-read-chunk.py <list> <index>`, which reads the
-  list as data, checks the entry against the scan root again and prints the
-  file, so no file name reaches a shell and no file-reading tool is needed.
+  fixed command, `/bin/sh graphify/atlas-read-chunk.sh <list> <index>`. The
+  shell entry point first finds the repository around the working directory
+  and cuts PATH to the absolute entries outside it, as the runner does, and
+  runs no `cat` or other tool from the ambient PATH (the interpreter path is
+  read with the shell's own `read` and must lie outside the repository). It
+  then runs `atlas-read-chunk.py`, which reads the list as data, checks the
+  entry against the scan root again and prints the file, so no file name
+  reaches a shell and no file-reading tool is needed.
   A PDF is read as text through `pdftotext` (poppler): the reader finds it on
-  an absolute PATH entry outside the scan root and the working directory, runs
+  an absolute PATH entry outside the repository of the scan root and of the
+  working directory (by logical and physical name, symlinks followed), runs
   it with fixed arguments and the resolved path as one argument (no shell), and
   without it refuses that PDF by name with an install line, never printing the
   bytes. poppler is an optional External Prerequisite of `$map-repo` on a

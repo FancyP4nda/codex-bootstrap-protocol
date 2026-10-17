@@ -187,6 +187,57 @@ class PackShape(unittest.TestCase):
         # The skills tree, agents/openai.yaml included, is wholly derived; the notes are native.
         self.assertEqual(fresh, tree_state(SKILLS))
 
+    # T053 round 6, item 5: the converter validates and builds the whole replacement in a staging directory first.
+    def converted_copy(self, tmp):
+        kit = Path(tmp)/'kit'
+        shutil.copytree(Path(SOURCE_KIT)/'assets/packs/atlas/global/.claude/skills', kit/'assets/packs/atlas/global/.claude/skills')
+        out = Path(tmp)/'out'
+        subprocess.run(['node', str(KIT/'tools/migrate-atlas.mjs'), str(kit), '--out', str(out)], check=True, capture_output=True, text=True)
+        return kit, out
+
+    def convert(self, kit, out):
+        return subprocess.run(['node', str(KIT/'tools/migrate-atlas.mjs'), str(kit), '--out', str(out)], capture_output=True, text=True)
+
+    @unittest.skipUnless(SOURCE_KIT, 'set ATLAS_SOURCE_KIT to a Claude kit checkout to run the converter')
+    def test_converter_keeps_the_previous_output_when_the_source_has_an_unknown_skill(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit, out = self.converted_copy(tmp)
+            before, map_before = tree_state(out), (out/'source-map.json').read_bytes()
+            unknown = kit/'assets/packs/atlas/global/.claude/skills/mystery'
+            unknown.mkdir()
+            (unknown/'SKILL.md').write_text('---\nname: mystery\ndescription: x\n---\n')
+            run = self.convert(kit, out)
+            self.assertNotEqual(run.returncode, 0, run.stdout)
+            self.assertIn('unknown skill', run.stderr)
+            self.assertEqual(tree_state(out), before)  # also proves no staging directory is left behind
+            self.assertEqual((out/'source-map.json').read_bytes(), map_before)
+
+    @unittest.skipUnless(SOURCE_KIT, 'set ATLAS_SOURCE_KIT to a Claude kit checkout to run the converter')
+    def test_converter_keeps_the_previous_output_when_a_seam_has_moved(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit, out = self.converted_copy(tmp)
+            before, map_before = tree_state(out), (out/'source-map.json').read_bytes()
+            doctor = kit/'assets/packs/atlas/global/.claude/skills/atlas-doctor/SKILL.md'
+            text = doctor.read_text()
+            seam = "REA's registration for this client, the one-time migration steps,"
+            self.assertIn(seam, text)
+            doctor.write_text(text.replace(seam, "REA's registration, the one-time migration steps,"))
+            run = self.convert(kit, out)
+            self.assertNotEqual(run.returncode, 0, run.stdout)
+            self.assertIn('expected 1 match', run.stderr)
+            self.assertEqual(tree_state(out), before)
+            self.assertEqual((out/'source-map.json').read_bytes(), map_before)
+
+    @unittest.skipUnless(SOURCE_KIT, 'set ATLAS_SOURCE_KIT to a Claude kit checkout to run the converter')
+    def test_converter_replaces_the_output_whole_on_success(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            kit, out = self.converted_copy(tmp)
+            (out/'global/.agents/skills/stale-file.md').write_text('left over')
+            run = self.convert(kit, out)
+            self.assertEqual(run.returncode, 0, run.stderr)
+            self.assertFalse((out/'global/.agents/skills/stale-file.md').exists())
+            self.assertEqual(tree_state(out/'global/.agents/skills'), tree_state(SKILLS))
+
 
 class DoctorTests(unittest.TestCase):
     """$atlas-doctor with client codex, against a stub home. It prints and edits nothing."""
@@ -480,11 +531,54 @@ class ReaServerDiscoveryTests(unittest.TestCase):
 
     def test_the_entry_may_run_rea_through_node_and_carry_a_comment_and_other_keys(self):
         config = ('# the REA server\n[mcp_servers.rea]   # registered by rea setup\n'
-                  'command = "node"\nargs = ["/opt/rea/bin/rea", "mcp"]  # stdio\nstartup_timeout_sec = 30\n'
+                  'command = "/usr/bin/node"\nargs = ["/opt/rea/scripts/rea.mjs", "mcp"]  # stdio\nstartup_timeout_sec = 30\n'
                   'env_vars = [\n  "HOME",\n]\n')
         run = self.setup_run(config)
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
+    # The registrations rea-agents 6.4.0 writes (SetupHost.js setupRegistrationCommand and
+    # ClientRegistrationIdentity.js npxRegistrationCommand), and look-alikes it does not write.
+    REGISTRATIONS = (
+        ('rea', '["mcp"]'), ('/opt/rea/bin/rea', '["mcp"]'), ('/opt/rea/bin/rea-agents', '["mcp"]'),
+        ('/opt/rea/scripts/rea.mjs', '["mcp"]'),
+        ('/usr/bin/node', '["/opt/rea/scripts/rea.mjs", "mcp"]'), ('/usr/bin/node', '["/opt/rea/bin/rea", "mcp"]'),
+        ('npx', '["-y", "rea-agents@6.4.0", "mcp"]'), ('npx', '["-y", "rea-agents", "mcp"]'),
+        ('npx', '["-y", "rea-agents@latest", "mcp"]'))
+    NOT_REGISTRATIONS = (
+        ('npx', '["-y", "rea-agents@6.4.0", "serve"]'), ('npx', '["rea-agents@6.4.0", "mcp"]'),
+        ('npx', '["-y", "other-agents@6.4.0", "mcp"]'), ('npx', '["-y", "rea-agents@6.4.0", "mcp", "--x"]'),
+        ('npx', '["-y", "rea-agents@9.9.9", "mcp"]'),
+        ('/opt/rea/scripts/other.mjs', '["mcp"]'), ('/opt/rea/scripts/rea.mjs', '["mcp", "--x"]'),
+        ('rea', '["mcp", "--x"]'), ('rea', '["serve"]'),
+        ('/usr/bin/node', '["/opt/x/server.mjs", "mcp"]'), ('/usr/bin/python3', '["/opt/rea/scripts/rea.mjs", "mcp"]'),
+        ('node', '["/opt/rea/scripts/rea.mjs", "mcp"]'), ('/usr/bin/node', '["rea.mjs", "mcp"]'))
+
+    def test_the_registration_forms_rea_agents_6_4_0_writes_are_recognised(self):
+        for command, args in self.REGISTRATIONS:
+            with self.subTest(command=command, args=args):
+                run = self.setup_run(f'[mcp_servers.rea]\ncommand = "{command}"\nargs = {args}\n')
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                self.assertIn('[ok] rea-mcp', run.stdout)
+
+    def test_other_commands_and_arguments_are_not_taken_for_reas_server(self):
+        for command, args in self.NOT_REGISTRATIONS:
+            with self.subTest(command=command, args=args):
+                run = self.setup_run(f'[mcp_servers.rea]\ncommand = "{command}"\nargs = {args}\n')
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('not recognised as REA', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+
+    def test_the_registration_forms_are_the_ones_the_installed_package_writes(self):
+        package = shutil.which('rea')
+        if not package:
+            self.skipTest('rea-agents is not installed here')
+        root = Path(os.path.realpath(package)).parent.parent
+        identity = root/'dist/application/ClientRegistrationIdentity.js'
+        if not identity.is_file():
+            self.skipTest('this rea install has no ClientRegistrationIdentity.js')
+        text = identity.read_text()
+        for word in ('"npx"', '"-y"', '"mcp"'):
+            self.assertIn(word, text)
     def test_the_environment_rule_is_applied_to_the_entry_env(self):
         for config, name in (('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { NODE_OPTIONS = "--require /x.js" }\n', 'NODE_OPTIONS'),
                              ('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers.rea.env]\nJAVA_TOOL_OPTIONS = "-javaagent:/x.jar"\n', 'JAVA_TOOL_OPTIONS')):
@@ -501,13 +595,86 @@ class ReaServerDiscoveryTests(unittest.TestCase):
         self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
         self.assertIn('SOME_TOOL_HOME', run.stdout)
 
-    def test_a_project_config_entry_wins_over_the_user_one(self):
+    def trust(self, root=None):
+        return f'[projects."{os.path.realpath(root or self.work)}"]\ntrust_level = "trusted"\n'
+
+    def test_a_trusted_project_entry_is_merged_over_the_user_one_per_key(self):
         bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { BASH_ENV = "/x" }\n'
-        run = self.setup_run(self.ENTRY, project=bad)
+        run = self.setup_run(self.ENTRY + self.trust(), project=bad)
         self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
         self.assertIn('BASH_ENV', run.stdout)
-        run = self.setup_run(bad, project=self.ENTRY)
+        # The user's entry holds the bad variable and the project's repeats only command and args:
+        # Codex keeps the user's env, so the merged entry is refused.
+        user_bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers.rea.env]\nBASH_ENV = "/x"\n'
+        run = self.setup_run(user_bad + self.trust(), project=self.ENTRY)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('BASH_ENV', run.stdout)
+
+    def test_a_user_env_variable_survives_a_project_table_that_repeats_only_command_and_args(self):
+        user = ('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n'
+                '[mcp_servers.rea.env]\nJAVA_TOOL_OPTIONS = "-javaagent:/x.jar"\n')
+        run = self.setup_run(user + self.trust(), project=self.ENTRY)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('JAVA_TOOL_OPTIONS', run.stdout)
+        self.assertNotIn('/x.jar', run.stdout)
+        self.assertNotIn('[ok] rea-mcp', run.stdout)
+
+    def test_a_project_env_name_replaces_the_users_and_other_names_stay(self):
+        user = ('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n'
+                '[mcp_servers.rea.env]\nBASH_ENV = "/x"\nKEPT = "1"\n')
+        project = '[mcp_servers.rea.env]\nBASH_ENV = "/ok"\n'
+        run = self.setup_run(user + self.trust(), project=project)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)  # BASH_ENV is refused whatever its value
+        self.assertIn('BASH_ENV', run.stdout)
+        harmless = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers.rea.env]\nKEPT = "1"\n'
+        run = self.setup_run(harmless + self.trust(), project='[mcp_servers.rea.env]\nKEPT = "2"\n')
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_a_project_entry_of_an_untrusted_project_is_ignored(self):
+        bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { BASH_ENV = "/x" }\n'
+        for trust in ('', f'[projects."{os.path.realpath(self.work)}"]\ntrust_level = "untrusted"\n',
+                      '[projects."/somewhere/else"]\ntrust_level = "trusted"\n'):
+            with self.subTest(trust=trust):
+                run = self.setup_run(self.ENTRY + trust, project=bad)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_an_unreadable_projects_table_fails_closed_when_a_project_entry_exists(self):
+        bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n'
+        run = self.setup_run(self.ENTRY + 'projects = { "/x" = { trust_level = "trusted" } }\n', project=bad)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('trusts the project', run.stdout)
+        run = self.setup_run(self.ENTRY + 'projects = { "/x" = { trust_level = "trusted" } }\n', project='model = "x"\n')
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_layers_run_from_the_project_root_down_with_the_closest_last(self):
+        root = self.work/'repo'
+        (root/'.git').mkdir(parents=True)
+        (root/'.codex').mkdir()
+        sub = root/'a/b'
+        (sub/'.codex').mkdir(parents=True)
+        (root/'.codex/config.toml').write_text('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers.rea.env]\nBASH_ENV = "/x"\n')
+        (sub/'.codex/config.toml').write_text('[mcp_servers.rea.env]\nBASH_ENV = "/y"\nOTHER = "1"\n')
+        (self.codex/'config.toml').write_text(self.trust(root))
+        run = subprocess.run(['bash', str(SKILLS/'atlas-doctor/scripts/atlas-check.sh'), 'codex', 'rea-setup'], cwd=sub,
+                             env=self.env(), capture_output=True, text=True, timeout=120)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)  # the root's command and args were found from below
+        self.assertIn('BASH_ENV', run.stdout)
+        self.assertNotIn('no [mcp_servers.rea] entry', run.stdout)
+
+    def test_directories_with_spaces_and_glob_characters_are_read_whole(self):
+        for name in ('with space', 'star*', 'br[a]ck', 'quote\'s', 'dollar$HOME', '-dash'):
+            with self.subTest(name=name):
+                shutil.rmtree(self.work, ignore_errors=True)
+                self.work = self.tmp/name
+                (self.work/'.codex').mkdir(parents=True)
+                (self.work/'.codex/config.toml').write_text(
+                    '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { BASH_ENV = "/x" }\n')
+                (self.codex/'config.toml').write_text(self.trust())
+                run = subprocess.run(['bash', str(SKILLS/'atlas-doctor/scripts/atlas-check.sh'), 'codex', 'rea-setup'], cwd=self.work,
+                                     env=self.env(), capture_output=True, text=True, timeout=120)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('BASH_ENV', run.stdout)
+                self.assertNotIn('no [mcp_servers.rea] entry', run.stdout)
 
     def test_a_relative_codex_home_is_refused(self):
         run = self.setup_run(self.ENTRY, CODEX_HOME='relative')
@@ -939,11 +1106,117 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertNotIn('os.popen', text)
         self.assertEqual((SKILLS/'graphify/atlas-read-chunk.py').read_text(), text)
 
+    # The entry point: it guards PATH and the interpreter before anything is resolved (T053 round 6, item 1).
+    ENTRY_POINT = SKILLS/'graphify/atlas-read-chunk.sh'
+
+    def entry_setup(self, names, path_dirs, cwd=None, python=None):
+        listfile = self.chunk_of(names)
+        (self.out/'.graphify_python').write_text((python or sys.executable) + '\n')
+        env = {'PATH': ':'.join(path_dirs), 'HOME': str(self.home)}
+        return listfile, env
+
+    def run_entry(self, listfile, index, env, cwd=None):
+        return subprocess.run(['/bin/sh', str(self.ENTRY_POINT), str(listfile), str(index)],
+                              cwd=cwd or self.tmp, capture_output=True, text=True, env=env)
+
+    @property
+    def home(self):
+        path = self.tmp/'fake-home'
+        path.mkdir(exist_ok=True)
+        return path
+
+    def plant(self, directory, name, body):
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory/name).write_text('#!/bin/sh\n' + body)
+        (directory/name).chmod(0o755)
+
+    def test_a_marker_printing_cat_in_a_repository_bin_on_path_is_never_run(self):
+        (self.tmp/'.git').mkdir()
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/a.md').write_text('body-a\n')
+        for tool in ('cat', 'readlink', 'dirname', 'python3'):
+            self.plant(self.tmp/'bin', tool, f'touch "{self.tmp}/RAN-{tool}"\necho planted-{tool}\n')
+        listfile, env = self.entry_setup(['docs/a.md'], [str(self.tmp/'bin'), '/usr/bin', '/bin'])
+        run = self.run_entry(listfile, 0, env)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('body-a', run.stdout)
+        self.assertNotIn('planted', run.stdout + run.stderr)
+        self.assertEqual(list(self.tmp.glob('RAN-*')), [])
+
+    def test_the_entry_point_refuses_an_interpreter_inside_the_repository(self):
+        (self.tmp/'.git').mkdir()
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/a.md').write_text('body-a\n')
+        self.plant(self.tmp/'venv/bin', 'python', f'touch "{self.tmp}/RAN-python"\n')
+        listfile, env = self.entry_setup(['docs/a.md'], ['/usr/bin', '/bin'], python=str(self.tmp/'venv/bin/python'))
+        run = self.run_entry(listfile, 0, env)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('STOP', run.stdout)
+        self.assertIn('repository', run.stdout)
+        self.assertFalse((self.tmp/'RAN-python').exists())
+
+    def test_the_entry_point_names_a_missing_or_relative_interpreter_file(self):
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/a.md').write_text('x\n')
+        listfile, env = self.entry_setup(['docs/a.md'], ['/usr/bin', '/bin'], python='python3')
+        run = self.run_entry(listfile, 0, env)
+        self.assertEqual((run.returncode, 'STOP' in run.stdout), (1, True), run.stdout + run.stderr)
+        (self.out/'.graphify_python').unlink()
+        run = self.run_entry(listfile, 0, env)
+        self.assertEqual((run.returncode, 'STOP' in run.stdout), (1, True), run.stdout + run.stderr)
+        run = subprocess.run(['/bin/sh', str(self.ENTRY_POINT), 'only-one'], cwd=self.tmp, capture_output=True, text=True, env=env)
+        self.assertEqual((run.returncode, 'usage' in run.stdout), (1, True), run.stdout + run.stderr)
+
+    @unittest.skipUnless(shutil.which('pdftotext'), 'pdftotext (poppler) is not installed: the PDF tests need it')
+    def test_a_trusted_pdftotext_still_works_through_the_entry_point(self):
+        (self.tmp/'.git').mkdir()
+        (self.tmp/'docs').mkdir()
+        self.make_pdf(self.tmp/'docs/paper.pdf')
+        listfile, env = self.entry_setup(['docs/paper.pdf'], [os.path.dirname(shutil.which('pdftotext')), '/usr/bin', '/bin'])
+        run = self.run_entry(listfile, 0, env)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn(self.PDF_TEXT, run.stdout)
+
+    def test_a_repository_pdftotext_is_refused_when_cwd_and_scan_root_are_a_subdirectory(self):
+        (self.tmp/'.git').mkdir()
+        (self.tmp/'docs').mkdir()
+        self.make_pdf(self.tmp/'docs/paper.pdf')
+        self.plant(self.tmp/'bin', 'pdftotext', f'touch "{self.tmp}/PWNED"\necho planted\n')
+        (self.tmp/'docs/graphify-out').mkdir()
+        sub_out = self.tmp/'docs/graphify-out'
+        (sub_out/'.graphify_root').write_bytes(os.fsencode(self.tmp/'docs'))
+        (sub_out/'.graphify_chunk_01.files').write_text(json.dumps(['paper.pdf']))
+        (sub_out/'.graphify_python').write_text(sys.executable + '\n')
+        path = f'{self.tmp}/bin:/nonexistent'
+        direct = subprocess.run([sys.executable, '-I', str(self.READER), str(sub_out/'.graphify_chunk_01.files'), '0'],
+                                cwd=self.tmp/'docs', capture_output=True, text=True, env={'PATH': path})
+        self.assertEqual(direct.returncode, 1, direct.stdout + direct.stderr)
+        self.assertNotIn('planted', direct.stdout)
+        # Through the entry point the cut PATH leaves no pdftotext at all, so the PDF is refused by name.
+        entered = subprocess.run(['/bin/sh', str(self.ENTRY_POINT), str(sub_out/'.graphify_chunk_01.files'), '0'],
+                                 cwd=self.tmp/'docs', capture_output=True, text=True, env={'PATH': path, 'HOME': str(self.home)})
+        self.assertEqual(entered.returncode, 1, entered.stdout + entered.stderr)
+        self.assertIn('STOP', entered.stdout)
+        self.assertNotIn('planted', entered.stdout)
+        self.assertFalse((self.tmp/'PWNED').exists())
+
+    def test_the_entry_point_carries_the_runners_boundary_block_byte_for_byte(self):
+        def block(path):
+            text = path.read_text()
+            return text[text.index('# ATLAS-BOUNDARY-BEGIN\n'):text.index('# ATLAS-BOUNDARY-END\n')]
+        self.assertEqual(block(self.ENTRY_POINT), block(SKILLS/'graphify/atlas-graphify.sh'))
+        self.assertEqual((KIT/'tools/atlas-codex/atlas-read-chunk.sh').read_text().count('# @@ATLAS-BOUNDARY@@'), 1)
+
     def test_skill_gives_one_reader_command_for_the_parallel_and_the_serial_path(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()
         self.assertNotIn('file-reading tool', text)
-        self.assertEqual(text.count('atlas-read-chunk.py'), 3)  # the command line, the spawn message, the serial path
+        self.assertEqual(text.count('atlas-read-chunk.sh'), 3)  # the command line, the spawn message, the serial path
+        self.assertNotIn('atlas-read-chunk.py', text)
+        self.assertIn('atlas-read-chunk.sh', (PACK/'pack.yaml').read_text())
         self.assertIn('atlas-read-chunk.py', (PACK/'pack.yaml').read_text())
+        command = [line for line in text.splitlines() if 'atlas-read-chunk.sh"' in line]
+        self.assertEqual(len(command), 1, command)
+        self.assertNotIn('cat ', command[0])  # no tool is looked up on the ambient PATH before the guard
 
     def seed_dead_run(self):
         for name, body in (('.graphify_chunk_01.files', '["old.md"]'), ('.graphify_chunk_total', '1\n'), ('.graphify_chunk_01.json', '{}')):

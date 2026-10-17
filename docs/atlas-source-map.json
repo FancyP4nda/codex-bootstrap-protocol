@@ -1107,7 +1107,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
       "source_sha256": "457990cb5ef1c79dea23df98a3df8a837af55ad8965f7caa158c1e4d7d00b2b7",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "edfb92ab04347398b131382d0c1d02dc72f57e3fc7172bf5d862ebb3f07d0249",
+      "destination_sha256": "fd2b3e421e9a042d88eed927001d27590e5612ee09a521f2746bc2243eb0892b",
       "transform": "script"
     },
     {
@@ -1184,7 +1184,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/graphify/SKILL.md",
       "source_sha256": "2386d546ab9e8b30dea1b0751f13d52e221988271c2cc8320d25a21419dc1d5c",
       "destination": "global/.agents/skills/graphify/SKILL.md",
-      "destination_sha256": "c23ee3e0ee9849b24c243ba355de381403026fd91faa12c0d88380df9b34b8af",
+      "destination_sha256": "8cd2aeb2d4e83be8d9ea72db26ce18dc9cea49b82793a28726b0e605bc33a7f3",
       "transform": "graphify-skill"
     },
     {
@@ -1261,7 +1261,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
       "source_sha256": "dcc7ebf9c16160950dfab5365418176b099a20fcda2b3c86c998fb2120877012",
       "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
-      "destination_sha256": "4f6afc5a5ec4abb0033daa926b6724fdc97f5a10a294a080f48bb1b6e8383635",
+      "destination_sha256": "a695c3f17c1a3aba909b6e9394834f70dc1e0efb32570dc4b8e3a537136b4735",
       "transform": "script"
     },
     {
@@ -1275,7 +1275,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
       "source_sha256": "b8004f507097a200714d2acdad15243e159ae0c86c68115d5b7b12eccd9133db",
       "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
-      "destination_sha256": "c77f5b8724b5797c764ab27e02177b32ddcbfe163625272c617abb52ea566185",
+      "destination_sha256": "d83e4db2286e6a3b03ceff9dc996a9713c1ab60ff6a45b485352bdbf8c2fe7c2",
       "transform": "script"
     },
     {
@@ -1343,9 +1343,16 @@
     },
     {
       "source": "tools/atlas-codex/atlas-read-chunk.py",
-      "source_sha256": "e7381a80700e85ccfa2229469ce9d19fdc02bb7c1cf3c877e0cafcabf1969593",
+      "source_sha256": "bb431cb53add34d36c5c945938bc133c69444363bdb18d3e0168e556319051a2",
       "destination": "global/.agents/skills/graphify/atlas-read-chunk.py",
-      "destination_sha256": "e7381a80700e85ccfa2229469ce9d19fdc02bb7c1cf3c877e0cafcabf1969593",
+      "destination_sha256": "bb431cb53add34d36c5c945938bc133c69444363bdb18d3e0168e556319051a2",
+      "transform": "kit-native"
+    },
+    {
+      "source": "tools/atlas-codex/atlas-read-chunk.sh",
+      "source_sha256": "1c7f130291ec2e5dd47168f3b68bfb908a2bd7dbacf12296ed38f8e80bfce3a1",
+      "destination": "global/.agents/skills/graphify/atlas-read-chunk.sh",
+      "destination_sha256": "04903dcc94e0c69dfe6145dfac55c39501b5bd8e97bf9b042e1836a318e77443",
       "transform": "kit-native"
     }
   ]

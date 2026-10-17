@@ -339,68 +339,124 @@ function walk(dir) {
   }).sort();
 }
 const sha = buf => crypto.createHash('sha256').update(buf).digest('hex');
-const files = [];
-function emit(rel, content, mode, source, transform) {
-  const dest = path.join('global/.agents/skills', rel);
-  const full = path.join(outDir, dest);
-  fs.mkdirSync(path.dirname(full), {recursive: true});
-  fs.writeFileSync(full, content, {mode});
-  files.push({source: path.relative(sourceKit, source), source_sha256: sha(fs.readFileSync(source)),
-    destination: dest, destination_sha256: sha(Buffer.from(content)), transform});
-}
 
-fs.rmSync(path.join(outDir, 'global/.agents/skills'), {recursive: true, force: true});
+// Nothing under the pack is touched until the whole replacement exists: the roster
+// check, every transform and every seam run into a staging directory beside the
+// output, which is then swapped in. On any failure the previous skills tree and
+// source map stay byte-identical and the staging directory is removed.
 const present = fs.readdirSync(sourceSkills).sort();
 const unknown = present.filter(n => !ROSTER.includes(n) && !VENDORED.includes(n));
 if (unknown.length) fail(`unknown skill(s) in the source pack: ${unknown.join(', ')}`);
 // docs/ holds the map for the real pack: assets/ may not name the Claude source paths it records.
 const mapFile = outFlag >= 0 ? path.join(outDir, 'source-map.json') : path.join(root, 'docs/atlas-source-map.json');
 const notYet = ROSTER.filter(n => !present.includes(n));
+const SKILLS_REL = 'global/.agents/skills';
+const skillsDir = path.join(outDir, SKILLS_REL);
+fs.mkdirSync(path.dirname(skillsDir), {recursive: true});
+fs.mkdirSync(path.dirname(mapFile), {recursive: true});
+const stage = fs.mkdtempSync(path.join(path.dirname(skillsDir), '.skills-stage-'));
+fs.chmodSync(stage, 0o755);
+const stageMap = path.join(path.dirname(mapFile), `.${path.basename(mapFile)}.stage-${path.basename(stage)}`);
+const files = [];
+const emitted = new Map();
+function emit(rel, content, mode, source, transform) {
+  const dest = path.join(SKILLS_REL, rel);
+  const full = path.join(stage, rel);
+  fs.mkdirSync(path.dirname(full), {recursive: true});
+  fs.writeFileSync(full, content, {mode});
+  emitted.set(rel, content);
+  files.push({source: path.relative(sourceKit, source), source_sha256: sha(fs.readFileSync(source)),
+    destination: dest, destination_sha256: sha(Buffer.from(content)), transform});
+}
 
-for (const file of walk(sourceSkills)) {
-  const rel = path.relative(sourceSkills, file);
-  const skill = rel.split(path.sep)[0];
-  const mode = fs.statSync(file).mode & 0o777;
-  const bytes = fs.readFileSync(file);
-  const text = () => bytes.toString('utf8');
-  if (skill === 'archify') {
-    // Byte copies of the Claude pack's vendored tree (same pin, same patches),
-    // except SKILL.md: the wrapper sentence's path and the slim frontmatter.
-    if (rel === 'archify/SKILL.md') emit(rel, slimFrontmatter(toCodex(text()), rel), mode, file, 'archify-skill');
-    else emit(rel, bytes, mode, file, 'copy');
-  } else if (skill === 'graphify') {
-    const base = path.basename(rel);
-    if (rel === 'graphify/SKILL.md') emit(rel, graphifySkill(text()), mode, file, 'graphify-skill');
-    else if (['LICENSE', 'NOTICE', 'LICENSE-MIT'].includes(base)) emit(rel, bytes, mode, file, 'copy');
-    else if (rel.startsWith('graphify/references/')) emit(rel, toCodex(text()), mode, file, 'reference');
-    else emit(rel, convertCommandFile(rel, text()), mode, file, 'script');
-  } else if (/\.(md|sh|txt)$/.test(rel)) {
-    emit(rel, convertCommandFile(rel, text()), mode, file, rel.endsWith('/SKILL.md') ? 'command' : 'script');
-  } else {
-    fail(`unexpected file in a Command: ${rel}`);
+// The runner's ATLAS-BOUNDARY block, whole (marker lines included), as the converter emitted it.
+function boundaryBlock() {
+  const runner = String(emitted.get('graphify/atlas-graphify.sh') ?? fail('graphify/atlas-graphify.sh is not in the source pack'));
+  const begin = runner.indexOf('# ATLAS-BOUNDARY-BEGIN\n');
+  const endMark = '# ATLAS-BOUNDARY-END\n';
+  const end = runner.indexOf(endMark);
+  if (begin < 0 || end < begin || runner.indexOf('# ATLAS-BOUNDARY-BEGIN\n', begin + 1) >= 0) fail('atlas-graphify.sh: ATLAS-BOUNDARY markers not found exactly once');
+  return runner.slice(begin, end + endMark.length);
+}
+
+function build() {
+  for (const file of walk(sourceSkills)) {
+    const rel = path.relative(sourceSkills, file);
+    const skill = rel.split(path.sep)[0];
+    const mode = fs.statSync(file).mode & 0o777;
+    const bytes = fs.readFileSync(file);
+    const text = () => bytes.toString('utf8');
+    if (skill === 'archify') {
+      // Byte copies of the Claude pack's vendored tree (same pin, same patches),
+      // except SKILL.md: the wrapper sentence's path and the slim frontmatter.
+      if (rel === 'archify/SKILL.md') emit(rel, slimFrontmatter(toCodex(text()), rel), mode, file, 'archify-skill');
+      else emit(rel, bytes, mode, file, 'copy');
+    } else if (skill === 'graphify') {
+      const base = path.basename(rel);
+      if (rel === 'graphify/SKILL.md') emit(rel, graphifySkill(text()), mode, file, 'graphify-skill');
+      else if (['LICENSE', 'NOTICE', 'LICENSE-MIT'].includes(base)) emit(rel, bytes, mode, file, 'copy');
+      else if (rel.startsWith('graphify/references/')) emit(rel, toCodex(text()), mode, file, 'reference');
+      else emit(rel, convertCommandFile(rel, text()), mode, file, 'script');
+    } else if (/\.(md|sh|txt)$/.test(rel)) {
+      emit(rel, convertCommandFile(rel, text()), mode, file, rel.endsWith('/SKILL.md') ? 'command' : 'script');
+    } else {
+      fail(`unexpected file in a Command: ${rel}`);
+    }
   }
-}
-// The Graphify chunk reader exists only here: a Claude worker has a file-reading
-// tool, a standard Codex session has none. It is native to this kit, not derived
-// from the Claude pack, so its record names this repository's file as the source.
-{
-  const native = path.join(import.meta.dirname, 'atlas-codex/atlas-read-chunk.py');
-  const bytes = fs.readFileSync(native);
-  const dest = 'global/.agents/skills/graphify/atlas-read-chunk.py';
-  fs.writeFileSync(path.join(outDir, dest), bytes, {mode: 0o755});
-  files.push({source: path.relative(root, native), source_sha256: sha(bytes), destination: dest,
-    destination_sha256: sha(bytes), transform: 'kit-native'});
-}
-for (const name of [...ROSTER.filter(n => present.includes(n)), ...VENDORED]) {
-  const skill = fs.readFileSync(path.join(outDir, 'global/.agents/skills', name, 'SKILL.md'), 'utf8');
-  const yamlPath = path.join(outDir, 'global/.agents/skills', name, 'agents/openai.yaml');
-  fs.mkdirSync(path.dirname(yamlPath), {recursive: true});
-  fs.writeFileSync(yamlPath, openaiYaml(name, skill));
+  // The Graphify chunk reader exists only here: a Claude worker has a file-reading
+  // tool, a standard Codex session has none. It is native to this kit, not derived
+  // from the Claude pack, so its record names this repository's file as the source.
+  // Its shell entry point carries the runner's ATLAS-BOUNDARY block, spliced in whole.
+  for (const [name, mode] of [['atlas-read-chunk.py', 0o755], ['atlas-read-chunk.sh', 0o755]]) {
+    const native = path.join(import.meta.dirname, 'atlas-codex', name);
+    let bytes = fs.readFileSync(native);
+    const placeholder = '# @@ATLAS-BOUNDARY@@\n';
+    if (name.endsWith('.sh')) {
+      const template = bytes.toString('utf8');
+      if (template.split(placeholder).length !== 2) fail(`${name}: boundary placeholder not found exactly once`);
+      bytes = Buffer.from(template.replace(placeholder, () => boundaryBlock()));
+    }
+    const dest = path.join(SKILLS_REL, 'graphify', name);
+    fs.writeFileSync(path.join(stage, 'graphify', name), bytes, {mode});
+    files.push({source: path.relative(root, native), source_sha256: sha(fs.readFileSync(native)), destination: dest,
+      destination_sha256: sha(bytes), transform: 'kit-native'});
+  }
+  for (const name of [...ROSTER.filter(n => present.includes(n)), ...VENDORED]) {
+    const skill = fs.readFileSync(path.join(stage, name, 'SKILL.md'), 'utf8');
+    const yamlPath = path.join(stage, name, 'agents/openai.yaml');
+    fs.mkdirSync(path.dirname(yamlPath), {recursive: true});
+    fs.writeFileSync(yamlPath, openaiYaml(name, skill));
+  }
+  let commit = 'unknown';
+  try { commit = execFileSync('git', ['-C', sourceKit, 'rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(); } catch { /* not a git checkout */ }
+  fs.writeFileSync(stageMap, JSON.stringify({
+    converter: 'tools/migrate-atlas.mjs', source_kit: 'claude-bootstrap-protocol', source_commit: commit,
+    commands_not_yet_derived: notYet, files}, null, 2) + '\n');
+  return commit;
 }
 
-let commit = 'unknown';
-try { commit = execFileSync('git', ['-C', sourceKit, 'rev-parse', 'HEAD'], {encoding: 'utf8'}).trim(); } catch { /* not a git checkout */ }
-fs.writeFileSync(mapFile, JSON.stringify({
-  converter: 'tools/migrate-atlas.mjs', source_kit: 'claude-bootstrap-protocol', source_commit: commit,
-  commands_not_yet_derived: notYet, files}, null, 2) + '\n');
+function swapIn() {
+  const old = `${stage}.old`;
+  const hadSkills = fs.existsSync(skillsDir);
+  if (hadSkills) fs.renameSync(skillsDir, old);
+  try {
+    fs.renameSync(stage, skillsDir);
+    fs.renameSync(stageMap, mapFile);
+  } catch (error) {
+    // Put the previous tree back; the map is renamed last, so it is still the previous one.
+    fs.rmSync(skillsDir, {recursive: true, force: true});
+    if (hadSkills) fs.renameSync(old, skillsDir);
+    throw error;
+  }
+  fs.rmSync(old, {recursive: true, force: true});
+}
+
+let commit;
+try {
+  commit = build();
+  swapIn();
+} finally {
+  fs.rmSync(stage, {recursive: true, force: true});
+  fs.rmSync(stageMap, {force: true});
+}
 console.log(`Derived ${files.length} atlas files from ${commit.slice(0, 7)}; not yet in the source: ${notYet.join(', ') || 'none'}.`);
