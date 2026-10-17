@@ -1107,7 +1107,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
       "source_sha256": "fbe8a0c0f693c7a11bcc9923ab4dbee51c25e5bb47556b6e4a5ec7e432074805",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "0ecc708cb2c7b75662566246bc5c20ab196d3266a2ba15957e720ae401cd70b7",
+      "destination_sha256": "784b7d5485df501eb695d2abbee101c1e40aef26977d26890d88a0816e03ab4a",
       "transform": "script"
     },
     {
@@ -1261,7 +1261,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
       "source_sha256": "54cd6345af41759f2c8e2558a5378f6067ec311f8bf037257fe7006b0598846f",
       "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
-      "destination_sha256": "f97c8ee8beae87dff4e864fac1e2d8bf4588a2b77e788e86640794cc2efe2672",
+      "destination_sha256": "b2fe02a6371d72f79fb08698a604b9f8a6dc952465e4b1b6fff4710f5a6caa9f",
       "transform": "script"
     },
     {
@@ -1275,7 +1275,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
       "source_sha256": "a87eda7956a11859d8492cbffacd23581f3de00d2293f30cb2496a21049f21ee",
       "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
-      "destination_sha256": "e78fdbcc5d37c426a4efa87ff29147c8f8c70106487122a823b5db60cef721ad",
+      "destination_sha256": "d992f512e81075fb95efe8c95745abd0f98220b18ad20ca025c642e42526bcb6",
       "transform": "script"
     },
     {

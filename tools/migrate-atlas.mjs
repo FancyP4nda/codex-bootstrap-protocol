@@ -153,15 +153,21 @@ function openaiYaml(name, skill) {
 const snippet = name => fs.readFileSync(path.join(import.meta.dirname, 'atlas-codex', name), 'utf8');
 const DOCTOR_CONFIG_AND_MIGRATION = snippet('doctor-config-and-migration.sh');
 const DOCTOR_HOOK_TRACES = snippet('doctor-hook-traces.sh');
-const REA_ENV_SERVER = snippet('rea-env-server.sh');
+// The server discovery's tomllib reader is spliced into the shell snippet as a
+// single-quoted string, so it must hold no single quote.
+const REA_ENV_PY = snippet('rea-env-server.py');
+if (REA_ENV_PY.includes("'")) fail('tools/atlas-codex/rea-env-server.py: the source is spliced into a single-quoted shell string and holds a single quote');
+const REA_ENV_SERVER = exactly(snippet('rea-env-server.sh'), '@@REA-ENV-PY@@', REA_ENV_PY.replace(/\n$/, ''), 'rea-env-server.sh');
 
 // The ATLAS-REA-ENV block finds REA's MCP server as a child of CLAUDE_PID. A Codex
 // session has no such process id (an inherited one would name another agent's
 // server), so the mirror reads the server from Codex's configuration instead
-// (tools/atlas-codex/rea-env-server.sh) and keeps the environment checks that follow.
+// (tools/atlas-codex/rea-env-server.sh, which parses it with tomllib through
+// rea-env-server.py) and keeps the environment checks that follow.
 function reaServerDiscovery(text, where) {
   text = between(text, '# _rea_ppid <pid>:', '    case "$_REER" in\n        *"$_REENL"*)', REA_ENV_SERVER, where);
   text = exactly(text, '(process $_REEM) was removed', '(from its config entry) was removed', where);
+  text = exactly(text, '# from env, tr and readlink, from the cut PATH.', "# from env, tr and readlink, and, to read Codex's config.toml, a Python 3.11 or\n# later (python3 -I), from the cut PATH.", where);
   return between(text, '#   _rea_env_server  the environment of the one "rea mcp" child of the', '# _rea_env_scan then checks', `#   _rea_env_server  the environment of REA's MCP server as Codex's
 #                    configuration starts it (the [mcp_servers.rea] entry
 #                    of the closest .codex/config.toml, else CODEX_HOME's;
@@ -171,8 +177,10 @@ function reaServerDiscovery(text, where) {
 #                    that names it, in _REESP and _REESL. It prints why
 #                    and returns 1
 #                    when it cannot be read with certainty: no entry, an
-#                    entry this reader can't parse or that does not run
-#                    "rea mcp", a relative CODEX_HOME, a cwd that can't be
+#                    file tomllib can't parse, an entry in a form the reader
+#                    doesn't map or that does not run "rea mcp", a project
+#                    entry whose trust can't be confirmed, no Python 3.11 or
+#                    later, a relative CODEX_HOME, a cwd that can't be
 #                    entered, a value holding a line break.
 `, where);
 }

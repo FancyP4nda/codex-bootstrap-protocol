@@ -223,8 +223,10 @@ _untrusted_line() {
 #                    that names it, in _REESP and _REESL. It prints why
 #                    and returns 1
 #                    when it cannot be read with certainty: no entry, an
-#                    entry this reader can't parse or that does not run
-#                    "rea mcp", a relative CODEX_HOME, a cwd that can't be
+#                    file tomllib can't parse, an entry in a form the reader
+#                    doesn't map or that does not run "rea mcp", a project
+#                    entry whose trust can't be confirmed, no Python 3.11 or
+#                    later, a relative CODEX_HOME, a cwd that can't be
 #                    entered, a value holding a line break.
 # _rea_env_scan then checks _REE, as the reader just before it left it, and
 # prints one refusal line per variable, naming it and never its value; it
@@ -233,7 +235,8 @@ _untrusted_line() {
 # holding a line break). It also checks the Java executable a REA call in
 # that environment can probe, naming JAVA_HOME or PATH. _rea_java checks
 # that Java exists, where REA needs one. Nothing here runs a tool apart
-# from env, tr and readlink, from the cut PATH.
+# from env, tr and readlink, and, to read Codex's config.toml, a Python 3.11 or
+# later (python3 -I), from the cut PATH.
 _rea_say() {
     printf '%s: %s\n' "${_REETAG:-rea-env}" "$1"
 }
@@ -263,262 +266,29 @@ _rea_env_self() {
 '*) _REELB=1 ;;
     esac
 }
-# Codex's discovery of REA's MCP server (T053 round 5). The Claude kit finds
+# Codex's discovery of REA's MCP server (T053 rounds 5 to 7). The Claude kit finds
 # the server as a child of its agent's process and reads that process's
 # environment from /proc; a Codex session has no such agent id, and an
 # inherited one would name another agent's server. Here the snapshot comes from the configuration Codex starts
-# the server from: the [mcp_servers.rea] entry of the closest .codex/config.toml
-# on the way up from this directory, else $CODEX_HOME/config.toml (default
-# ~/.codex). Its command and args must run "rea mcp", its cwd is the server's
+# the server from: the [mcp_servers.rea] entry of $CODEX_HOME/config.toml
+# (default ~/.codex), layered under the .codex/config.toml of each directory
+# from the project root down to this one, for a project the user's config marks
+# trusted. Its command and args must run "rea mcp", its cwd is the server's
 # working directory (default: this one), and its environment is what Codex
 # gives a stdio server: the variables of its default list and the entry's
 # env_vars, taken from this process's own environment (already checked), then
-# the entry's env table over them. Only plain TOML is read: [mcp_servers.rea]
-# and [mcp_servers.rea.env] tables, one-line strings without backslash
-# escapes, one-line arrays and inline tables. Anything else, and a missing
-# entry, fails closed with a line that names the file.
-_rea_ltrim() {
-    while :; do
-        case "$_REETR" in
-            ' '* | "$_REETB"*) _REETR=${_REETR#?} ;;
-            *) break ;;
-        esac
-    done
-}
-# _rea_tstr <text>: the one-line quoted string at the start of text, in
-# _REETV, the rest in _REETR. A basic string with a backslash is refused.
-_rea_tstr() {
-    _REETR=$1
-    case "$_REETR" in
-        \"*) _REETQ='"' ;;
-        \'*) _REETQ="'" ;;
-        *) return 1 ;;
-    esac
-    _REETR=${_REETR#?}
-    _REETV=${_REETR%%"$_REETQ"*}
-    [ "$_REETV" != "$_REETR" ] || return 1
-    case "$_REETV" in
-        *\\*) [ "$_REETQ" != '"' ] || return 1 ;;
-    esac
-    _REETR=${_REETR#"$_REETV"?}
-}
-# _rea_tend: nothing but a comment follows.
-_rea_tend() {
-    _rea_ltrim
-    case "$_REETR" in '' | '#'*) return 0 ;; esac
-    return 1
-}
-# _rea_tarr <text>: a one-line array of strings, one per line in _REETL.
-_rea_tarr() {
-    _REETR=${1#\[}
-    _REETL=""
-    while :; do
-        _rea_ltrim
-        case "$_REETR" in
-            \]*)
-                _REETR=${_REETR#?}
-                break
-                ;;
-            ,*)
-                _REETR=${_REETR#?}
-                continue
-                ;;
-        esac
-        _rea_tstr "$_REETR" || return 1
-        _REETL="$_REETL$_REETV$_REENL"
-    done
-    _rea_tend
-}
-# _rea_tname <text>: the text without quotes and blanks, in _REEN (a table
-# or key name as TOML's dotted form writes it).
-_rea_tname() {
-    _REEN=$1
-    while :; do
-        case "$_REEN" in
-            *\"*) _REEN=${_REEN%%\"*}${_REEN#*\"} ;;
-            *\'*) _REEN=${_REEN%%\'*}${_REEN#*\'} ;;
-            *' '*) _REEN=${_REEN%%' '*}${_REEN#*' '} ;;
-            *"$_REETB"*) _REEN=${_REEN%%"$_REETB"*}${_REEN#*"$_REETB"} ;;
-            *) break ;;
-        esac
-    done
-}
-# _rea_tpair <name> <text>: NAME=value of a string value, appended to _REEEP.
-_rea_tpair() {
-    case "$1" in '' | *[!A-Za-z0-9_]* | [0-9]*) return 1 ;; esac
-    _rea_tstr "$2" && _rea_tend || return 1
-    _REEEP="$_REEEP$1=$_REETV$_REENL"
-}
-# _rea_ttab <text>: a one-line inline table of strings, appended to _REEEP.
-_rea_ttab() {
-    _REETR=${1#\{}
-    while :; do
-        _rea_ltrim
-        case "$_REETR" in
-            \}*)
-                _REETR=${_REETR#?}
-                break
-                ;;
-            ,*)
-                _REETR=${_REETR#?}
-                continue
-                ;;
-        esac
-        _REETK=${_REETR%%[!A-Za-z0-9_-]*}
-        if [ -n "$_REETK" ]; then
-            _REETR=${_REETR#"$_REETK"}
-        else
-            _rea_tstr "$_REETR" || return 1
-            _REETK=$_REETV
-        fi
-        _rea_ltrim
-        case "$_REETR" in =*) _REETR=${_REETR#?} ;; *) return 1 ;; esac
-        _rea_ltrim
-        _rea_tstr "$_REETR" || return 1
-        case "$_REETK" in '' | *[!A-Za-z0-9_]* | [0-9]*) return 1 ;; esac
-        _REEEP="$_REEEP$_REETK=$_REETV$_REENL"
-    done
-    _rea_tend
-}
-# _rea_cfg_read <file>: the [mcp_servers.rea] keys of one config file.
-# Returns 0 with the keys it sets in _REEC (command), _REEARGS (one per line,
-# _REEHAVE set), _REEEV (env_vars names, one per line, _REEEVSET set), _REEEP
-# (env, NAME=value per line) and _REECW (cwd), each empty when the file does
-# not set it; 1 when the file has no such entry; 2 with the reason in
-# _REEWHY.
-_rea_cfg_read() {
-    _REEWHY=""
-    _REEFOUND=""
-    _REEFORM=""
-    _REEC=""
-    _REEARGS=""
-    _REEEV=""
-    _REEEP=""
-    _REECW=""
-    _REEHAVE=""
-    _REEEVSET=""
-    _REEENVT=""
-    _REEBL=top
-    [ -r "$1" ] || return 1
-    while IFS= read -r _REEL || [ -n "$_REEL" ]; do
-        _REEL=${_REEL%"$_REECR"}
-        _REETR=$_REEL
-        _rea_ltrim
-        _REEL=$_REETR
-        case "$_REEL" in
-            '' | '#'*) continue ;;
-            '[['*)
-                _REEBL=other
-                continue
-                ;;
-            '['*)
-                _REEN=${_REEL#\[}
-                _REEN=${_REEN%%\]*}
-                _rea_tname "$_REEN"
-                case "$_REEN" in
-                    mcp_servers.rea)
-                        if [ -n "$_REEFOUND" ]; then
-                            _REEWHY="is set in two tables"
-                            return 2
-                        fi
-                        _REEFOUND=1
-                        _REEBL=main
-                        ;;
-                    mcp_servers.rea.env)
-                        _REEBL=env
-                        _REEENVT=1
-                        ;;
-                    mcp_servers.rea.*)
-                        _REEBL=other
-                        _REEFORM=1
-                        ;;
-                    mcp_servers) _REEBL=servers ;;
-                    *) _REEBL=other ;;
-                esac
-                continue
-                ;;
-        esac
-        case "$_REEL" in *=*) ;; *) continue ;; esac
-        _REEK=${_REEL%%=*}
-        _REETR=${_REEL#*=}
-        _rea_ltrim
-        _REEV=$_REETR
-        _rea_tname "$_REEK"
-        _REEK=$_REEN
-        case "$_REEBL" in
-            top)
-                case "$_REEK" in mcp_servers.rea | mcp_servers.rea.*) _REEFORM=1 ;; esac
-                ;;
-            servers)
-                case "$_REEK" in rea | rea.*) _REEFORM=1 ;; esac
-                ;;
-            env)
-                if ! _rea_tpair "$_REEK" "$_REEV"; then
-                    _REEWHY="has an [mcp_servers.rea.env] line this check can't read (one NAME = \"value\" per line)"
-                    return 2
-                fi
-                ;;
-            main)
-                case "$_REEK" in
-                    command)
-                        if [ -n "$_REEC" ] || ! { _rea_tstr "$_REEV" && _rea_tend; }; then
-                            _REEWHY="has a command that is not set once as a one-line string without backslashes"
-                            return 2
-                        fi
-                        _REEC=$_REETV
-                        ;;
-                    cwd)
-                        if ! { _rea_tstr "$_REEV" && _rea_tend; }; then
-                            _REEWHY="has a cwd that is not a one-line string without backslashes"
-                            return 2
-                        fi
-                        _REECW=$_REETV
-                        ;;
-                    args)
-                        if ! _rea_tarr "$_REEV"; then
-                            _REEWHY="has args that are not a one-line array of strings"
-                            return 2
-                        fi
-                        _REEARGS=$_REETL
-                        _REEHAVE=1
-                        ;;
-                    env_vars)
-                        # The names Codex passes on from the session. They
-                        # only widen the snapshot with variables the session's
-                        # own check covered, so a list spread over lines is
-                        # left out rather than refused.
-                        if _rea_tarr "$_REEV"; then
-                            _REEEV=$_REETL
-                            _REEEVSET=1
-                        fi
-                        ;;
-                    env)
-                        if ! _rea_ttab "$_REEV"; then
-                            _REEWHY="has an env table that is not a one-line inline table of strings"
-                            return 2
-                        fi
-                        ;;
-                    env.*)
-                        if ! _rea_tpair "${_REEK#env.}" "$_REEV"; then
-                            _REEWHY="has an env line that is not a one-line string"
-                            return 2
-                        fi
-                        ;;
-                esac
-                ;;
-        esac
-    done <"$1"
-    # A layer may hold only part of the entry (Codex merges the layers per
-    # key), so completeness is checked on the merged entry, not here.
-    if [ -n "$_REEFOUND$_REEENVT" ]; then
-        return 0
-    fi
-    if [ -n "$_REEFORM" ]; then
-        _REEWHY="is written in a form this check can't read; write it as a [mcp_servers.rea] table"
-        return 2
-    fi
-    return 1
-}
+# the entry's env table over them.
+#
+# No shell reads the TOML. A Python 3.11 or later, found on the PATH the caller
+# already cut to entries outside the untrusted area (and checked again by name,
+# resolved directory and symlink step), runs as `python3 -I -c` over the
+# source below: tomllib parses the files, the project's trust comes from the
+# parsed [projects] table, and the layers are merged as Codex merges them. It
+# prints one record per line (c: f: a: e: v: w: x:), which the loop below reads
+# with `read`; nothing it prints is evaluated. A file that does not parse, an
+# entry in a form it does not map, a project entry whose trust cannot be
+# confirmed and a missing Python 3.11 each fail closed with a line that names
+# the file. An unsupported form is never taken for an absent entry.
 # _rea_isrea_script <path>: REA's entry script by name (bin "rea" or
 # "rea-agents", or scripts/rea.mjs in the package).
 _rea_isrea_script() {
@@ -574,143 +344,361 @@ _rea_cfg_isrea() {
     esac
     return 1
 }
-# _rea_layer <file> <project>: one config layer's [mcp_servers.rea] keys,
-# merged over the earlier layers as Codex does: per key, the later layer
-# wins, an array (args, env_vars) is replaced whole, and the env table is
-# merged name by name. Returns 0 when the layer was merged, 1 when it
-# holds no entry or is ignored (a project layer of an untrusted project),
-# 2 after a named line when it can't be read.
-_rea_layer() {
-    _rea_cfg_read "$1"
-    _REERC=$?
-    if [ "$2" = project ] && [ "$_REERC" -ne 1 ] && [ "$_REETRUST" != yes ]; then
-        if [ "$_REETRUST" = no ]; then
-            return 1
-        fi
-        _rea_say "$1 sets an [mcp_servers.rea] entry, but whether Codex trusts the project $_REEROOT can't be read from the [projects] tables of $_REEHOME/config.toml, so REA's MCP server can't be checked; nothing checked."
-        return 2
+# _rea_python: a Python 3.11 or later outside the untrusted area, in _REEPY.
+# Each candidate is an absolute entry of the (cut) PATH, refused when it lies
+# inside the repository by name, resolved directory or symlink step, and must
+# run isolated (-I -S, from /) with tomllib. Returns 1 when none does.
+_rea_python() {
+    _REEPY=""
+    _REEPF=""
+    case $- in *f*) _REEPF=1 ;; esac
+    _REEPS=$IFS
+    IFS=:
+    set -f
+    for _REEPD in $PATH; do
+        case "$_REEPD" in /*) ;; *) continue ;; esac
+        for _REEPN in python3 python3.14 python3.13 python3.12 python3.11; do
+            _REEPC="$_REEPD/$_REEPN"
+            [ -f "$_REEPC" ] && [ -x "$_REEPC" ] || continue
+            _inside_path "$_REEPC" && continue
+            # From /, with the version managers' installs off: a shim (asdf,
+            # pyenv, mise) picks its interpreter from files in the working
+            # directory, which here is the repository's.
+            if (cd / && MISE_AUTO_INSTALL=0 MISE_NOT_FOUND_AUTO_INSTALL=0 "$_REEPC" -I -S -c 'import sys, tomllib
+sys.exit(0 if sys.version_info >= (3, 11) and sys.flags.isolated else 1)') >/dev/null 2>&1; then
+                _REEPY=$_REEPC
+                break 2
+            fi
+        done
+    done
+    IFS=$_REEPS
+    [ -n "$_REEPF" ] || set +f
+    [ -n "$_REEPY" ]
+}
+# The reader, run by _rea_config: tools/atlas-codex/rea-env-server.py, spliced in
+# by the converter (it holds no single quote).
+_REEPYSRC='# The Codex configuration of the REA MCP server, read with tomllib (T053 round 7).
+# Kit-authored for the Codex mirror, not derived. tools/migrate-atlas.mjs splices
+# this file into rea-env-server.sh, which runs it as `python3 -I -c <source>
+# <CODEX_HOME> <physical cwd> <logical cwd>` with a trusted Python 3.11 or later.
+# That source sits in a shell single-quoted string, so it holds no single quote.
+#
+# It reads the user config.toml and each project .codex/config.toml, decides
+# project trust from the parsed [projects] table, merges the [mcp_servers.rea]
+# entry as Codex layers it (per key, the later layer wins; args and env_vars are
+# replaced whole; env is merged name by name) and prints the result as one record
+# per line, never as shell text:
+#   ok            first line of a result
+#   f:<path>      a config file that holds the entry (one per layer)
+#   c:<command>   h:   (args are set)   a:<arg> (one per argument)
+#   v:<NAME>      an env_vars name      e:<NAME>=<value> an env pair
+#   w:<cwd>       x:<path of the file that set it>
+# On anything it cannot read with certainty it prints one `refuse:<reason>` line
+# and exits 1. An unsupported form is never taken for an absent one.
+import os
+import re
+import stat
+import sys
+import tomllib
+
+LIMIT = 1048576
+NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
+
+
+class Refuse(Exception):
+    pass
+
+
+def shown(text):
+    return "".join("?" if (c < " " or c == "\x7f") else c for c in str(text))
+
+
+def read_toml(path):
+    try:
+        info = os.stat(path)
+    except (FileNotFoundError, NotADirectoryError):
+        return None
+    except OSError as err:
+        raise Refuse("%s can not be read (%s)" % (shown(path), shown(err.strerror)))
+    if not stat.S_ISREG(info.st_mode):
+        raise Refuse("%s is not a regular file" % shown(path))
+    if info.st_size > LIMIT:
+        raise Refuse("%s is too large to read (over %d bytes)" % (shown(path), LIMIT))
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NONBLOCK)
+        try:
+            if not stat.S_ISREG(os.fstat(fd).st_mode):
+                raise Refuse("%s is not a regular file" % shown(path))
+            data = os.read(fd, LIMIT + 1)
+        finally:
+            os.close(fd)
+    except OSError as err:
+        raise Refuse("%s can not be read (%s)" % (shown(path), shown(err.strerror)))
+    if len(data) > LIMIT:
+        raise Refuse("%s is too large to read (over %d bytes)" % (shown(path), LIMIT))
+    try:
+        return tomllib.loads(data.decode("utf-8"))
+    except (ValueError, RecursionError) as err:
+        raise Refuse("%s is not valid TOML (%s)" % (shown(path), shown(err)))
+
+
+def text_of(value, what, path):
+    if not isinstance(value, str):
+        raise Refuse("the [mcp_servers.rea] entry in %s has %s that is not a string" % (shown(path), what))
+    if "\n" in value or "\r" in value or "\x00" in value:
+        raise Refuse("the [mcp_servers.rea] entry in %s has %s holding a line break or a NUL" % (shown(path), what))
+    return value
+
+
+def names_of(value, what, path):
+    if not isinstance(value, list):
+        raise Refuse("the [mcp_servers.rea] entry in %s has %s that is not an array of strings" % (shown(path), what))
+    return [text_of(item, what, path) for item in value]
+
+
+def entry_of(doc, path):
+    """The [mcp_servers.rea] entry of one parsed file as a dict of mapped keys, or None when it has none."""
+    if "mcp_servers" not in doc:
+        return None
+    servers = doc["mcp_servers"]
+    if not isinstance(servers, dict):
+        raise Refuse("%s sets mcp_servers in a form this check cannot map to [mcp_servers.rea] (it is not a table)" % shown(path))
+    if "rea" not in servers:
+        return None
+    raw = servers["rea"]
+    if not isinstance(raw, dict):
+        raise Refuse("the [mcp_servers.rea] entry in %s is in a form this check cannot map (it is not a table)" % shown(path))
+    entry = {}
+    if "command" in raw:
+        entry["command"] = text_of(raw["command"], "a command", path)
+    if "args" in raw:
+        entry["args"] = names_of(raw["args"], "args", path)
+    if "cwd" in raw:
+        entry["cwd"] = text_of(raw["cwd"], "a cwd", path)
+    if "env_vars" in raw:
+        entry["env_vars"] = names_of(raw["env_vars"], "env_vars", path)
+        for name in entry["env_vars"]:
+            if not NAME.match(name):
+                raise Refuse("the [mcp_servers.rea] entry in %s has an env_vars name this check cannot take" % shown(path))
+    if "env" in raw:
+        table = raw["env"]
+        if not isinstance(table, dict):
+            raise Refuse("the [mcp_servers.rea] entry in %s has an env that is not a table of strings" % shown(path))
+        env = {}
+        for name, value in table.items():
+            if not NAME.match(name):
+                raise Refuse("the [mcp_servers.rea] entry in %s has an env name this check cannot take (letters, digits and underscores only)" % shown(path))
+            env[name] = text_of(value, "the env value of " + name, path)
+        entry["env"] = env
+    return entry
+
+
+def marker_root(start, markers):
+    here = start
+    while True:
+        for marker in markers:
+            if os.path.lexists(os.path.join(here, marker)):
+                return here
+        if here == "/":
+            return start
+        here = os.path.dirname(here) or "/"
+
+
+def main_worktree(root):
+    """The main checkout of a linked worktree rooted at root, or None."""
+    link = os.path.join(root, ".git")
+    if not os.path.isfile(link):
+        return None
+    try:
+        with open(link, "rb") as handle:
+            first = handle.read(4096).decode("utf-8", "replace").splitlines()[0]
+        if not first.startswith("gitdir:"):
+            return None
+        gitdir = first[len("gitdir:"):].strip()
+        gitdir = os.path.normpath(os.path.join(root, gitdir))
+        if not os.path.isfile(os.path.join(gitdir, "commondir")):
+            return None
+        with open(os.path.join(gitdir, "commondir"), "rb") as handle:
+            common = handle.read(4096).decode("utf-8", "replace").strip()
+        common = os.path.normpath(os.path.join(gitdir, common))
+    except (OSError, IndexError):
+        return None
+    return os.path.dirname(common) if os.path.basename(common) == ".git" else None
+
+
+def trust_of(user, keys):
+    """(yes, no, unmarked or bad, with why) for the project, from the parsed user config."""
+    projects = user.get("projects") if user else None
+    if projects is None:
+        return "unmarked", "no [projects] table"
+    if not isinstance(projects, dict):
+        return "bad", "[projects] is not a table"
+    seen = set()
+    for key, value in projects.items():
+        if key.rstrip("/") not in keys:
+            continue
+        if not isinstance(value, dict):
+            return "bad", "the [projects] entry for " + shown(key) + " is not a table"
+        level = value.get("trust_level")
+        if level is None:
+            continue
+        if level == "trusted":
+            seen.add("yes")
+        elif level == "untrusted":
+            seen.add("no")
+        else:
+            return "bad", "the trust_level of " + shown(key) + " is not trusted or untrusted"
+    if seen == {"yes"}:
+        return "yes", ""
+    if seen == {"no"}:
+        return "no", ""
+    if seen:
+        return "bad", "the [projects] entries for this directory, its project root and its main checkout disagree"
+    return "unmarked", "no [projects] entry for this directory or its project root marks it"
+
+
+def run(home, cwd, logical):
+    for given in (home, cwd):
+        if re.search("[\\x00-\\x1f\\x7f]", given):
+            raise Refuse("%s holds a control character, so the records this reader prints could be forged" % shown(given))
+    user_path = os.path.join(home, "config.toml")
+    user = read_toml(user_path)
+    layers = []
+    if user is not None:
+        entry = entry_of(user, user_path)
+        if entry is not None:
+            layers.append((user_path, entry))
+    markers = [".git"]
+    if user is not None and "project_root_markers" in user:
+        markers = user["project_root_markers"]
+        if not isinstance(markers, list) or not all(isinstance(m, str) and m and "/" not in m for m in markers):
+            raise Refuse("project_root_markers in %s is not an array of plain names (no empty name, no slash)" % shown(user_path))
+    root = marker_root(cwd, markers)
+    keys = {cwd.rstrip("/") or "/", root.rstrip("/") or "/"}
+    if logical.startswith("/"):
+        try:
+            if os.path.samefile(logical, cwd):
+                keys.add(logical.rstrip("/") or "/")
+        except OSError:
+            pass
+    main = main_worktree(root)
+    if main:
+        keys.add(main.rstrip("/") or "/")
+    state, why = trust_of(user, keys)
+    dirs = []
+    here = cwd
+    while True:
+        dirs.append(here)
+        if here == root or here == "/":
+            break
+        here = os.path.dirname(here) or "/"
+    for directory in reversed(dirs):
+        path = os.path.join(directory, ".codex", "config.toml")
+        try:
+            if os.path.samefile(path, user_path):
+                continue
+        except OSError:
+            pass
+        if state == "no":
+            continue
+        doc = read_toml(path)
+        if doc is None:
+            continue
+        entry = entry_of(doc, path)
+        if entry is None:
+            continue
+        if state != "yes":
+            raise Refuse("%s sets an [mcp_servers.rea] entry, but whether Codex trusts the project %s cannot be confirmed from the [projects] tables of %s (%s); mark the project trusted or untrusted there" % (shown(path), shown(root), shown(user_path), why))
+        layers.append((path, entry))
+    out = ["ok"]
+    merged = {}
+    env = {}
+    cwd_file = ""
+    for path, entry in layers:
+        out.append("f:" + path)
+        for key in ("command", "args", "env_vars"):
+            if key in entry:
+                merged[key] = entry[key]
+        if "cwd" in entry:
+            merged["cwd"] = entry["cwd"]
+            cwd_file = path
+        env.update(entry.get("env", {}))
+    if "command" in merged:
+        out.append("c:" + merged["command"])
+    if "args" in merged:
+        out.append("h:")
+        out.extend("a:" + item for item in merged["args"])
+    out.extend("v:" + item for item in merged.get("env_vars", []))
+    out.extend("e:%s=%s" % pair for pair in env.items())
+    if "cwd" in merged:
+        out.append("w:" + merged["cwd"])
+        out.append("x:" + cwd_file)
+    return out
+
+
+def emit(lines, code):
+    sys.stdout.buffer.write(("\n".join(lines) + "\n").encode("utf-8", "surrogateescape"))
+    sys.stdout.buffer.flush()
+    sys.exit(code)
+
+
+def main():
+    if len(sys.argv) != 4:
+        emit(["refuse:the configuration reader was called wrongly"], 1)
+    home, cwd, logical = sys.argv[1:4]
+    try:
+        emit(run(home, cwd, logical), 0)
+    except Refuse as err:
+        emit(["refuse:" + str(err)], 1)
+    except Exception as err:
+        emit(["refuse:the configuration reader failed (%s)" % shown(type(err).__name__)], 1)
+
+
+main()'
+# _rea_config: the merged [mcp_servers.rea] entry from Codex's configuration, in
+# _REEMC (command), _REEMA (args, one per line, _REEMHAVE set), _REEMEV (env_vars
+# names), _REEMEP (env, NAME=value per line), _REEMCW and _REEMCWFILE (cwd and
+# the file that set it) and _REEFILE (the files that hold the entry, _REEANY
+# set). Returns 1 after a named line when it cannot be read with certainty.
+_rea_config() {
+    if ! _rea_python; then
+        _rea_say "found no Python 3.11 or later (with tomllib) outside $_REEROOT on PATH, so Codex's config.toml cannot be read and REA's MCP server can't be checked; nothing checked. Install Python 3.11 or later, or put it on PATH."
+        return 1
     fi
-    case $_REERC in
-        0) ;;
-        2)
-            _rea_say "the [mcp_servers.rea] entry in $1 $_REEWHY, so REA's MCP server can't be checked; nothing checked."
-            return 2
-            ;;
-        *) return 1 ;;
-    esac
-    [ -z "$_REEC" ] || _REEMC=$_REEC
-    if [ -n "$_REEHAVE" ]; then
-        _REEMA=$_REEARGS
-        _REEMHAVE=1
-    fi
-    [ -z "$_REEEVSET" ] || _REEMEV=$_REEEV
-    if [ -n "$_REECW" ]; then
-        _REEMCW=$_REECW
-        _REEMCWFILE=$1
-    fi
-    _REEMT=""
+    _REELOG=${PWD-}
+    _REEOUT=$(cd / && MISE_AUTO_INSTALL=0 MISE_NOT_FOUND_AUTO_INSTALL=0 "$_REEPY" -I -S -c "$_REEPYSRC" "$_REEHOME" "$_REESS" "$_REELOG" 2>/dev/null)
+    _REEPRC=$?
+    _REEGOT=""
     while IFS= read -r _REEL; do
-        [ -n "$_REEL" ] || continue
-        case "$_REENL$_REEEP" in
-            *"$_REENL${_REEL%%=*}="*) continue ;;
-        esac
-        _REEMT="$_REEMT$_REEL$_REENL"
-    done <<EOF
-$_REEMEP
-EOF
-    _REEMEP="$_REEMT$_REEEP"
-    _REEFILE="${_REEFILE:+$_REEFILE, }$1"
-    _REEANY=1
-    return 0
-}
-# _rea_layers <dir>: the project layers from the project root down to dir,
-# the root's first. Each candidate path is read directly, quoted, as the
-# recursion unwinds; no list of paths is built.
-_rea_layers() {
-    if [ "$1" != "$_REEROOT" ]; then
-        _REEUP=${1%/*}
-        [ -n "$_REEUP" ] || _REEUP=/
-        _rea_layers "$_REEUP" || return 2
-    fi
-    _rea_layer "$1/.codex/config.toml" project
-    [ $? -ne 2 ]
-}
-# _rea_user_scan <file>: from the user's config.toml, project_root_markers
-# (in _REEMARK, one per line, default ".git") and whether Codex trusts the
-# project at _REEROOT (_REETRUST: yes, no, or unknown when the file's
-# [projects] tables are in a form this reader can't take).
-_rea_user_scan() {
-    _REEMARK=".git"
-    _REETRUST=no
-    [ -r "$1" ] || return 0
-    _REEPB=""
-    _REEPU=""
-    _REEPL=""
-    _REETOPL=1
-    while IFS= read -r _REEL || [ -n "$_REEL" ]; do
-        _REEL=${_REEL%"$_REECR"}
-        _REETR=$_REEL
-        _rea_ltrim
-        _REEL=$_REETR
         case "$_REEL" in
-            '' | '#'*) continue ;;
-            '[['*)
-                _REEPB=""
-                _REETOPL=""
-                continue
+            ok) _REEGOT=1 ;;
+            refuse:*)
+                _rea_say "${_REEL#refuse:}, so REA's MCP server can't be checked; nothing checked."
+                return 1
                 ;;
-            '['*)
-                _REEPB=""
-                _REETOPL=""
-                case "$_REEL" in
-                    '[projects]'* | '[ projects ]'*) _REEPU=1 ;;
-                    '[projects.'*)
-                        if _rea_tstr "${_REEL#\[projects.}" && case "$_REETR" in \]*) true ;; *) false ;; esac; then
-                            if [ -n "$_REEROOT" ] && { [ "$_REETV" = "$_REEROOT" ] || [ "$_REETV" = "$_REEROOT/" ]; }; then
-                                _REEPB=1
-                            fi
-                        else
-                            _REEPU=1
-                        fi
-                        ;;
-                esac
-                continue
+            f:*)
+                _REEFILE="${_REEFILE:+$_REEFILE, }${_REEL#f:}"
+                _REEANY=1
+                ;;
+            c:*) _REEMC=${_REEL#c:} ;;
+            h:*) _REEMHAVE=1 ;;
+            a:*) _REEMA="$_REEMA${_REEL#a:}$_REENL" ;;
+            v:*) _REEMEV="$_REEMEV${_REEL#v:}$_REENL" ;;
+            e:*) _REEMEP="$_REEMEP${_REEL#e:}$_REENL" ;;
+            w:*) _REEMCW=${_REEL#w:} ;;
+            x:*) _REEMCWFILE=${_REEL#x:} ;;
+            *)
+                _rea_say "the configuration reader printed a line this check does not know, so REA's MCP server can't be checked; nothing checked."
+                return 1
                 ;;
         esac
-        case "$_REEL" in *=*) ;; *) continue ;; esac
-        _REEK=${_REEL%%=*}
-        _REETR=${_REEL#*=}
-        _rea_ltrim
-        _REEV=$_REETR
-        _rea_tname "$_REEK"
-        case "$_REEN" in
-            project_root_markers)
-                if [ -z "$_REETOPL" ]; then
-                    :
-                elif _rea_tarr "$_REEV"; then
-                    _REEMARK=$_REETL
-                else
-                    _REEPU=1
-                fi
-                ;;
-            projects | projects.*) _REEPU=1 ;;
-            trust_level)
-                if [ -n "$_REEPB" ]; then
-                    if _rea_tstr "$_REEV" && _rea_tend; then
-                        _REEPL=$_REETV
-                    else
-                        _REEPU=1
-                    fi
-                fi
-                ;;
-        esac
-    done <"$1"
-    if [ -n "$_REEPL" ]; then
-        [ "$_REEPL" = trusted ] && _REETRUST=yes
-    elif [ -n "$_REEPU" ]; then
-        _REETRUST=unknown
+    done <<EOF
+$_REEOUT
+EOF
+    if [ -z "$_REEGOT" ] || [ "$_REEPRC" -ne 0 ]; then
+        _rea_say "the configuration reader (Python $_REEPY) did not finish, so Codex's config.toml cannot be read and REA's MCP server can't be checked; nothing checked."
+        return 1
     fi
-    return 0
 }
 _rea_env_server() {
     _REEKIND=server
@@ -737,30 +725,7 @@ _rea_env_server() {
             return 1
             ;;
     esac
-    # Codex's layering (Advanced Configuration, "Project config files"): the
-    # user's config.toml, then the .codex/config.toml of each directory from the
-    # project root down to this one, closest last, merged per key. Project
-    # layers count only when the user's config marks the project trusted.
-    _REEROOT=""
-    _rea_user_scan "$_REEHOME/config.toml"
-    _REED=$_REESS
-    while :; do
-        while IFS= read -r _REEMK; do
-            case "$_REEMK" in '' | */*) continue ;; esac
-            if [ -e "$_REED/$_REEMK" ]; then
-                _REEROOT=$_REED
-                break
-            fi
-        done <<EOF
-$_REEMARK
-EOF
-        [ -z "$_REEROOT" ] || break
-        [ "$_REED" = / ] && break
-        _REED=${_REED%/*}
-        [ -n "$_REED" ] || _REED=/
-    done
-    [ -n "$_REEROOT" ] || _REEROOT=$_REESS
-    _rea_user_scan "$_REEHOME/config.toml"
+    _REEROOT=$_REESS
     _REEMC=""
     _REEMA=""
     _REEMHAVE=""
@@ -770,15 +735,13 @@ EOF
     _REEMCWFILE=""
     _REEFILE=""
     _REEANY=""
-    _rea_layer "$_REEHOME/config.toml" user
-    [ $? -ne 2 ] || return 1
-    _rea_layers "$_REESS" || return 1
+    _rea_config || return 1
     [ -n "$_REEANY" ] || {
-        _rea_say "found no [mcp_servers.rea] entry in $_REEHOME/config.toml or in a trusted project's .codex/config.toml from $_REEROOT down to this directory, so REA's MCP server can't be checked; nothing checked. Run: rea setup"
+        _rea_say "found no [mcp_servers.rea] entry in $_REEHOME/config.toml or in a trusted project's .codex/config.toml from the project root down to this directory, so REA's MCP server can't be checked; nothing checked. Run: rea setup"
         return 1
     }
     if [ -z "$_REEMC" ] || [ -z "$_REEMHAVE" ]; then
-        _rea_say "the [mcp_servers.rea] entry ($_REEFILE, merged as Codex layers them) has no command, or no args array on one line, so REA's MCP server can't be checked; nothing checked."
+        _rea_say "the [mcp_servers.rea] entry ($_REEFILE, merged as Codex layers them) has no command or no args array, so REA's MCP server can't be checked; nothing checked."
         return 1
     fi
     _REEC=$_REEMC
@@ -798,10 +761,17 @@ EOF
         return 1
     }
     _REE=""
+    _REEDONE=$_REENL
     for _REEK in HOME LOGNAME PATH SHELL USER __CF_USER_TEXT_ENCODING LANG LC_ALL TERM TMPDIR TZ $_REEEV; do
         case "$_REENL$_REEEP" in
             *"$_REENL$_REEK="*) continue ;;
         esac
+        # A name in both lists (env_vars may repeat a default variable) is
+        # taken once.
+        case "$_REEDONE" in
+            *"$_REENL$_REEK$_REENL"*) continue ;;
+        esac
+        _REEDONE="$_REEDONE$_REEK$_REENL"
         while IFS= read -r _REEL; do
             case "$_REEL" in
                 "$_REEK="*)

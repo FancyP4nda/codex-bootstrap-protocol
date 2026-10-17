@@ -57,13 +57,20 @@ behaviour in full; the text installed here is that text with the `$` sigil.
     Codex configures it: `config.toml` in `$CODEX_HOME`, then the
     `.codex/config.toml` of each directory from the project root (the nearest
     `.git`, or `project_root_markers`) down to the working directory, merged
-    per key (env tables name by name, arrays replaced), and a project layer
-    counts only when `[projects."<root>"]` in the user's file has
-    `trust_level = "trusted"`. The merged command and args must be a
-    registration `rea-agents@6.4.0` writes (`rea mcp`, `<path>/scripts/rea.mjs
-    mcp`, `node <path>/scripts/rea.mjs mcp` or `npx -y rea-agents@6.4.0 mcp`).
-    When the entry cannot be established the check stops with a line naming
-    the file.
+    per key (env tables name by name, arrays replaced). Python's `tomllib`
+    parses the files, so every TOML spelling of the entry is read (tables,
+    inline tables, dotted and quoted keys, multi-line arrays). It runs as
+    `python3 -I`, a Python 3.11 or later found on a PATH cut to entries outside
+    the repository. A project layer counts only when `[projects."<path>"]` in
+    the user's file has `trust_level = "trusted"` for the working directory,
+    the project root or the main checkout of a linked worktree. The merged
+    command and args must be a registration `rea-agents@6.4.0` writes (`rea
+    mcp`, `<path>/scripts/rea.mjs mcp`, `node <path>/scripts/rea.mjs mcp` or
+    `npx -y rea-agents@6.4.0 mcp`). A file `tomllib` cannot parse, an entry in
+    a form that is not mapped, a project entry whose trust is not marked
+    (or marked both ways), and a missing Python 3.11 each stop the check with
+    a line naming the file. Nothing is treated as absent when it cannot be
+    read.
   - `migration-unstamped-archify` and `migration-unstamped-graphify`: a skill
     directory under `~/.agents/skills` that the install record does not list,
     with the line that moves it out (D-4).

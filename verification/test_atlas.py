@@ -484,7 +484,10 @@ class ReaServerDiscoveryTests(unittest.TestCase):
     def setup_run(self, config=None, project=None, cwd=None, **extra):
         if config is not None:
             (self.codex/'config.toml').write_text(config)
-        if project is not None:
+        # project=None removes the project layer; Ellipsis keeps the file a test prepared by hand.
+        if project is None:
+            (self.work/'.codex/config.toml').unlink(missing_ok=True)
+        elif project is not Ellipsis:
             (self.work/'.codex').mkdir(exist_ok=True)
             (self.work/'.codex/config.toml').write_text(project)
         script = SKILLS/'atlas-doctor/scripts/atlas-check.sh'
@@ -516,18 +519,216 @@ class ReaServerDiscoveryTests(unittest.TestCase):
                 self.assertNotIn('[ok] rea-mcp', run.stdout)
 
     def test_an_unreadable_entry_fails_closed_with_a_named_line(self):
-        for config in ('[mcp_servers.rea]\ncommand = "rea"\nargs = [\n  "mcp",\n]\n',
-                       '[mcp_servers.rea]\ncommand = "rea\nargs = ["mcp"]\n',
-                       '[mcp_servers.rea]\ncommand = "re\\\\a"\nargs = ["mcp"]\n',
-                       'mcp_servers.rea.command = "rea"\nmcp_servers.rea.args = ["mcp"]\n',
+        for config in ('[mcp_servers.rea]\ncommand = "re\\\\a"\nargs = ["mcp"]\n',
                        '[mcp_servers.rea]\nargs = ["mcp"]\n',
-                       '[mcp_servers.rea]\ncommand = "other"\nargs = ["serve"]\n'):
+                       '[mcp_servers.rea]\ncommand = "other"\nargs = ["serve"]\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp", 5]\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { A = 1 }\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv_vars = [{ name = "X" }]\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { "1X" = "a" }\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { X = "a\\nb" }\n',
+                       'mcp_servers = 5\n', 'mcp_servers = { rea = 5 }\n'):
             with self.subTest(config=config):
                 run = self.setup_run(config)
                 self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
                 self.assertIn('[missing] rea-env', run.stdout)
                 self.assertIn('mcp_servers.rea', run.stdout)
                 self.assertNotIn('[ok] rea-mcp', run.stdout)
+
+    def test_a_config_tomllib_cannot_parse_fails_closed_naming_the_file(self):
+        for config in ('[mcp_servers.rea]\ncommand = "rea\nargs = ["mcp"]\n', '[mcp_servers.rea\n', 'a = = 1\n',
+                       '[mcp_servers.rea]\ncommand = "rea"\n[mcp_servers.rea]\n'):
+            with self.subTest(config=config):
+                run = self.setup_run(config)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('[missing] rea-env', run.stdout)
+                self.assertIn(str(self.codex/'config.toml'), run.stdout)
+                self.assertIn('not valid TOML', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+        # a trusted project's file, and one that is not a regular file or is too large
+        proj = self.ENTRY + self.trust()
+        run = self.setup_run(proj, project='[mcp_servers.rea\n')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn(str(self.work/'.codex/config.toml'), run.stdout)
+        self.assertIn('not valid TOML', run.stdout)
+        (self.work/'.codex/config.toml').unlink()
+        (self.work/'.codex/config.toml').symlink_to('/dev/zero')
+        run = self.setup_run(proj, project=...)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('not a regular file', run.stdout)
+        (self.work/'.codex/config.toml').unlink()
+        (self.work/'.codex/config.toml').write_text('# ' + 'x' * 2_000_000 + '\n')
+        run = self.setup_run(proj, project=...)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('too large', run.stdout)
+
+    FORMS = (
+        'mcp_servers = {rea = {command = "rea", args = ["mcp"], env = {NODE_OPTIONS = "--require /repo/payload.js"}}}\n',
+        '[mcp_servers."\\u0072ea"]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers."\\u0072ea".env]\nNODE_OPTIONS = "--require /repo/payload.js"\n',
+        '[mcp_servers]\nrea.command = "rea"\nrea.args = ["mcp"]\n[mcp_servers.rea.env]\nNODE_OPTIONS = "--require /repo/payload.js"\n',
+        'mcp_servers.rea.command = "rea"\nmcp_servers.rea.args = [\n  "mcp",  # stdio\n]\nmcp_servers.rea.env.NODE_OPTIONS = "--require /repo/payload.js"\n',
+        '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n"env" = { "NODE_OPTIONS" = "--require /repo/payload.js" }\n',
+        '[ mcp_servers . rea ]\ncommand = "rea"\nargs = ["mcp"]\n[ mcp_servers . rea . env ]\nNODE_OPTIONS = \'--require /repo/payload.js\'\n')
+
+    def test_every_toml_form_of_the_entry_is_read_and_a_code_loading_env_is_refused(self):
+        for config in self.FORMS:
+            for where in ('user', 'project'):
+                with self.subTest(config=config, where=where):
+                    if where == 'user':
+                        run = self.setup_run(config)
+                    else:
+                        run = self.setup_run(self.ENTRY + self.trust(), project=config)
+                    self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                    self.assertIn('NODE_OPTIONS', run.stdout)
+                    self.assertNotIn('payload.js', run.stdout)
+                    self.assertNotIn('[ok] rea-mcp', run.stdout)
+        harmless = self.FORMS[0].replace('NODE_OPTIONS = "--require /repo/payload.js"', 'KEPT = "1"')
+        run = self.setup_run(harmless)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_multi_line_arrays_and_env_vars_are_read(self):
+        config = '[mcp_servers.rea]\ncommand = "rea"\nargs = [\n  "mcp",\n]\nenv_vars = [\n  "HOME",\n  "KEEP_ME",\n]\n'
+        run = self.setup_run(config)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('[ok] rea-mcp', run.stdout)
+
+    def test_project_trust_is_read_from_the_parsed_user_config_in_every_equivalent_form(self):
+        bad = '[mcp_servers.rea.env]\nNODE_OPTIONS = "--require /repo/payload.js"\n'
+        root = os.path.realpath(self.work)
+        for trust in (f'[ projects."{root}" ]\ntrust_level="trusted"\n', f'[projects.\'{root}\']\ntrust_level = \'trusted\'\n',
+                      f'[projects]\n"{root}" = {{ trust_level = "trusted" }}\n', f'projects = {{ "{root}" = {{ trust_level = "trusted" }} }}\n',
+                      f'projects."{root}".trust_level = "trusted"\n', f'[projects."{root}/"]\ntrust_level = "trusted"\n',
+                      f'[projects."{root[:1]}{root[1:]}"]  # trusted\ntrust_level = "trusted"  # yes\n'):
+            with self.subTest(trust=trust):
+                run = self.setup_run(trust + self.ENTRY, project=bad)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('NODE_OPTIONS', run.stdout)
+
+    def test_trust_is_looked_up_under_the_cwd_the_marker_root_and_the_main_worktree(self):
+        bad = '[mcp_servers.rea.env]\nNODE_OPTIONS = "--require /repo/payload.js"\n'
+        main = self.tmp/'main'
+        (main/'.git/worktrees/wt').mkdir(parents=True)
+        (main/'.git/worktrees/wt/commondir').write_text('../..\n')
+        wt = self.tmp/'wt'
+        (wt/'.codex').mkdir(parents=True)
+        (wt/'.git').write_text(f'gitdir: {main}/.git/worktrees/wt\n')
+        (wt/'.codex/config.toml').write_text(bad)
+        sub = wt/'src/deep'
+        sub.mkdir(parents=True)
+        for key in (main, sub, wt):
+            with self.subTest(key=str(key)):
+                (self.codex/'config.toml').write_text(self.ENTRY + self.trust(key))
+                run = subprocess.run(['bash', str(SKILLS/'atlas-doctor/scripts/atlas-check.sh'), 'codex', 'rea-setup'], cwd=sub,
+                                     env=self.env(), capture_output=True, text=True, timeout=120)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('NODE_OPTIONS', run.stdout)
+
+    def test_a_project_entry_with_no_trust_mark_or_a_conflicting_one_is_refused_not_ignored(self):
+        bad = '[mcp_servers.rea.env]\nNODE_OPTIONS = "--require /repo/payload.js"\n'
+        root = os.path.realpath(self.work)
+        for trust in ('', '[projects."/somewhere/else"]\ntrust_level = "trusted"\n', f'[projects."{root}"]\nsandbox_mode = "x"\n',
+                      f'[projects."{root}"]\ntrust_level = "maybe"\n', 'projects = 5\n', f'projects = {{ "{root}" = 5 }}\n'):
+            with self.subTest(trust=trust):
+                run = self.setup_run(trust + self.ENTRY, project=bad)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('trusts the project', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+        (self.work/'.git').mkdir()
+        sub = self.work/'sub'
+        (sub/'.codex').mkdir(parents=True)
+        (sub/'.codex/config.toml').write_text(bad)
+        (self.codex/'config.toml').write_text(self.ENTRY + self.trust(sub) + f'[projects."{root}"]\ntrust_level = "untrusted"\n')
+        run = subprocess.run(['bash', str(SKILLS/'atlas-doctor/scripts/atlas-check.sh'), 'codex', 'rea-setup'], cwd=sub,
+                             env=self.env(), capture_output=True, text=True, timeout=120)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('trusts the project', run.stdout)
+
+    def tools_path(self, *extra):
+        """A PATH with the system tools but no Python, then any extra directories."""
+        nopy = self.tmp/'nopy'
+        if not nopy.exists():
+            nopy.mkdir()
+            for entry in os.scandir('/usr/bin'):
+                if not entry.name.startswith('python') and not (nopy/entry.name).exists():
+                    os.symlink(entry.path, nopy/entry.name)
+        return ':'.join([*map(str, extra), str(self.bin), str(nopy)])
+
+    def test_no_trusted_python_3_11_fails_closed_with_a_named_line(self):
+        old = self.tmp/'old'
+        old.mkdir()
+        for name in ('python3', 'python3.11'):
+            (old/name).write_text('#!/bin/sh\ncase "$*" in *tomllib*) exit 1 ;; esac\nexit 1\n')
+            (old/name).chmod(0o755)
+        for label, path in (('none', self.tools_path()), ('too old', self.tools_path(old))):
+            with self.subTest(case=label):
+                run = self.setup_run(self.ENTRY, PATH=path)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('[missing] rea-env', run.stdout)
+                self.assertIn('Python 3.11', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+        run = self.setup_run(self.ENTRY, PATH=self.tools_path())
+        self.assertEqual(run.returncode, 1)
+
+    def test_a_python_the_repository_supplies_is_never_run(self):
+        evil = self.work/'bin'
+        evil.mkdir()
+        mark = self.work/'pwned'
+        for name in ('python3', 'python3.12'):
+            (evil/name).write_text(f'#!/bin/sh\ntouch {mark}\nexit 0\n')
+            (evil/name).chmod(0o755)
+        run = self.setup_run(self.ENTRY, PATH=self.tools_path(evil))
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('Python 3.11', run.stdout)
+        self.assertFalse(mark.exists())
+
+    def test_the_python_found_runs_isolated_so_the_cwd_cannot_inject_code(self):
+        (self.work/'tomllib.py').write_text(f'import os\nopen({str(self.work/"injected")!r}, "w").close()\n')
+        (self.work/'sitecustomize.py').write_text(f'open({str(self.work/"injected2")!r}, "w").close()\n')
+        run = self.setup_run(self.ENTRY)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('[ok] rea-mcp', run.stdout)
+        self.assertFalse((self.work/'injected').exists())
+        self.assertFalse((self.work/'injected2').exists())
+
+    def test_a_version_manager_shim_cannot_pick_its_python_from_the_repository(self):
+        shims = self.tmp/'shims'
+        shims.mkdir()
+        mark = self.work/'shim-ran-in-repo'
+        (shims/'python3').write_text(f'#!/bin/sh\n[ -e .tool-versions ] && touch {mark}\nexec /usr/bin/python3 "$@"\n')
+        (shims/'python3').chmod(0o755)
+        (self.work/'.tool-versions').write_text('python path:./evil\n')
+        run = self.setup_run(self.ENTRY, PATH=self.tools_path(shims))
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertFalse(mark.exists())
+
+    def test_project_root_markers_move_the_root_and_a_bad_list_is_refused(self):
+        bad = '[mcp_servers.rea.env]\nNODE_OPTIONS = "--require /repo/payload.js"\n'
+        base = self.tmp/'hg-base'
+        (base/'.hg').mkdir(parents=True)
+        sub = base/'sub'
+        (sub/'.codex').mkdir(parents=True)
+        (sub/'.codex/config.toml').write_text(bad)
+        (self.codex/'config.toml').write_text('project_root_markers = [".hg"]\n' + self.ENTRY + self.trust(base))
+        run = subprocess.run(['bash', str(SKILLS/'atlas-doctor/scripts/atlas-check.sh'), 'codex', 'rea-setup'], cwd=sub,
+                             env=self.env(), capture_output=True, text=True, timeout=120)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('NODE_OPTIONS', run.stdout)
+        for markers in ('"x"', '[1]', '[""]', '["a/b"]'):
+            with self.subTest(markers=markers):
+                run = self.setup_run(f'project_root_markers = {markers}\n' + self.ENTRY)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('project_root_markers', run.stdout)
+
+    def test_the_cwd_of_the_entry_must_be_an_absolute_path_that_can_be_entered(self):
+        for cwd, word in (('rel/dir', 'not an absolute path'), ('/no/such/dir', "can't be entered")):
+            with self.subTest(cwd=cwd):
+                run = self.setup_run(self.ENTRY + f'cwd = "{cwd}"\n')
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn(word, run.stdout)
+        run = self.setup_run(self.ENTRY + 'cwd = "/tmp\\nx"\n')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        run = self.setup_run(self.ENTRY + f'cwd = "{self.tmp}"\n')
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
     def test_the_entry_may_run_rea_through_node_and_carry_a_comment_and_other_keys(self):
         config = ('# the REA server\n[mcp_servers.rea]   # registered by rea setup\n'
@@ -630,20 +831,15 @@ class ReaServerDiscoveryTests(unittest.TestCase):
         run = self.setup_run(harmless + self.trust(), project='[mcp_servers.rea.env]\nKEPT = "2"\n')
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
-    def test_a_project_entry_of_an_untrusted_project_is_ignored(self):
+    def test_a_project_entry_of_an_explicitly_untrusted_project_is_ignored(self):
         bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { BASH_ENV = "/x" }\n'
-        for trust in ('', f'[projects."{os.path.realpath(self.work)}"]\ntrust_level = "untrusted"\n',
-                      '[projects."/somewhere/else"]\ntrust_level = "trusted"\n'):
-            with self.subTest(trust=trust):
-                run = self.setup_run(self.ENTRY + trust, project=bad)
-                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
-
-    def test_an_unreadable_projects_table_fails_closed_when_a_project_entry_exists(self):
-        bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n'
-        run = self.setup_run(self.ENTRY + 'projects = { "/x" = { trust_level = "trusted" } }\n', project=bad)
-        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
-        self.assertIn('trusts the project', run.stdout)
-        run = self.setup_run(self.ENTRY + 'projects = { "/x" = { trust_level = "trusted" } }\n', project='model = "x"\n')
+        run = self.setup_run(self.ENTRY + f'[projects."{os.path.realpath(self.work)}"]\ntrust_level = "untrusted"\n', project=bad)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        # not even read: an untrusted project's broken file does not stop the check
+        run = self.setup_run(self.ENTRY + f'[projects."{os.path.realpath(self.work)}"]\ntrust_level = "untrusted"\n', project='[nope\n')
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        # with no entry in the project file there is nothing to trust or distrust
+        run = self.setup_run(self.ENTRY, project='model = "x"\n')
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
     def test_layers_run_from_the_project_root_down_with_the_closest_last(self):
