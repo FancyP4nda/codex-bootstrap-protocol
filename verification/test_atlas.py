@@ -12,6 +12,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import sys
 import unittest
 from unittest import mock
 
@@ -405,6 +406,146 @@ class DoctorTests(unittest.TestCase):
         self.assertIn('multi_agent', text)
 
 
+class ReaServerDiscoveryTests(unittest.TestCase):
+    """rea-setup finds REA's MCP server from Codex's configuration, never from a Claude process id (T053 round 5)."""
+
+    ENTRY = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n'
+    SCRIPTS = (('atlas-doctor/scripts/atlas-check.sh', None),)
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp(prefix='atlas-rea-server-'))
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.home = self.tmp/'home'
+        self.codex = self.home/'.codex'
+        self.codex.mkdir(parents=True)
+        self.work = self.tmp/'work'
+        self.work.mkdir()
+        bin = self.tmp/'bin'
+        bin.mkdir()
+        rea = bin/'rea'
+        rea.write_text('#!/bin/sh\ncase "$1" in --version) echo 6.4.0 ;; *) exit 0 ;; esac\n')
+        rea.chmod(0o755)
+        self.bin = bin
+
+    def env(self, **extra):
+        return {'PATH': f'{self.bin}:/usr/bin:/bin', 'HOME': str(self.home), 'CODEX_HOME': str(self.codex), 'LC_ALL': 'C', **extra}
+
+    def setup_run(self, config=None, project=None, cwd=None, **extra):
+        if config is not None:
+            (self.codex/'config.toml').write_text(config)
+        if project is not None:
+            (self.work/'.codex').mkdir(exist_ok=True)
+            (self.work/'.codex/config.toml').write_text(project)
+        script = SKILLS/'atlas-doctor/scripts/atlas-check.sh'
+        return subprocess.run(['bash', str(script), 'codex', 'rea-setup'], cwd=cwd or self.work, env=self.env(**extra),
+                              capture_output=True, text=True, timeout=120)
+
+    def test_a_codex_session_with_a_valid_entry_and_no_claude_pid_passes(self):
+        run = self.setup_run(self.ENTRY)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn('[ok] rea-mcp', run.stdout)
+        self.assertNotIn('CLAUDE_PID', run.stdout + run.stderr)
+
+    def test_an_inherited_claude_pid_is_ignored(self):
+        for pid in ('1', str(os.getppid()), 'not-a-pid'):
+            with self.subTest(pid=pid):
+                run = self.setup_run(self.ENTRY, CLAUDE_PID=pid)
+                self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+                self.assertIn('[ok] rea-mcp', run.stdout)
+
+    def test_a_missing_entry_fails_closed_with_a_named_line(self):
+        for config in ('model = "x"\n', '[mcp_servers.reactor]\ncommand = "rea"\nargs = ["mcp"]\n', None):
+            with self.subTest(config=config):
+                if config is None:
+                    (self.codex/'config.toml').unlink(missing_ok=True)
+                run = self.setup_run(config)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('[missing] rea-env', run.stdout)
+                self.assertIn('no [mcp_servers.rea] entry', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+
+    def test_an_unreadable_entry_fails_closed_with_a_named_line(self):
+        for config in ('[mcp_servers.rea]\ncommand = "rea"\nargs = [\n  "mcp",\n]\n',
+                       '[mcp_servers.rea]\ncommand = "rea\nargs = ["mcp"]\n',
+                       '[mcp_servers.rea]\ncommand = "re\\\\a"\nargs = ["mcp"]\n',
+                       'mcp_servers.rea.command = "rea"\nmcp_servers.rea.args = ["mcp"]\n',
+                       '[mcp_servers.rea]\nargs = ["mcp"]\n',
+                       '[mcp_servers.rea]\ncommand = "other"\nargs = ["serve"]\n'):
+            with self.subTest(config=config):
+                run = self.setup_run(config)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('[missing] rea-env', run.stdout)
+                self.assertIn('mcp_servers.rea', run.stdout)
+                self.assertNotIn('[ok] rea-mcp', run.stdout)
+
+    def test_the_entry_may_run_rea_through_node_and_carry_a_comment_and_other_keys(self):
+        config = ('# the REA server\n[mcp_servers.rea]   # registered by rea setup\n'
+                  'command = "node"\nargs = ["/opt/rea/bin/rea", "mcp"]  # stdio\nstartup_timeout_sec = 30\n'
+                  'env_vars = [\n  "HOME",\n]\n')
+        run = self.setup_run(config)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_the_environment_rule_is_applied_to_the_entry_env(self):
+        for config, name in (('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { NODE_OPTIONS = "--require /x.js" }\n', 'NODE_OPTIONS'),
+                             ('[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\n[mcp_servers.rea.env]\nJAVA_TOOL_OPTIONS = "-javaagent:/x.jar"\n', 'JAVA_TOOL_OPTIONS')):
+            with self.subTest(name=name):
+                run = self.setup_run(config)
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn(name, run.stdout)
+                self.assertNotIn('/x.js', run.stdout)
+                self.assertNotIn('/x.jar', run.stdout)
+
+    def test_an_entry_env_variable_naming_a_path_inside_the_repository_is_refused(self):
+        config = f'[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = {{ SOME_TOOL_HOME = "{self.work}/tools" }}\n'
+        run = self.setup_run(config)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('SOME_TOOL_HOME', run.stdout)
+
+    def test_a_project_config_entry_wins_over_the_user_one(self):
+        bad = '[mcp_servers.rea]\ncommand = "rea"\nargs = ["mcp"]\nenv = { BASH_ENV = "/x" }\n'
+        run = self.setup_run(self.ENTRY, project=bad)
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('BASH_ENV', run.stdout)
+        run = self.setup_run(bad, project=self.ENTRY)
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+
+    def test_a_relative_codex_home_is_refused(self):
+        run = self.setup_run(self.ENTRY, CODEX_HOME='relative')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('CODEX_HOME', run.stdout)
+
+    def install_helpers(self):
+        shutil.copytree(SKILLS, self.home/'.agents/skills')
+
+    def helper(self, rel, **extra):
+        return subprocess.run(['sh', str(self.home/'.agents/skills'/rel)], cwd=self.work, env=self.env(**extra),
+                              capture_output=True, text=True, timeout=120)
+
+    def test_the_binary_and_android_helpers_find_the_server_from_the_config_too(self):
+        self.install_helpers()
+        (self.codex/'config.toml').write_text(self.ENTRY)
+        for rel, ok in (('rea-binary/scripts/provider-check.sh', '[ok] provider ghidra'), ('rea-android/scripts/tool-check.sh', '[ok] java')):
+            for extra in ({}, {'CLAUDE_PID': '1'}):
+                with self.subTest(helper=rel, env=extra):
+                    run = self.helper(rel, **extra)
+                    self.assertIn(ok, run.stdout, run.stdout + run.stderr)  # the android helper exits 1 for the JADX jar a bare stub lacks
+                    self.assertNotIn('mcp_servers.rea', run.stdout + run.stderr)
+        (self.codex/'config.toml').write_text('model = "x"\n')
+        for rel in ('rea-binary/scripts/provider-check.sh', 'rea-android/scripts/tool-check.sh'):
+            with self.subTest(helper=rel, case='missing entry'):
+                run = self.helper(rel, CLAUDE_PID='1')
+                self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+                self.assertIn('no [mcp_servers.rea] entry', run.stdout + run.stderr)
+
+    def test_no_helper_reads_a_claude_process_id_or_proc(self):
+        for rel in ('atlas-doctor/scripts/atlas-check.sh', 'rea-android/scripts/tool-check.sh', 'rea-binary/scripts/provider-check.sh'):
+            text = (SKILLS/rel).read_text()
+            with self.subTest(file=rel):
+                self.assertNotIn('CLAUDE_PID', text)
+                self.assertNotIn('/environ', text)
+                self.assertIn('mcp_servers.rea', text)
+
+
 def skill_blocks(marker):
     """Python bodies of the heredoc blocks in graphify/SKILL.md whose first line is `# <marker>`."""
     text = (SKILLS/'graphify/SKILL.md').read_text()
@@ -718,6 +859,85 @@ class GraphifyDispatchTests(unittest.TestCase):
         self.assertIn(str((self.tmp/'img/a.png').resolve()), run.stdout)
         self.assertNotIn('binary', run.stdout)
         self.assertEqual(self.read_chunk(self.chunk_of(['img']), 0).returncode, 1)
+
+    PDF_TEXT = 'Hello atlas pdf text 4711'
+
+    def make_pdf(self, path, text=None):
+        """A one-page PDF whose content stream is Flate-compressed, so the text is not readable as bytes."""
+        import zlib
+        stream = zlib.compress(f'BT /F1 12 Tf 72 720 Td ({text or self.PDF_TEXT}) Tj ET'.encode())
+        objs = [b'<< /Type /Catalog /Pages 2 0 R >>', b'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+                b'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>',
+                b'<< /Length %d /Filter /FlateDecode >>\nstream\n' % len(stream) + stream + b'\nendstream',
+                b'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>']
+        out, offsets = bytearray(b'%PDF-1.4\n'), []
+        for n, body in enumerate(objs, 1):
+            offsets.append(len(out))
+            out += b'%d 0 obj\n' % n + body + b'\nendobj\n'
+        xref = len(out)
+        out += b'xref\n0 %d\n0000000000 65535 f \n' % (len(objs) + 1)
+        out += b''.join(b'%010d 00000 n \n' % o for o in offsets)
+        out += b'trailer\n<< /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n' % (len(objs) + 1, xref)
+        Path(path).write_bytes(bytes(out))
+
+    def read_chunk_env(self, listfile, index, path):
+        return subprocess.run([sys.executable, '-I', str(self.READER), str(listfile), str(index)],
+                              cwd=self.tmp, capture_output=True, text=True, env={'PATH': path})
+
+    @unittest.skipUnless(shutil.which('pdftotext'), 'pdftotext (poppler) is not installed: the PDF text test needs it')
+    def test_reader_prints_the_text_of_a_compressed_pdf_not_its_bytes(self):
+        (self.tmp/'docs').mkdir()
+        self.make_pdf(self.tmp/'docs/paper.pdf')
+        self.assertNotIn(self.PDF_TEXT.encode(), (self.tmp/'docs/paper.pdf').read_bytes())
+        run = self.read_chunk_env(self.chunk_of(['docs/paper.pdf']), 0, os.path.dirname(shutil.which('pdftotext')) + ':/usr/bin:/bin')
+        self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
+        self.assertIn(self.PDF_TEXT, run.stdout)
+        self.assertNotIn('%PDF', run.stdout)
+        self.assertNotIn('FlateDecode', run.stdout)
+        self.assertIn('----- begin file', run.stdout)
+
+    def test_reader_refuses_a_pdf_by_name_without_pdftotext_and_prints_no_bytes(self):
+        (self.tmp/'docs').mkdir()
+        self.make_pdf(self.tmp/'docs/paper.pdf')
+        empty = self.tmp/'empty-path'
+        empty.mkdir()
+        run = self.read_chunk_env(self.chunk_of(['docs/paper.pdf']), 0, '/nonexistent:relative:' + str(empty))
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('STOP', run.stdout)
+        self.assertIn('docs/paper.pdf', run.stdout)
+        self.assertIn('pdftotext', run.stdout)
+        self.assertIn('poppler', run.stdout)
+        for raw in ('%PDF', 'stream', 'endobj', 'FlateDecode', self.PDF_TEXT):
+            self.assertNotIn(raw, run.stdout)
+
+    def test_reader_does_not_trust_a_pdftotext_inside_the_scan_root(self):
+        (self.tmp/'docs').mkdir()
+        self.make_pdf(self.tmp/'docs/paper.pdf')
+        planted = self.tmp/'bin'
+        planted.mkdir()
+        (planted/'pdftotext').write_text(f'#!/bin/sh\ntouch {self.tmp}/PWNED\necho planted\n')
+        (planted/'pdftotext').chmod(0o755)
+        run = self.read_chunk_env(self.chunk_of(['docs/paper.pdf']), 0, f'{planted}:/nonexistent')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertNotIn('planted', run.stdout)
+        self.assertFalse((self.tmp/'PWNED').exists())
+
+    @unittest.skipUnless(shutil.which('pdftotext'), 'pdftotext (poppler) is not installed: the unreadable PDF test needs it')
+    def test_reader_refuses_a_pdf_pdftotext_cannot_read_without_printing_it(self):
+        (self.tmp/'docs').mkdir()
+        (self.tmp/'docs/broken.pdf').write_bytes(b'%PDF-1.4\nnot really a pdf SECRET-BYTES\n')
+        run = self.read_chunk_env(self.chunk_of(['docs/broken.pdf']), 0, os.path.dirname(shutil.which('pdftotext')) + ':/usr/bin:/bin')
+        self.assertEqual(run.returncode, 1, run.stdout + run.stderr)
+        self.assertIn('STOP', run.stdout)
+        self.assertIn('docs/broken.pdf', run.stdout)
+        self.assertNotIn('SECRET-BYTES', run.stdout)
+
+    def test_reader_hands_pdftotext_the_path_as_one_argument_never_through_a_shell(self):
+        text = (KIT/'tools/atlas-codex/atlas-read-chunk.py').read_text()
+        self.assertNotIn('shell=True', text)
+        self.assertNotIn('os.system', text)
+        self.assertNotIn('os.popen', text)
+        self.assertEqual((SKILLS/'graphify/atlas-read-chunk.py').read_text(), text)
 
     def test_skill_gives_one_reader_command_for_the_parallel_and_the_serial_path(self):
         text = (SKILLS/'graphify/SKILL.md').read_text()

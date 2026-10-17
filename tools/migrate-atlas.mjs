@@ -153,18 +153,66 @@ function openaiYaml(name, skill) {
 const snippet = name => fs.readFileSync(path.join(import.meta.dirname, 'atlas-codex', name), 'utf8');
 const DOCTOR_CONFIG_AND_MIGRATION = snippet('doctor-config-and-migration.sh');
 const DOCTOR_HOOK_TRACES = snippet('doctor-hook-traces.sh');
+const REA_ENV_SERVER = snippet('rea-env-server.sh');
+
+// The ATLAS-REA-ENV block finds REA's MCP server as a child of CLAUDE_PID. A Codex
+// session has no such process id (an inherited one would name another agent's
+// server), so the mirror reads the server from Codex's configuration instead
+// (tools/atlas-codex/rea-env-server.sh) and keeps the environment checks that follow.
+function reaServerDiscovery(text, where) {
+  text = between(text, '# _rea_ppid <pid>:', '    case "$_REER" in\n        *"$_REENL"*)', REA_ENV_SERVER, where);
+  text = exactly(text, '(process $_REEM) was removed', '(from its config entry) was removed', where);
+  return between(text, '#   _rea_env_server  the environment of the one "rea mcp" child of the', '# _rea_env_scan then checks', `#   _rea_env_server  the environment of REA's MCP server as Codex's
+#                    configuration starts it (the [mcp_servers.rea] entry
+#                    of the closest .codex/config.toml, else CODEX_HOME's;
+#                    no process id is read), in _REE, its working directory
+#                    in _REECWD, and the area around that directory, by
+#                    its physical name and by the snapshot's PWD when
+#                    that names it, in _REESP and _REESL. It prints why
+#                    and returns 1
+#                    when it cannot be read with certainty: no entry, an
+#                    entry this reader can't parse or that does not run
+#                    "rea mcp", a relative CODEX_HOME, a cwd that can't be
+#                    entered, a value holding a line break.
+`, where);
+}
 
 const ADAPT = {
   'atlas-doctor/scripts/atlas-archify.sh': (text, where) =>
     exactly(text, 'the Claude config directory, $_ABV, is not an absolute path; set CLAUDE_CONFIG_DIR to one.',
       'the agents directory, $_ABV, is not an absolute path; set HOME to an absolute path.', where),
   'atlas-doctor/scripts/atlas-check.sh': (text, where) => {
+    text = reaServerDiscovery(text, where);
     text = exactly(text, '# <client> selects the config dir: claude is $CLAUDE_CONFIG_DIR, else\n# ~/.claude. The Codex mirror carries its own copy for codex (FR-047).',
       '# <client> selects the config dir: codex is ~/.agents. This copy takes no other\n# client; the Claude kit carries its own for claude (FR-047).', where);
     text = exactly(text, '"${ATLAS_CLIENT:-claude}"', '"${ATLAS_CLIENT:-codex}"', where);
     // A relative HOME would resolve the runner against the repository (the untrusted area).
     return exactly(text, 'claude) ATLAS_CLIENT=claude; ATLAS_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}" ;;',
       'codex)\n            ATLAS_CLIENT=codex\n            ATLAS_CONFIG_DIR="$HOME/.agents"\n            case "$ATLAS_CONFIG_DIR" in\n                /*) ;;\n                *) printf \'%s\\n\' "atlas-check.sh: HOME is not an absolute path; set HOME to one." >&2; return 2 ;;\n            esac\n            ;;', where);
+  },
+  'rea-android/scripts/tool-check.sh': (text, where) => {
+    text = reaServerDiscovery(text, where);
+    text = exactly(text, `# environment from /proc/<pid>/environ of the one process whose parent is
+# the agent (CLAUDE_PID, which must be an ancestor of this script) and
+# whose command line is "rea mcp", and applies FR-038's environment rule to
+# it`, `# environment from Codex's configuration of REA's MCP server (the
+# [mcp_servers.rea] entry of the closest .codex/config.toml, else CODEX_HOME's;
+# no process id is read) and applies FR-038's environment rule to
+# it`, where);
+    return exactly(text, `# same way when the environment can't be read with certainty: no /proc,
+# CLAUDE_PID not an ancestor, no such server or more than one, an
+# unreadable environment, a value holding a line break, or a name set twice.`,
+      `# same way when the environment can't be read with certainty: no rea entry
+# in Codex's config.toml, an entry that can't be read or does not run "rea
+# mcp", a relative CODEX_HOME, a cwd that can't be entered, or a name set twice.`, where);
+  },
+  'rea-binary/scripts/provider-check.sh': (text, where) => {
+    text = reaServerDiscovery(text, where);
+    return exactly(text, `# read from /proc/<pid>/environ of the one "rea mcp" child of the agent
+# (CLAUDE_PID, an ancestor of this script); when it can't be read with
+# certainty the helper stops and says why.`, `# read from Codex's configuration of REA's MCP server (the [mcp_servers.rea]
+# entry of the closest .codex/config.toml, else CODEX_HOME's); when it can't be
+# read with certainty the helper stops and says why.`, where);
   },
   'atlas-doctor/scripts/doctor.sh': (text, where) => {
     text = exactly(text, `#   rea-mcp         rea doctor --client claude_code (REA's name for Claude
@@ -228,6 +276,8 @@ const ADAPT = {
     esac`, where);
     return exactly(text, '    _doctor_rea\n    _doctor_migration\n', '    _doctor_rea\n    _doctor_codex_config\n    _doctor_migration\n', where);
   },
+  'rea-android/SKILL.md': (text, where) =>
+    exactly(text, 'It reads only files and `/proc`, and\nruns no tool.', 'It reads only files (Codex\'s `config.toml`), and\nruns no tool.', where),
   'atlas-doctor/SKILL.md': (text, where) => {
     text = exactly(text, "REA's registration for this client, the one-time migration steps,",
       "REA's registration for this client, Codex's `multi_agent` setting and REA's `config.toml` entry, the one-time migration steps,", where);

@@ -65,7 +65,7 @@ is missing or stale; the operator runs `rea setup`.
 REA's MCP server, not this shell, runs apktool and the JADX JAR, from its
 own environment. The helper reads that environment and checks that what
 REA would run (apktool, the JAR, java and every entry of the server's
-`PATH`) lies outside the repository. It reads only files and `/proc`, and
+`PATH`) lies outside the repository. It reads only files (Codex's `config.toml`), and
 runs no tool.
 
 `[ok] jadx` and `[ok] apktool` mean go on. A `[missing] <tool>` line names

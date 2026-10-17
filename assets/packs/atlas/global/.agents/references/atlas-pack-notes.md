@@ -106,6 +106,12 @@ serve operations the pack does not support and are not vendored.
   fixed command, `graphify/atlas-read-chunk.py <list> <index>`, which reads the
   list as data, checks the entry against the scan root again and prints the
   file, so no file name reaches a shell and no file-reading tool is needed.
+  A PDF is read as text through `pdftotext` (poppler): the reader finds it on
+  an absolute PATH entry outside the scan root and the working directory, runs
+  it with fixed arguments and the resolved path as one argument (no shell), and
+  without it refuses that PDF by name with an install line, never printing the
+  bytes. poppler is an optional External Prerequisite of `$map-repo` on a
+  corpus with PDFs.
   The Claude kit's Step B0 and B1 also refuse a file name that holds a double
   quote or a backslash, because its workers get the list as JSON text in a
   prompt; here the delta file puts the looser check back, since the reader
