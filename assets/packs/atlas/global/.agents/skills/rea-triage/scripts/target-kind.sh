@@ -164,7 +164,7 @@ main() {
         refuse "$target does not exist."
     fi
     [ -f "$target" ] || refuse "$target is not a regular file or a directory; nothing read."
-    lower=$(printf '%s' "${target##*/}" | tr 'A-Z' 'a-z')
+    lower=$(printf '%s' "${target##*/}" | LC_ALL=C tr 'A-Z' 'a-z')
     printf 'kind: %s\n' "$(kind_of_file "$target" "$lower")"
 }
 

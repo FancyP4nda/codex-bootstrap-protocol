@@ -299,13 +299,13 @@ _rea_isrea_script() {
     return 1
 }
 # _rea_cfg_isrea: command and args are one of the registrations rea-agents
-# 6.4.0 writes (SetupHost.js, ClientRegistrationIdentity.js), each checked by
+# 6.8.0 writes (SetupHost.js, ClientRegistrationIdentity.js), each checked by
 # its exact arguments:
 #   rea mcp | rea-agents mcp | <abs>/rea mcp | <abs>/scripts/rea.mjs mcp
 #   <abs>/node <abs>/rea|rea-agents|scripts/rea.mjs mcp
-#   npx -y rea-agents[@latest|@6.4.0] mcp
+#   npx -y rea-agents[@latest|@6.8.0] mcp
 _rea_cfg_isrea() {
-    _REEPIN=6.4.0
+    _REEPIN=6.8.0
     _REEJ=${_REEARGS%"$_REENL"}
     _REEAN=0
     _REET=$_REEARGS

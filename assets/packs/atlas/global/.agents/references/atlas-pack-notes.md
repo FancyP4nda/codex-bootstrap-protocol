@@ -284,3 +284,9 @@ The pack is pre-airlock like `craft` and `web-design`: every evidence field in
   blocks against fixture chunk files (`GraphifyDispatchTests`); a real Codex
   session spawning subagents from it is not exercised (operator step, with
   A-011).
+
+## REA 6.8.0 compatibility update (2026-11-12)
+
+The REA prerequisite pin is now 6.8.0. The prerequisite checks, updater guidance, Android helper version text, and version-bound regression fixtures were updated together. Codex MCP registration recognition accepts the corresponding pinned npx invocation. Other tool pins are unchanged.
+
+On the Omarchy x86_64 workstation, REA setup and client/skill checks passed for Claude Code and Codex. Provider readiness checks passed for Ghidra 12.1.2 with JDK 21, jadx-headless-mcp 0.7.1, Kuna 1.833, and Hopper 6.6.2 demo. These checks establish installation and readiness, not a full native-analysis workflow or cross-platform verification.

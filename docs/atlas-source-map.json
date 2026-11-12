@@ -1,7 +1,7 @@
 {
   "converter": "tools/migrate-atlas.mjs",
   "source_kit": "claude-bootstrap-protocol",
-  "source_commit": "bc90ee4f95a404f46d7a6c0869c2c61703e46b4f",
+  "source_commit": "39d4832e7af82adb7d8408ed76e314df0fc52f07",
   "commands_not_yet_derived": [],
   "files": [
     {
@@ -1105,9 +1105,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/atlas-doctor/scripts/atlas-check.sh",
-      "source_sha256": "fbe8a0c0f693c7a11bcc9923ab4dbee51c25e5bb47556b6e4a5ec7e432074805",
+      "source_sha256": "75b6c493dc809621fd44b53cfa7dadfdd87c193be16dc5598822346d807e10ac",
       "destination": "global/.agents/skills/atlas-doctor/scripts/atlas-check.sh",
-      "destination_sha256": "a290e957719d54083700534fcde7eb6a8419c4c589eb572554fbc4fd6a1b385b",
+      "destination_sha256": "87ff85116bd246025e5eb556c98f6ec951ba569861279e86acc2e2b73dea37b3",
       "transform": "script"
     },
     {
@@ -1245,9 +1245,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/map-repo/SKILL.md",
-      "source_sha256": "e09832eeaa8a40a44ad9df77714ab034a686e77ceb24d23eb01d726b1d3e1274",
+      "source_sha256": "1ddc5644664320047e0664486e8ea5eeada8df6321b84d1a8408d25fcee54eee",
       "destination": "global/.agents/skills/map-repo/SKILL.md",
-      "destination_sha256": "35f5ad1be34e11881405a07bbc72e344977859398b501297fc4958bf81cee8e6",
+      "destination_sha256": "b48a03fb2b8af6902899aef0c3b26986166d883e76bac2d37978ada10f24ff55",
       "transform": "command"
     },
     {
@@ -1259,9 +1259,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-android/scripts/tool-check.sh",
-      "source_sha256": "54cd6345af41759f2c8e2558a5378f6067ec311f8bf037257fe7006b0598846f",
+      "source_sha256": "7dfbba8e0ca37219de2e9e2d146199266a6cebea42ba07f1960e1b955069ec7e",
       "destination": "global/.agents/skills/rea-android/scripts/tool-check.sh",
-      "destination_sha256": "1f07a3c3c359be2132b69f763a3fa5f3ce67c66e74034a9b75b3f8d893b8d46d",
+      "destination_sha256": "6a583d01e6ea987ec8cf24c0555e005a34c868f35ce0457fddff9bd4b2eed2f7",
       "transform": "script"
     },
     {
@@ -1275,7 +1275,7 @@
       "source": "assets/packs/atlas/global/.claude/skills/rea-binary/scripts/provider-check.sh",
       "source_sha256": "a87eda7956a11859d8492cbffacd23581f3de00d2293f30cb2496a21049f21ee",
       "destination": "global/.agents/skills/rea-binary/scripts/provider-check.sh",
-      "destination_sha256": "2c667b42dd3a01ac26ee9ab9e2cf435b80cdd4dc8f4bca899cae5555d1b18b16",
+      "destination_sha256": "06139035789e39c003d76ec969ea05b4d08cee44d470bd46a2c71c088841b08a",
       "transform": "script"
     },
     {
@@ -1308,9 +1308,9 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-map/SKILL.md",
-      "source_sha256": "b2201ef4dde8e462abdf6bc8ae9c0ca3fdc8505b062ed5b1270e8e37608c8f23",
+      "source_sha256": "736595fcea97767e789287dbae476dc3b98db1e8a2f02a603f91569d30a313d4",
       "destination": "global/.agents/skills/rea-map/SKILL.md",
-      "destination_sha256": "f497f72434d88070e14adf4064f2e3c25d9e9cfec673861cf5b1a40e753d069d",
+      "destination_sha256": "646a857cbb40783ce5b6148976edcf52b0a2040136613a7881580b45cdfab17c",
       "transform": "command"
     },
     {
@@ -1322,23 +1322,23 @@
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-triage/scripts/target-kind.sh",
-      "source_sha256": "3da981e822aa59ce9c6d7d845dcad610e6e4e1af1fa954b8865dfc2a803c7b38",
+      "source_sha256": "6886409113e61509d7fc9c7e5d01221feb18dc3c9749607ecd82a390c43565e9",
       "destination": "global/.agents/skills/rea-triage/scripts/target-kind.sh",
-      "destination_sha256": "e37d3bafc292b99172f1fb9ef5fb647f3e205e6db5c8cdaf3bd1b451b5d227d6",
+      "destination_sha256": "472d0040443d1cf74c516797e99b80c56fda861412addfe5f8d758a46b07a92d",
       "transform": "script"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-update/SKILL.md",
-      "source_sha256": "4892d1c9e1fcb590186af8eb6debafe80e27a0928d2b00c1e1c9d2ab82d5cfe1",
+      "source_sha256": "20a93fc9799c8aecff7b4beea117df2b3ba5071b941f894e9be209d6894307f7",
       "destination": "global/.agents/skills/rea-update/SKILL.md",
-      "destination_sha256": "10feddd95b9b336b6bf95c9d661f4e06175cecb25e2e309fa4321da171076013",
+      "destination_sha256": "631de11471127f4d86701b2dde4170e714666965eb799caa3f150b2a85373fa3",
       "transform": "command"
     },
     {
       "source": "assets/packs/atlas/global/.claude/skills/rea-update/scripts/update.sh",
-      "source_sha256": "8780223776573155d663a47d2d2aa78c9900dd6d0587e121774bc5d0c6a5c87b",
+      "source_sha256": "1005e423d4698a48e1929011beb0757967fd05893c1b7a1ed76dd26a6e04408d",
       "destination": "global/.agents/skills/rea-update/scripts/update.sh",
-      "destination_sha256": "72bed51863b9256f7a48f6b23cc330e5652f63d5b5d76db2015fdfef09337a85",
+      "destination_sha256": "22f6c3920aff2d0589574f6a2508c99e231e75ba8360cad566662455e581701b",
       "transform": "script"
     },
     {

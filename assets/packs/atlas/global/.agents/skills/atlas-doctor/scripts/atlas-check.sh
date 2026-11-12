@@ -131,7 +131,7 @@ ATLAS_IDS="graphify uv rea node-archify node-rea browser"
 # inherited from the environment must not downgrade or skip a refusal.
 ATLAS_REA_ENV_WARN=""
 ATLAS_REA_SERVER_SCAN=""
-ATLAS_REA_PIN="6.4.0"
+ATLAS_REA_PIN="6.8.0"
 ATLAS_NODE_ARCHIFY_FLOOR="18"
 ATLAS_NODE_REA_RANGE="^22.19.0 || ^24.11.0 || >=26.0.0"
 
@@ -454,13 +454,13 @@ _rea_isrea_script() {
     return 1
 }
 # _rea_cfg_isrea: command and args are one of the registrations rea-agents
-# 6.4.0 writes (SetupHost.js, ClientRegistrationIdentity.js), each checked by
+# 6.8.0 writes (SetupHost.js, ClientRegistrationIdentity.js), each checked by
 # its exact arguments:
 #   rea mcp | rea-agents mcp | <abs>/rea mcp | <abs>/scripts/rea.mjs mcp
 #   <abs>/node <abs>/rea|rea-agents|scripts/rea.mjs mcp
-#   npx -y rea-agents[@latest|@6.4.0] mcp
+#   npx -y rea-agents[@latest|@6.8.0] mcp
 _rea_cfg_isrea() {
-    _REEPIN=6.4.0
+    _REEPIN=6.8.0
     _REEJ=${_REEARGS%"$_REENL"}
     _REEAN=0
     _REET=$_REEARGS
@@ -1513,7 +1513,7 @@ _atlas_printable() {
 }
 
 # _atlas_version <executable>: the first line of "<executable> --version",
-# cut after its last space (rea 6.4.0) and without a leading "v" (v22.19.0),
+# cut after its last space (rea 6.8.0) and without a leading "v" (v22.19.0),
 # in _AV: the version alone when it starts like one, else the text without
 # characters outside [A-Za-z0-9.+_-]; empty when the output is.
 _atlas_version() {

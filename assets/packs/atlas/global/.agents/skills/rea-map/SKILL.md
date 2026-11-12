@@ -194,21 +194,31 @@ notice and the end, as in `$map-repo`, and a question after the notice:
 - **The notice, between Step 2 and Step 3.** Count the non-code files
   Step 2 detected: its docs, papers and images (the `document`, `paper` and
   `image` lists of Step 2's detection result; decompiled Android output
-  often holds resource files among them). Then check which Gemini key names
-  are set, never their values (this block needs no path lines):
+  often holds resource files among them). Then run this block, with
+  `NON_CODE_COUNT` replaced by that count (a whole number; it needs no path
+  lines). It prints the notice and, for each Gemini key that is set, a line
+  naming the key and never its value:
 
   ```bash
-  [ -n "${GEMINI_API_KEY:-}" ] && printf '%s\n' 'GEMINI_API_KEY is set'
-  [ -n "${GOOGLE_API_KEY:-}" ] && printf '%s\n' 'GOOGLE_API_KEY is set'
-  :
+  IFS= read -r MAP_REPO_N <<'MAP_REPO_N_EOF'
+  NON_CODE_COUNT
+  MAP_REPO_N_EOF
+  case "$MAP_REPO_N" in ''|*[!0123456789]*) printf '%s\n' 'the notice count must be a whole number; refused.'; exit 1 ;; esac
+  if [ "$MAP_REPO_N" -eq 0 ]; then
+      printf '%s\n' 'Semantic pass: no non-code files, so no file goes to a model.'
+  else
+      printf '%s\n' "Semantic pass: ${MAP_REPO_N} non-code file(s) (docs, papers, images) will be sent to a model: this session's subagents read them."
+  fi
+  [ -z "${GEMINI_API_KEY:-}" ] || printf '%s\n' 'GEMINI_API_KEY is set, but the atlas pack never sends files to Google Gemini.'
+  [ -z "${GOOGLE_API_KEY:-}" ] || printf '%s\n' 'GOOGLE_API_KEY is set, but the atlas pack never sends files to Google Gemini.'
   ```
 
-  Print the notice before any non-code file is read for the graph:
-  `Semantic pass: <N> non-code file(s) (docs, papers, images) will be sent to a model: this session's subagents read them.`
-  When the block named a key, add `<key> is set, but the atlas pack never sends files to Google Gemini.`
-  for each key it named. With `N` = 0, print
-  `Semantic pass: no non-code files, so no file goes to a model.` and run
-  Step 3 Part B's fast path. Only then start Step 3.
+  Show this block's output to the operator verbatim, as the block printed
+  it, before any non-code file is read for the graph and before Step 3:
+  do not paraphrase, shorten, reorder or merge its lines, and do not
+  replace them with your own wording. The key lines name a key and never
+  its value. With `N` = 0, run Step 3 Part B's fast path. Only then start
+  Step 3.
 - **The question, after the notice (rea-map only).** The non-code files
   come from the target, so anyone who built it wrote them, and the
   skill's subagents that read them can run commands. With `N` > 0, ask, and

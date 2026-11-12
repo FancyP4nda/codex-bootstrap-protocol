@@ -152,10 +152,10 @@ pack:
       accepted_risk: "uv itself is not scanned; the operator installs it."
     - id: rea
       kind: npm-global
-      pin: {type: exact, value: "6.4.0"}
+      pin: {type: exact, value: "6.8.0"}
       on_newer: warn
       check: "rea --version"
-      install_hint: "npm install --global rea-agents@6.4.0"
+      install_hint: "npm install --global rea-agents@6.8.0"
       required_by: [rea-doctor, rea-triage, rea-feature, diagram-flow, rea-binary, rea-android, rea-electron, rea-diagram, rea-update]
       network: >-
         Static analysis is local; its dynamic captures (web pages, devices)

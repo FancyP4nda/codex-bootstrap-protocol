@@ -33,14 +33,14 @@ Before asking, say all of this, then ask the question, and wait for the
 answer:
 
 - `rea update` installs REA's latest release, which may move REA off the
-  kit's pin (`rea-agents@6.4.0`) to a version the kit hasn't tested.
+  kit's pin (`rea-agents@6.8.0`) to a version the kit hasn't tested.
 - After the update, REA's MCP registration and skill need refreshing, so
   every REA Command stops with
   `REA MCP server or skill not set up for this client. Run: rea setup`
   until the operator runs `rea setup` (and restarts the agent session if
   `rea setup` says so).
 - Afterwards the REA Commands run with an off-pin warning,
-  `REA <v> is newer than the kit's pin 6.4.0 (off-pin, untested by the kit). To restore the pin: npm install --global rea-agents@6.4.0, then rea setup`,
+  `REA <v> is newer than the kit's pin 6.8.0 (off-pin, untested by the kit). To restore the pin: npm install --global rea-agents@6.8.0, then rea setup`,
   and `$atlas-doctor` reports REA as `[warn]` off-pin until the pin is
   restored or the kit re-pins.
 - To restore the pin later, the operator runs the two commands that

@@ -33,7 +33,7 @@
 # every rea run gets a fresh environment through env -i, with only PATH,
 # HOME, the user and locale names, TERM, TMPDIR and the proxy variables
 # (without NODE_EXTRA_CA_CERTS or NODE_TLS_REJECT_UNAUTHORIZED a proxy can't
-# break TLS). REA 6.4.0 needs no more: it finds its install prefix from its
+# break TLS). REA 6.8.0 needs no more: it finds its install prefix from its
 # own package path and has npm install the release globally into that
 # prefix with --ignore-scripts, so npm reads the operator's ~/.npmrc and that
 # prefix's etc/npmrc, and runs no package script.
@@ -90,7 +90,7 @@ version() {
     v=$(rea_run 2>/dev/null | head -n 1)
     v=${v##* }
     v=${v#v}
-    v=$(printf '%s' "$v" | tr -cd 'A-Za-z0-9.+_-')
+    v=$(printf '%s' "$v" | LC_ALL=C tr -cd 'A-Za-z0-9.+_-')
     [ -n "$v" ] || v='an unreadable version'
     printf '%s\n' "$v"
 }
@@ -144,10 +144,14 @@ main() {
     if [ -n "$out" ]; then
         printf '%s\n' 'rea update printed:'
         # Colour, cursor and OSC (hyperlink, title) sequences go whole, then
-        # every other control character; each line is cut at LINE_MAX.
-        printf '%s\n' "$out" | sed -e "s|${ESC}\[[0-?]*[ -/]*[@-~]||g" -e "s|${ESC}][^${BEL}${ESC}]*${BEL}||g" \
-            -e "s|${ESC}][^${BEL}${ESC}]*${ESC}\\\\||g" | tr -d '\000-\010\013-\037\177' \
-            | tr '\011' ' ' | head -n "$LINES_MAX" | cut -c "1-$LINE_MAX" | sed 's/^/    /'
+        # every other control character; each line is cut at LINE_MAX. sed runs in
+        # the C locale because its bracket ranges ([@-~], [ -/]) are an error in
+        # some UTF-8 locales such as en_US.UTF-8; tr follows for byte semantics.
+        # GNU cut -c counts bytes, so a cut at LINE_MAX can split a multibyte
+        # character, which is harmless.
+        printf '%s\n' "$out" | LC_ALL=C sed -e "s|${ESC}\[[0-?]*[ -/]*[@-~]||g" -e "s|${ESC}][^${BEL}${ESC}]*${BEL}||g" \
+            -e "s|${ESC}][^${BEL}${ESC}]*${ESC}\\\\||g" | LC_ALL=C tr -d '\000-\010\013-\037\177' \
+            | LC_ALL=C tr '\011' ' ' | head -n "$LINES_MAX" | cut -c "1-$LINE_MAX" | sed 's/^/    /'
         n=$(printf '%s\n' "$out" | wc -l)
         if [ "$n" -gt "$LINES_MAX" ]; then
             printf '%s\n' '    (more lines cut)'

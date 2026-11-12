@@ -143,10 +143,10 @@ class PackShape(unittest.TestCase):
         check = (SKILLS/'atlas-doctor/scripts/atlas-check.sh').read_text()
         runner = (SKILLS/'graphify/atlas-graphify.sh').read_text()
         self.assertIn('GRAPHIFY_PIN="0.9.85"', runner)
-        self.assertIn('ATLAS_REA_PIN="6.4.0"', check)
+        self.assertIn('ATLAS_REA_PIN="6.8.0"', check)
         self.assertIn('ATLAS_NODE_REA_RANGE="^22.19.0 || ^24.11.0 || >=26.0.0"', check)
         yaml = (PACK/'pack.yaml').read_text()
-        for pin in ('value: "0.9.85"', 'value: "6.4.0"', 'value: "18"', 'value: "^22.19.0 || ^24.11.0 || >=26.0.0"'):
+        for pin in ('value: "0.9.85"', 'value: "6.8.0"', 'value: "18"', 'value: "^22.19.0 || ^24.11.0 || >=26.0.0"'):
             self.assertIn(pin, yaml)
 
     def test_source_map_records_every_derived_file_and_matches_it(self):
@@ -523,7 +523,7 @@ class ReaServerDiscoveryTests(unittest.TestCase):
         bin = self.tmp/'bin'
         bin.mkdir()
         rea = bin/'rea'
-        rea.write_text('#!/bin/sh\ncase "$1" in --version) echo 6.4.0 ;; *) exit 0 ;; esac\n')
+        rea.write_text('#!/bin/sh\ncase "$1" in --version) echo 6.8.0 ;; *) exit 0 ;; esac\n')
         rea.chmod(0o755)
         self.bin = bin
 
@@ -786,24 +786,24 @@ class ReaServerDiscoveryTests(unittest.TestCase):
         run = self.setup_run(config)
         self.assertEqual(run.returncode, 0, run.stdout + run.stderr)
 
-    # The registrations rea-agents 6.4.0 writes (SetupHost.js setupRegistrationCommand and
+    # The registrations rea-agents 6.8.0 writes (SetupHost.js setupRegistrationCommand and
     # ClientRegistrationIdentity.js npxRegistrationCommand), and look-alikes it does not write.
     REGISTRATIONS = (
         ('rea', '["mcp"]'), ('/opt/rea/bin/rea', '["mcp"]'), ('/opt/rea/bin/rea-agents', '["mcp"]'),
         ('/opt/rea/scripts/rea.mjs', '["mcp"]'),
         ('/usr/bin/node', '["/opt/rea/scripts/rea.mjs", "mcp"]'), ('/usr/bin/node', '["/opt/rea/bin/rea", "mcp"]'),
-        ('npx', '["-y", "rea-agents@6.4.0", "mcp"]'), ('npx', '["-y", "rea-agents", "mcp"]'),
+        ('npx', '["-y", "rea-agents@6.8.0", "mcp"]'), ('npx', '["-y", "rea-agents", "mcp"]'),
         ('npx', '["-y", "rea-agents@latest", "mcp"]'))
     NOT_REGISTRATIONS = (
-        ('npx', '["-y", "rea-agents@6.4.0", "serve"]'), ('npx', '["rea-agents@6.4.0", "mcp"]'),
-        ('npx', '["-y", "other-agents@6.4.0", "mcp"]'), ('npx', '["-y", "rea-agents@6.4.0", "mcp", "--x"]'),
+        ('npx', '["-y", "rea-agents@6.8.0", "serve"]'), ('npx', '["rea-agents@6.8.0", "mcp"]'),
+        ('npx', '["-y", "other-agents@6.8.0", "mcp"]'), ('npx', '["-y", "rea-agents@6.8.0", "mcp", "--x"]'),
         ('npx', '["-y", "rea-agents@9.9.9", "mcp"]'),
         ('/opt/rea/scripts/other.mjs', '["mcp"]'), ('/opt/rea/scripts/rea.mjs', '["mcp", "--x"]'),
         ('rea', '["mcp", "--x"]'), ('rea', '["serve"]'),
         ('/usr/bin/node', '["/opt/x/server.mjs", "mcp"]'), ('/usr/bin/python3', '["/opt/rea/scripts/rea.mjs", "mcp"]'),
         ('node', '["/opt/rea/scripts/rea.mjs", "mcp"]'), ('/usr/bin/node', '["rea.mjs", "mcp"]'))
 
-    def test_the_registration_forms_rea_agents_6_4_0_writes_are_recognised(self):
+    def test_the_registration_forms_rea_agents_6_8_0_writes_are_recognised(self):
         for command, args in self.REGISTRATIONS:
             with self.subTest(command=command, args=args):
                 run = self.setup_run(f'[mcp_servers.rea]\ncommand = "{command}"\nargs = {args}\n')
